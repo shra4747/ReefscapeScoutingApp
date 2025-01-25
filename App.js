@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from './screens/HomeScreen';
 import BlankScreen from './screens/BlankScreen';
 import EndGame from './screens/EndGame';
+import PostGame from './screens/PostGame';
 import Profile from './screens/Profile';
 
 const Tab = createBottomTabNavigator();
@@ -24,8 +25,8 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Tab.Screen 
-          name="Page 2" 
-          component={BlankScreen} 
+          name="Post Game" 
+          component={PostGame} 
           options={{ headerShown: false }}
         />
         <Tab.Screen 
