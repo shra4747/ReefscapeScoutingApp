@@ -6,6 +6,7 @@ import HomeScreen from './screens/HomeScreen';
 import BlankScreen from './screens/BlankScreen';
 import EndGame from './screens/EndGame';
 import PostGame from './screens/PostGame';
+import StartPage from './screens/StartPage';
 import Profile from './screens/Profile';
 
 const Tab = createBottomTabNavigator();
@@ -20,8 +21,8 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Tab.Screen 
-          name="Page 1" 
-          component={BlankScreen} 
+          name="Start" 
+          component={StartPage} 
           options={{ headerShown: false }}
         />
         <Tab.Screen 
