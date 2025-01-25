@@ -45,7 +45,7 @@ const EndGame = () => {
                 value={shallowHang}
                 onValueChange={() => handleOptionSelect('shallow', setShallowHang)}
               />
-              <Text>Shallow Hang</Text>
+              <Text style={styles.optionText}>Shallow Hang</Text>
             </TouchableOpacity>
           )}
 
@@ -61,7 +61,7 @@ const EndGame = () => {
                 value={deepHang}
                 onValueChange={() => handleOptionSelect('deep', setDeepHang)}
               />
-              <Text>Deep Hang</Text>
+              <Text style={styles.optionText}>Deep Hang</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -74,7 +74,7 @@ const EndGame = () => {
                 value={park}
                 onValueChange={() => handleOptionSelect('park', setPark)}
               />
-              <Text>Park</Text>
+              <Text style={styles.optionText}>Park</Text>
             </View>
           )}
           {(!isAnyOptionSelected() || failedClimb) && (
@@ -83,7 +83,7 @@ const EndGame = () => {
                 value={failedClimb}
                 onValueChange={() => handleOptionSelect('failedClimb', setFailedClimb)}
               />
-              <Text>Failed Climb/Park</Text>
+              <Text style={styles.optionText}>Failed Climb/Park</Text>
             </View>
           )}
         </View>
@@ -100,9 +100,9 @@ const EndGame = () => {
             step={0.1}
             value={hangTime}
             onValueChange={setHangTime}
-            minimumTrackTintColor="#007AFF"
-            maximumTrackTintColor="#000000"
-            thumbTintColor="#007AFF"
+            minimumTrackTintColor="#ff3030"
+            maximumTrackTintColor="#ffffff"
+            thumbTintColor="#ff3030"
           />
         </View>
       )}
@@ -138,11 +138,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingTop: 50,
+    backgroundColor: '#000000',
   },
   title: {
     fontSize: 36,
     fontWeight: 'bold',
     marginBottom: 40,
+    color: '#ffffff',
   },
   mainContainer: {
     marginTop: 50,
@@ -173,13 +175,15 @@ const styles = StyleSheet.create({
     width: 60,
     height: 80,
     borderWidth: 3,
-    borderColor: 'black',
+    borderColor: '#ff3030',
+    backgroundColor: '#1a1a1a',
+    opacity: 0.8,
   },
   selectedRectangle: {
-    backgroundColor: '#90EE90',  // Changed from '#e0e0e0' to light green
+    backgroundColor: '#90EE90',
   },
   hiddenCheckbox: {
-    display: 'none',  // Hide the actual checkbox
+    display: 'none',
   },
   parkOptionsContainer: {
     marginTop: 40,
@@ -195,7 +199,7 @@ const styles = StyleSheet.create({
   button: {
     position: 'absolute',
     bottom: 40,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#ff3030',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -206,24 +210,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   undoButton: {
-    left: 40,  // Position on the left
+    left: 40,
   },
   submitButton: {
-    right: 40,  // Position on the right
+    right: 40,
   },
   sliderContainer: {
     position: 'absolute',
-    bottom: 100,  // Position above the buttons
+    bottom: 100,
     width: '80%',
     alignItems: 'center',
   },
   sliderLabel: {
     fontSize: 16,
     marginBottom: 10,
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
   slider: {
     width: '100%',
     height: 40,
+  },
+  optionText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 });
 

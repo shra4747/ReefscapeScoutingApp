@@ -60,8 +60,8 @@ const BlankScreen = () => {
       >
         {/* Page Title */}
         <View style={[styles.titleContainer, { position: 'absolute', top: 80 }]}>
-          <Text style={[styles.pageTitle, { color: 'black' }]}>TEAM 75:</Text>
-          <Text style={[styles.pageTitle, { color: 'red' }]}> SCOUTING APP</Text>
+          <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
+          <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
         </View>
 
         <Image 
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#000000', // Black background
   },
   titleContainer: {
     flexDirection: 'row',
@@ -152,21 +152,24 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 30,
     fontWeight: 'bold',
+    color: '#ffffff', // White text
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#ffffff', // White text for other titles
   },
   input: {
     height: 40,
     width: '80%',
-    borderColor: '#ccc',
+    borderColor: '#ff3030', // Red border
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
     fontSize: 16,
-    color: '#000',
+    color: '#000000', // Black text for input
+    backgroundColor: '#ffffff', // White background for input
     marginBottom: 20,
   },
   dropdownContainer: {
@@ -174,19 +177,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   dropdown: {
-    borderColor: '#ccc',
-    backgroundColor: '#f9f9f9',
+    borderColor: '#ff3030', // Red border
+    backgroundColor: '#ffffff', // White background for dropdown
   },
   dropdownBox: {
     borderColor: '#ccc',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#ffffff', // White background for dropdown box
   },
   resultText: {
     fontSize: 16,
-    color: '#333',
+    color: '#ffffff', // White text
   },
   submitButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#ff3030', // Red button
     padding: 15,
     borderRadius: 10,
     width: '80%',
@@ -196,7 +199,7 @@ const styles = StyleSheet.create({
     bottom: 40,
   },
   submitButtonText: {
-    color: 'white',
+    color: 'white', // White text
     fontSize: 18,
     fontWeight: 'bold',
   },

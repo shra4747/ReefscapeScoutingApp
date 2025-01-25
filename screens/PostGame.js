@@ -129,11 +129,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingTop: 40,
+    backgroundColor: '#000000', // Black background
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#ffffff', // White text
   },
   dropdownTitle: {
     fontSize: 18,
@@ -141,15 +143,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginLeft: '10%',
     marginBottom: 5,
+    color: '#ff3030', // Red text for emphasis
   },
   dropdown: {
-    borderColor: '#ccc',
+    borderColor: '#ff3030', // Red border
   },
   dropdownContainer: {
     width: '80%',
   },
   submitButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#ff3030', // Red button
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 8,
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   submitButtonText: {
-    color: 'white',
+    color: 'white', // White text
     fontSize: 18,
     fontWeight: '600',
   },
