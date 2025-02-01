@@ -81,7 +81,7 @@ const AllianceMeter = ({ redMatches, blueMatches }) => {
 };
 
 const Profile = () => {
-  const currentHours = 0; // This should be dynamically set based on your app's logic
+  const currentHours = 5; // This should be dynamically set based on your app's logic
   let scoutingLevel;
 
   if (currentHours <= 5) {

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
 
-const Auto = () => {
+const Teleop = () => {
   const [dots, setDots] = useState([]);
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
   const [imageBounds, setImageBounds] = useState({ top: 0, left: 0, width: 0, height: 0 });
@@ -11,7 +11,7 @@ const Auto = () => {
   const [showNotification, setShowNotification] = useState(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
 
-  const alliance_color = "Blue";
+  const alliance_color = "Red";
 
   useEffect(() => {
     if (showNotification) {
@@ -106,7 +106,7 @@ const Auto = () => {
         <Text style={styles.notificationText}>Last action has been undone</Text>
       </Animated.View>
 
-      <Text style={styles.title}>Autonomous</Text>
+      <Text style={styles.title}>Teleop</Text>
       <View style={styles.topButtonsContainer}>
         <TouchableOpacity 
           style={styles.undoButton} 
@@ -317,4 +317,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Auto;
+export default Teleop;

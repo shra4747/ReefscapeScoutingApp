@@ -7,6 +7,8 @@ import BlankScreen from './screens/BlankScreen';
 import EndGame from './screens/EndGame';
 import PostGame from './screens/PostGame';
 import Auto from './screens/Auto';
+import Teleop from './screens/Teleop';
+import BlueAuto from './screens/BlueAuto';
 import AutoP1 from './screens/AutoP1';
 import AutoP2 from './screens/AutoP2';
 import AutoP21 from './screens/AutoP21';
@@ -32,6 +34,16 @@ export default function App() {
         <Tab.Screen 
           name="Auto" 
           component={Auto} 
+          options={{ headerShown: false }}
+        />
+        <Tab.Screen 
+          name="Teleop" 
+          component={Teleop} 
+          options={{ headerShown: false }}
+        />
+        <Tab.Screen 
+          name="BlueAuto" 
+          component={BlueAuto} 
           options={{ headerShown: false }}
         />
         <Tab.Screen 

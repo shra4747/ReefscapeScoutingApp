@@ -1,11 +1,14 @@
 // screens/BlankScreen.js
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 const AutoP21 = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Processor</Text>
+      <TouchableOpacity style={styles.backButton}>
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
+      <Text style={styles.title}>Reef</Text>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.makeButton}>
           <Text style={styles.buttonText}>Make</Text>
@@ -25,6 +28,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#4B0082',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1,
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  backButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 32,

@@ -1,35 +1,13 @@
 // screens/BlankScreen.js
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 
-const Auto = () => {
+const BlueAuto = () => {
   const [dots, setDots] = useState([]);
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
   const [imageBounds, setImageBounds] = useState({ top: 0, left: 0, width: 0, height: 0 });
   const [stationCount, setStationCount] = useState(0);
   const [groundCount, setGroundCount] = useState(0);
-  const [showNotification, setShowNotification] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-100)).current;
-
-  const alliance_color = "Blue";
-
-  useEffect(() => {
-    if (showNotification) {
-      Animated.sequence([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.delay(2000),
-        Animated.timing(slideAnim, {
-          toValue: -100,
-          duration: 300,
-          useNativeDriver: true,
-        })
-      ]).start(() => setShowNotification(false));
-    }
-  }, [showNotification]);
 
   const handlePress = (event) => {
     const { locationX, locationY } = event.nativeEvent;
@@ -71,7 +49,6 @@ const Auto = () => {
   };
 
   const handleUndo = () => {
-    setShowNotification(true);
     setDots(dots.slice(0, -1)); // Remove the last dot
   };
 
@@ -97,15 +74,6 @@ const Auto = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[
-        styles.notification,
-        {
-          transform: [{ translateY: slideAnim }]
-        }
-      ]}>
-        <Text style={styles.notificationText}>Last action has been undone</Text>
-      </Animated.View>
-
       <Text style={styles.title}>Autonomous</Text>
       <View style={styles.topButtonsContainer}>
         <TouchableOpacity 
@@ -123,7 +91,7 @@ const Auto = () => {
       </View>
       <TouchableWithoutFeedback onPress={handlePress}>
         <Image 
-          source={require(`../assets/${alliance_color}Reef.png`)}
+          source={require('../assets/BlueReef.png')}
           style={styles.fieldImage}
           onLayout={handleImageLayout}
         />
@@ -300,21 +268,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  notification: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FF3B30',
-    padding: 15,
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  notificationText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
 });
 
-export default Auto;
+export default BlueAuto;

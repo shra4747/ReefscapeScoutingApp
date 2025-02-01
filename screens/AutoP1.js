@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-const RedAutoP1 = () => {
+const AutoP1 = () => {
   const [selectedNumber, setSelectedNumber] = useState(null);
 
   const handleNumberPress = (number) => {
@@ -11,6 +11,9 @@ const RedAutoP1 = () => {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton}>
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>Processor</Text>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.makeButton}>
@@ -47,6 +50,21 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     backgroundColor: '#2E7D32',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1,
+    backgroundColor: '#007AFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  backButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 32,
@@ -127,4 +145,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RedAutoP1;
+export default AutoP1;
