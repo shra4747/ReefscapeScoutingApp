@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { useNavigation } from '@react-navigation/native';
 
-const BlankScreen = () => {
+const StartPage = () => {
+  const navigation = useNavigation();
   const [scouterId, setScouterId] = useState(''); // Scouter ID state
   const [openMatch, setOpenMatch] = useState(false); // Match dropdown open state
   const [valueMatch, setValueMatch] = useState(null); // Selected match value
@@ -51,6 +53,15 @@ const BlankScreen = () => {
       setValueTeam(null);
     }
   }, [valueMatch]);
+
+  const handleSubmit = () => {
+    if (scouterId && valueMatch && valueTeam) {
+      navigation.navigate('Auto');
+    } else {
+      // Optionally add error handling for incomplete fields
+      console.log('Please fill all fields');
+    }
+  };
 
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
@@ -121,13 +132,10 @@ const BlankScreen = () => {
         <Text style={styles.resultText}>Selected Match: {valueMatch || 'None'}</Text>
         {valueTeam && <Text style={styles.resultText}>Selected Team: {valueTeam}</Text>}
 
-        {/* Submit Button */}
+        {/* Updated Submit Button */}
         <TouchableOpacity 
           style={styles.submitButton}
-          onPress={() => {
-            // Add your submit logic here
-            console.log('Submit pressed');
-          }}
+          onPress={handleSubmit}
         >
           <Text style={styles.submitButtonText}>Submit</Text>
         </TouchableOpacity>
@@ -211,4 +219,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BlankScreen;
+export default StartPage;

@@ -1,15 +1,15 @@
 // screens/BlankScreen.js
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const Auto = () => {
-  const [dots, setDots] = useState([]);
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
-  const [imageBounds, setImageBounds] = useState({ top: 0, left: 0, width: 0, height: 0 });
   const [stationCount, setStationCount] = useState(0);
   const [groundCount, setGroundCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
+  const navigation = useNavigation();
 
   const alliance_color = "Blue";
 
@@ -35,26 +35,23 @@ const Auto = () => {
     const { locationX, locationY } = event.nativeEvent;
     
     // Calculate the actual image boundaries within the container
-    const imageAspectRatio = 1440 / 789; // Replace with your actual image dimensions
+    const imageAspectRatio = 1440 / 789;
     const containerAspectRatio = imageLayout.width / imageLayout.height;
     
     let actualWidth, actualHeight, offsetX, offsetY;
     
     if (containerAspectRatio > imageAspectRatio) {
-      // Image is height-constrained
       actualHeight = imageLayout.height;
       actualWidth = imageLayout.height * imageAspectRatio;
       offsetX = (imageLayout.width - actualWidth) / 2;
       offsetY = 0;
     } else {
-      // Image is width-constrained
       actualWidth = imageLayout.width;
       actualHeight = imageLayout.width / imageAspectRatio;
       offsetX = 0;
       offsetY = (imageLayout.height - actualHeight) / 2;
     }
 
-    // Check if touch is within actual image bounds
     const isWithinBounds = 
       locationX >= offsetX && 
       locationX <= offsetX + actualWidth &&
@@ -62,7 +59,7 @@ const Auto = () => {
       locationY <= offsetY + actualHeight;
 
     if (isWithinBounds) {
-      setDots([...dots, { x: locationX, y: locationY }]);
+      navigation.navigate('AutoP2');
     }
   };
 
@@ -72,27 +69,6 @@ const Auto = () => {
 
   const handleUndo = () => {
     setShowNotification(true);
-    setDots(dots.slice(0, -1)); // Remove the last dot
-  };
-
-  const handleStationIncrement = () => {
-    setStationCount(stationCount + 1);
-  };
-
-  const handleStationDecrement = () => {
-    if (stationCount > 0) {
-      setStationCount(stationCount - 1);
-    }
-  };
-
-  const handleGroundIncrement = () => {
-    setGroundCount(groundCount + 1);
-  };
-
-  const handleGroundDecrement = () => {
-    if (groundCount > 0) {
-      setGroundCount(groundCount - 1);
-    }
   };
 
   return (
@@ -116,7 +92,7 @@ const Auto = () => {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.proceedButton} 
-          onPress={() => {}}  // Add your proceed handler here
+          onPress={() => navigation.navigate('Teleop')}
         >
           <Text style={styles.proceedButtonText}>Proceed</Text>
         </TouchableOpacity>
@@ -128,40 +104,34 @@ const Auto = () => {
           onLayout={handleImageLayout}
         />
       </TouchableWithoutFeedback>
-      {dots.map((dot, index) => (
-        <View
-          key={index}
-          style={[
-            styles.dot,
-            { left: dot.x - 5, top: dot.y - 5 }
-          ]}
-        />
-      ))}
-      <TouchableOpacity style={styles.processorButton}>
+      <TouchableOpacity 
+        style={styles.processorButton}
+        onPress={() => navigation.navigate('AutoP1')}
+      >
         <Text style={styles.processorButtonText}>Processor</Text>
       </TouchableOpacity>
       
       <View style={styles.countersContainer}>
         <View style={styles.counterButtonGroup}>
-          <TouchableOpacity style={styles.incrementButton} onPress={handleGroundIncrement}>
+          <TouchableOpacity style={styles.incrementButton} onPress={() => setGroundCount(groundCount + 1)}>
             <Text style={styles.controlButtonText}>+</Text>
           </TouchableOpacity>
           <View style={styles.groundButton}>
             <Text style={styles.groundButtonText}>Ground: {groundCount}</Text>
           </View>
-          <TouchableOpacity style={styles.decrementButton} onPress={handleGroundDecrement}>
+          <TouchableOpacity style={styles.decrementButton} onPress={() => groundCount > 0 && setGroundCount(groundCount - 1)}>
             <Text style={styles.controlButtonText}>-</Text>
           </TouchableOpacity>
         </View>
 
         <View style={[styles.counterButtonGroup, { marginTop: 10 }]}>
-          <TouchableOpacity style={styles.incrementButton} onPress={handleStationIncrement}>
+          <TouchableOpacity style={styles.incrementButton} onPress={() => setStationCount(stationCount + 1)}>
             <Text style={styles.controlButtonText}>+</Text>
           </TouchableOpacity>
           <View style={styles.stationButton}>
             <Text style={styles.stationButtonText}>Station: {stationCount}</Text>
           </View>
-          <TouchableOpacity style={styles.decrementButton} onPress={handleStationDecrement}>
+          <TouchableOpacity style={styles.decrementButton} onPress={() => stationCount > 0 && setStationCount(stationCount - 1)}>
             <Text style={styles.controlButtonText}>-</Text>
           </TouchableOpacity>
         </View>
@@ -216,13 +186,6 @@ const styles = StyleSheet.create({
     // height: '70%',
     // position: 'justify',
     // resizeMode: 'contain',
-  },
-  dot: {
-    position: 'absolute',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'gold',
   },
   processorButton: {
     position: 'absolute',

@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { useNavigation } from '@react-navigation/native';
 
 const PostGame = () => {
+  const navigation = useNavigation();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [openRobotType, setOpenRobotType] = useState(false);
   const [openIntake, setOpenIntake] = useState(false);
@@ -49,7 +51,7 @@ const PostGame = () => {
       intake: intakeValue,
       endEffector: endEffectorValue
     });
-    setShowConfirmation(true);
+    navigation.navigate('Confirmation');
   };
 
   if (showConfirmation) {

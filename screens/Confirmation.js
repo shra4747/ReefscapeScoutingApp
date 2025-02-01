@@ -14,9 +14,9 @@ const Confirmation = () => {
 
       <TouchableOpacity 
         style={styles.backButton}
-        onPress={() => navigation.navigate('Start')}
+        onPress={() => navigation.navigate('StartPage')}
       >
-        <Text style={styles.backButtonText}>Back to Start Page</Text>
+        <Text style={styles.backButtonText}>Back to Start</Text>
       </TouchableOpacity>
     </View>
   );

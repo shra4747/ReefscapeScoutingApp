@@ -1,11 +1,17 @@
 // screens/BlankScreen.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const AutoP21 = () => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton}>
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
       <Text style={styles.title}>Reef</Text>
@@ -19,6 +25,12 @@ const AutoP21 = () => {
       </View>
       <TouchableOpacity style={styles.deAlgaefyButton}>
         <Text style={styles.deAlgaefyText}>De-Algaefy</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.doneButton}
+        onPress={() => navigation.navigate('Auto')}
+      >
+        <Text style={styles.doneButtonText}>Done</Text>
       </TouchableOpacity>
     </View>
   );
@@ -94,6 +106,21 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  doneButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    elevation: 3,
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+  },
+  doneButtonText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
 

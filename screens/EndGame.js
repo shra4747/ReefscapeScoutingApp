@@ -3,8 +3,10 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import CheckBox from 'expo-checkbox';
 import Slider from '@react-native-community/slider';  // Make sure to install this package
+import { useNavigation } from '@react-navigation/native';  // Add this import
 
 const EndGame = () => {
+  const navigation = useNavigation();  // Add this
   const [shallowHang, setShallowHang] = React.useState(false);
   const [deepHang, setDeepHang] = React.useState(false);
   const [park, setPark] = React.useState(false);
@@ -108,7 +110,7 @@ const EndGame = () => {
       )}
 
       <TouchableOpacity 
-        style={[styles.button, styles.undoButton]}
+        style={styles.undoButton}
         onPress={() => {
           setShallowHang(false);
           setDeepHang(false);
@@ -121,10 +123,8 @@ const EndGame = () => {
       </TouchableOpacity>
 
       <TouchableOpacity 
-        style={[styles.button, styles.submitButton]}
-        onPress={() => {
-          // Add submit functionality here
-        }}
+        style={styles.submitButton}
+        onPress={() => navigation.navigate('PostGame')}
       >
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
@@ -196,9 +196,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
   },
-  button: {
+  submitButton: {
     position: 'absolute',
     bottom: 40,
+    right: 40,
+    backgroundColor: '#ff3030',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  undoButton: {
+    position: 'absolute',
+    bottom: 40,
+    left: 40,
     backgroundColor: '#ff3030',
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -208,12 +218,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  undoButton: {
-    left: 40,
-  },
-  submitButton: {
-    right: 40,
   },
   sliderContainer: {
     position: 'absolute',

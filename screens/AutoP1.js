@@ -1,8 +1,10 @@
 // screens/BlankScreen.js
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const AutoP1 = () => {
+  const navigation = useNavigation();
   const [selectedNumber, setSelectedNumber] = useState(null);
 
   const handleNumberPress = (number) => {
@@ -11,7 +13,10 @@ const AutoP1 = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton}>
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
       <Text style={styles.title}>Processor</Text>
@@ -38,7 +43,10 @@ const AutoP1 = () => {
           </TouchableOpacity>
         ))}
       </View>
-      <TouchableOpacity style={styles.doneButton}>
+      <TouchableOpacity 
+        style={styles.doneButton}
+        onPress={() => navigation.goBack()}
+      >
         <Text style={styles.doneButtonText}>Done</Text>
       </TouchableOpacity>
     </View>
