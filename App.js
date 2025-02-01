@@ -6,6 +6,10 @@ import HomeScreen from './screens/HomeScreen';
 import BlankScreen from './screens/BlankScreen';
 import EndGame from './screens/EndGame';
 import PostGame from './screens/PostGame';
+import Auto from './screens/Auto';
+import AutoP1 from './screens/AutoP1';
+import AutoP2 from './screens/AutoP2';
+import AutoP21 from './screens/AutoP21';
 import StartPage from './screens/StartPage';
 import Profile from './screens/Profile';
 
@@ -23,6 +27,26 @@ export default function App() {
         <Tab.Screen 
           name="Start" 
           component={StartPage} 
+          options={{ headerShown: false }}
+        />
+        <Tab.Screen 
+          name="Auto" 
+          component={Auto} 
+          options={{ headerShown: false }}
+        />
+        <Tab.Screen 
+          name="AutoP1" 
+          component={AutoP1} 
+          options={{ headerShown: false }}
+        />
+        <Tab.Screen 
+          name="AutoP2" 
+          component={AutoP2} 
+          options={{ headerShown: false }}
+        />
+        <Tab.Screen 
+          name="AutoP21" 
+          component={AutoP21} 
           options={{ headerShown: false }}
         />
         <Tab.Screen 
