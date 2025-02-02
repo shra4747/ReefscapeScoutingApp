@@ -1,25 +1,30 @@
 // screens/BlankScreen.js
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const AutoP2 = () => {
   const [selectedLevel, setSelectedLevel] = useState(null);
   const navigation = useNavigation();
+  const slideAnim = useRef(new Animated.Value(400)).current;
 
   const handleLevelPress = (level) => {
     setSelectedLevel(level);
-    navigation.navigate('AutoP21');
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      friction: 8,
+    }).start();
   };
+
+  const handleDone = () => {
+    navigation.navigate('Auto');
+  };
+
+  const showDeAlgaefy = selectedLevel === 'L2' || selectedLevel === 'L3';
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
       <Text style={styles.reefTitle}>Reef</Text>
       <View style={styles.buttonContainer}>
         {['L4', 'L3', 'L2', 'L1'].map((level) => (
@@ -40,6 +45,37 @@ const AutoP2 = () => {
           </TouchableOpacity>
         ))}
       </View>
+
+      <Animated.View 
+        style={[
+          styles.optionsContainer,
+          {
+            transform: [{ translateY: slideAnim }]
+          }
+        ]}
+      >
+        <View style={styles.optionsButtonContainer}>
+          <TouchableOpacity style={styles.makeButton}>
+            <Text style={styles.optionButtonText}>Make</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.missButton}>
+            <Text style={styles.optionButtonText}>Miss</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {showDeAlgaefy && (
+          <TouchableOpacity style={styles.deAlgaefyButton}>
+            <Text style={styles.deAlgaefyText}>De-Algaefy</Text>
+          </TouchableOpacity>
+        )}
+        
+        <TouchableOpacity 
+          style={styles.doneButton}
+          onPress={handleDone}
+        >
+          <Text style={styles.doneButtonText}>Done</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 };
@@ -47,56 +83,104 @@ const AutoP2 = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#4B0082',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1,
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  backButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+    backgroundColor: '#000000',
   },
   reefTitle: {
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 50,
-    marginBottom: 10,
+    marginTop: 60,
+    marginBottom: 30,
     color: 'white',
   },
   buttonContainer: {
-    flex: 1,
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 20,
-    marginBottom: 100,
+    gap: 25,
   },
   button: {
-    backgroundColor: 'white',
-    paddingVertical: 20,
-    paddingHorizontal: 50,
-    borderRadius: 10,
-    width: 250,
+    width: 280,
+    height: 80,
+    backgroundColor: '#1a1a1a',
+    justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#ff3030',
   },
   selectedButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#90EE90',
   },
   buttonText: {
-    color: 'black',
-    fontSize: 24,
+    color: 'white',
+    fontSize: 32,
     fontWeight: 'bold',
   },
   selectedButtonText: {
     color: 'black',
+  },
+  optionsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#1a1a1a',
+    padding: 15,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    elevation: 5,
+    maxHeight: 280,
+  },
+  optionsButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 15,
+  },
+  makeButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 15,
+    width: '47%',
+    height: 80,
+    justifyContent: 'center',
+  },
+  missButton: {
+    backgroundColor: '#f44336',
+    padding: 15,
+    borderRadius: 15,
+    width: '47%',
+    height: 80,
+    justifyContent: 'center',
+  },
+  optionButtonText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  deAlgaefyButton: {
+    backgroundColor: '#2196F3',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  deAlgaefyText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  doneButton: {
+    backgroundColor: '#ff3030',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 8,
+  },
+  doneButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

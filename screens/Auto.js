@@ -2,6 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { TapGestureHandler, State } from 'react-native-gesture-handler';
+import Svg, { Path } from 'react-native-svg';
+import 'react-native-gesture-handler';
 
 const Auto = () => {
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
@@ -10,6 +13,7 @@ const Auto = () => {
   const [showNotification, setShowNotification] = useState(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const navigation = useNavigation();
+  const [selectedSection, setSelectedSection] = useState(null);
 
   const alliance_color = "Blue";
 
@@ -31,35 +35,28 @@ const Auto = () => {
     }
   }, [showNotification]);
 
-  const handlePress = (event) => {
-    const { locationX, locationY } = event.nativeEvent;
-    
-    // Calculate the actual image boundaries within the container
-    const imageAspectRatio = 1440 / 789;
-    const containerAspectRatio = imageLayout.width / imageLayout.height;
-    
-    let actualWidth, actualHeight, offsetX, offsetY;
-    
-    if (containerAspectRatio > imageAspectRatio) {
-      actualHeight = imageLayout.height;
-      actualWidth = imageLayout.height * imageAspectRatio;
-      offsetX = (imageLayout.width - actualWidth) / 2;
-      offsetY = 0;
-    } else {
-      actualWidth = imageLayout.width;
-      actualHeight = imageLayout.width / imageAspectRatio;
-      offsetX = 0;
-      offsetY = (imageLayout.height - actualHeight) / 2;
-    }
-
-    const isWithinBounds = 
-      locationX >= offsetX && 
-      locationX <= offsetX + actualWidth &&
-      locationY >= offsetY && 
-      locationY <= offsetY + actualHeight;
-
-    if (isWithinBounds) {
-      navigation.navigate('AutoP2');
+  const handleTap = (event) => {
+    if (event.nativeEvent.state === State.END) {
+      const { x, y } = event.nativeEvent;
+      const { width, height } = imageLayout;
+      
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const relativeX = x - centerX;
+      const relativeY = y - centerY;
+      const angle = Math.atan2(relativeY, relativeX);
+      const degrees = (angle * 180 / Math.PI + 360) % 360;
+      
+      // Get section based on angle
+      let section;
+      if (degrees >= 300 || degrees < 0) section = 'HR';
+      else if (degrees >= 0 && degrees < 60) section = 'MR';
+      else if (degrees >= 60 && degrees < 120) section = 'BR';
+      else if (degrees >= 120 && degrees < 180) section = 'BL';
+      else if (degrees >= 180 && degrees < 240) section = 'ML';
+      else if (degrees >= 240 && degrees < 300) section = 'HL';
+      
+      setSelectedSection(section);
     }
   };
 
@@ -69,6 +66,51 @@ const Auto = () => {
 
   const handleUndo = () => {
     setShowNotification(true);
+  };
+
+  // SVG paths for each hexagon section
+  const getSectionPath = (section) => {
+    const { width, height } = imageLayout;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const baseRadius = Math.min(width, height) * 0.48;
+
+    // Calculate points for the section
+    const startAngle = {
+      'HR': 300, 'MR': 0, 'BR': 60,
+      'BL': 120, 'ML': 180, 'HL': 240
+    }[section];
+    
+    const endAngle = startAngle + 60;
+    
+    // Convert angles to radians
+    const startRad = (startAngle * Math.PI) / 180;
+    const endRad = (endAngle * Math.PI) / 180;
+    
+    // Adjust radius based on whether it's a vertical or horizontal edge
+    const getAdjustedRadius = (angle) => {
+      // Normalize angle to 0-360
+      const normalizedAngle = ((angle % 360) + 360) % 360;
+      
+      // Vertical edges (30°, 150°, 210°, 330°) need less radius
+      // Horizontal edges (90°, 270°) need more radius
+      if (normalizedAngle % 60 === 30) {
+        return baseRadius * 0.92;  // Vertical edges
+      } else if (normalizedAngle % 180 === 90) {
+        return baseRadius * 1.08;  // Horizontal edges
+      }
+      return baseRadius;  // Diagonal edges
+    };
+
+    const radius1 = getAdjustedRadius(startAngle);
+    const radius2 = getAdjustedRadius(endAngle);
+    
+    const x1 = centerX + radius1 * Math.cos(startRad);
+    const y1 = centerY + radius1 * Math.sin(startRad);
+    const x2 = centerX + radius2 * Math.cos(endRad);
+    const y2 = centerY + radius2 * Math.sin(endRad);
+    
+    return `M ${centerX} ${centerY} L ${x1} ${y1} L ${x2} ${y2} Z`;
   };
 
   return (
@@ -97,13 +139,32 @@ const Auto = () => {
           <Text style={styles.proceedButtonText}>Proceed</Text>
         </TouchableOpacity>
       </View>
-      <TouchableWithoutFeedback onPress={handlePress}>
-        <Image 
-          source={require(`../assets/${alliance_color}Reef.png`)}
-          style={styles.fieldImage}
-          onLayout={handleImageLayout}
+      <View 
+        style={styles.imageContainer}
+        onLayout={handleImageLayout}
+      >
+        <Image
+          source={alliance_color === "Blue" ? 
+            require('../assets/BlueReef.png') : 
+            require('../assets/RedReef.png')
+          }
+          style={styles.image}
+          resizeMode="contain"
         />
-      </TouchableWithoutFeedback>
+        
+        <TapGestureHandler onHandlerStateChange={handleTap}>
+          <Svg style={[StyleSheet.absoluteFill, {transform: [{rotate: '30deg'}]}]}>
+            {selectedSection && (
+              <Path
+                d={getSectionPath(selectedSection)}
+                fill="rgba(0, 0, 255, 0.3)"  // Semi-transparent yellow highlight
+                stroke="blue"
+                strokeWidth="2"
+              />
+            )}
+          </Svg>
+        </TapGestureHandler>
+      </View>
       <TouchableOpacity 
         style={styles.processorButton}
         onPress={() => navigation.navigate('AutoP1')}
@@ -143,13 +204,15 @@ const Auto = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#fff',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 60,
+    marginTop: 40,
     marginBottom: 10,
   },
   topButtonsContainer: {
@@ -158,6 +221,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 10,
     marginTop: 10,
+    marginBottom: 20,
   },
   undoButton: {
     backgroundColor: '#007AFF',
@@ -181,11 +245,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  fieldImage: {
-    // width: '70%',
-    // height: '70%',
-    // position: 'justify',
-    // resizeMode: 'contain',
+  imageContainer: {
+    width: '110%',
+    aspectRatio: 1,
+    marginTop: -50,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
   },
   processorButton: {
     position: 'absolute',
