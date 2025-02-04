@@ -75,6 +75,7 @@ const EndGame = () => {
               <CheckBox
                 value={park}
                 onValueChange={() => handleOptionSelect('park', setPark)}
+                color={park ? 'red' : 'red'}  // This will make both checked and unchecked states red
               />
               <Text style={styles.optionText}>Park</Text>
             </View>
@@ -84,6 +85,7 @@ const EndGame = () => {
               <CheckBox
                 value={failedClimb}
                 onValueChange={() => handleOptionSelect('failedClimb', setFailedClimb)}
+                color={failedClimb ? 'red' : 'red'}  // This will make both checked and unchecked states red
               />
               <Text style={styles.optionText}>Failed Climb/Park</Text>
             </View>
@@ -180,7 +182,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   selectedRectangle: {
-    backgroundColor: '#90EE90',
+    backgroundColor: '#FF0000',
   },
   hiddenCheckbox: {
     display: 'none',

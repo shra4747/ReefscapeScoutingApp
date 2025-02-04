@@ -57,14 +57,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#000000',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 20,
     zIndex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF0000',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -90,14 +90,14 @@ const styles = StyleSheet.create({
     marginTop: '40%',
   },
   makeButton: {
-    backgroundColor: '#FF9500',
+    backgroundColor: '#FF0000',
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 10,
     elevation: 3,
   },
   missButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#FF0000',
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 10,
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   doneButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF0000',
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 10,

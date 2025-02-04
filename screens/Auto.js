@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#000',
   },
   title: {
     fontSize: 32,
@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
+    color: 'white',
   },
   topButtonsContainer: {
     flexDirection: 'row',
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   undoButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF0000',
     padding: 10,
     borderRadius: 5,
     alignSelf: 'flex-start',
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   proceedButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#FF0000',
     padding: 10,
     borderRadius: 5,
     alignSelf: 'flex-start',
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#FF0000',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   groundButton: {
-    backgroundColor: '#8B4513', // Brown color
+    backgroundColor: '#FF0000', // Red color
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -297,19 +298,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   stationButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF0000',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
     marginRight: 10,
   },
   stationButtonText: {
-    color: 'black',
+    color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
   },
   incrementButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#FF0000',
     width: 30,
     height: 30,
     borderRadius: 5,
@@ -344,6 +345,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  redoButton: {
+    backgroundColor: '#FF0000',
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    zIndex: 1,
   },
 });
 
