@@ -15,7 +15,7 @@ const Auto = () => {
   const navigation = useNavigation();
   const [selectedSection, setSelectedSection] = useState(null);
 
-  const alliance_color = "Blue";
+  const alliance_color = "Red";
 
   useEffect(() => {
     if (showNotification) {
@@ -71,9 +71,9 @@ const Auto = () => {
   // SVG paths for each hexagon section
   const getSectionPath = (section) => {
     const { width, height } = imageLayout;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const baseRadius = Math.min(width, height) * 0.48;
+    const centerX = width / 2 + 5;
+    const centerY = height / 2 + 10;
+    const baseRadius = Math.min(width, height) * 0.325;
 
     // Calculate points for the section
     const startAngle = {
@@ -145,8 +145,8 @@ const Auto = () => {
       >
         <Image
           source={alliance_color === "Blue" ? 
-            require('../assets/BlueReef.png') : 
-            require('../assets/RedReef.png')
+            require('../assets/BlueReefVUSE.png') : 
+            require('../assets/RedReefVUSE.png')
           }
           style={styles.image}
           resizeMode="contain"
@@ -157,8 +157,8 @@ const Auto = () => {
             {selectedSection && (
               <Path
                 d={getSectionPath(selectedSection)}
-                fill="rgba(0, 0, 255, 0.3)"  // Semi-transparent yellow highlight
-                stroke="blue"
+                fill={alliance_color === "Blue" ? "rgba(0, 0, 255, 0.3)" : "rgba(255, 0, 0, 0.3)"}  // Semi-transparent highlight
+                stroke={alliance_color === "Blue" ? "blue" : "red"}
                 strokeWidth="2"
               />
             )}
@@ -246,9 +246,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   imageContainer: {
-    width: '110%',
+    width: '150%',
     aspectRatio: 1,
-    marginTop: -50,
+    marginTop: -45,
   },
   image: {
     width: '100%',
