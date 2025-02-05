@@ -11,9 +11,11 @@ const Auto = () => {
   const [stationCount, setStationCount] = useState(0);
   const [groundCount, setGroundCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
+  const [tappedReef, setTappedReef] = useState(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const navigation = useNavigation();
   const [selectedSection, setSelectedSection] = useState(null);
+  const [showAutoP2, setShowAutoP2] = useState(false);
 
   const alliance_color = "Red";
 
@@ -57,6 +59,12 @@ const Auto = () => {
       else if (degrees >= 240 && degrees < 300) section = 'HL';
       
       setSelectedSection(section);
+
+      if (selectedSection === section) {
+          navigation.navigate('AutoP2', { selectedSection });
+      } else {
+        setSelectedSection(section);
+      }
     }
   };
 
@@ -67,6 +75,10 @@ const Auto = () => {
   const handleUndo = () => {
     setShowNotification(true);
   };
+
+  const handleTappedReef = () => {
+    setTappedReef(true);
+  }
 
   // SVG paths for each hexagon section
   const getSectionPath = (section) => {
@@ -352,6 +364,17 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignSelf: 'flex-start',
     zIndex: 1,
+  },
+  autoP2Container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100, // Ensure it appears on top
   },
 });
 

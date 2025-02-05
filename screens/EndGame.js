@@ -1,5 +1,5 @@
 // screens/EndGame.js
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import CheckBox from 'expo-checkbox';
 import Slider from '@react-native-community/slider';  // Make sure to install this package
@@ -12,6 +12,7 @@ const EndGame = () => {
   const [park, setPark] = React.useState(false);
   const [failedClimb, setFailedClimb] = React.useState(false);
   const [hangTime, setHangTime] = React.useState(0);
+  const [isActive, setIsActive] = useState(false);
 
   // Function to check if any option is selected
   const isAnyOptionSelected = () => {
@@ -28,6 +29,10 @@ const EndGame = () => {
     // Set the selected option
     setter(true);
   }
+
+  const handlePress = () => {
+    setIsActive((prev) => !prev); // Toggle the active state
+  };
 
   return (
     <View style={styles.container}>
@@ -240,6 +245,29 @@ const styles = StyleSheet.create({
   optionText: {
     color: '#ffffff',
     fontWeight: 'bold',
+  },
+  box: {
+    width: 100,
+    height: 100,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  boxText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  string: {
+    width: 10,
+    backgroundColor: '#FF3B30',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  stringText: {
+    color: 'white',
+    textAlign: 'center',
   },
 });
 

@@ -3,9 +3,9 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const AutoP2 = () => {
+const AutoP2 = ({ navigation, route }) => {
   const [selectedLevel, setSelectedLevel] = useState(null);
-  const navigation = useNavigation();
+  const { selectedSection } = route.params; // Get the selected section if needed
   const slideAnim = useRef(new Animated.Value(400)).current;
 
   const handleLevelPress = (level) => {
@@ -18,7 +18,7 @@ const AutoP2 = () => {
   };
 
   const handleDone = () => {
-    navigation.navigate('Auto');
+    navigation.goBack()
   };
 
   const showDeAlgaefy = selectedLevel === 'L2' || selectedLevel === 'L3';
