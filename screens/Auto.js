@@ -60,6 +60,8 @@ const Auto = () => {
       
       setSelectedSection(section);
 
+      // Append the selected section to the reef list
+
       if (selectedSection === section) {
           navigation.navigate('AutoP2', { selectedSection });
       } else {
