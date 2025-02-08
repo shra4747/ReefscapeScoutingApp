@@ -2,13 +2,46 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const AutoP1 = () => {
+const AutoP1 = ({ route }) => {
   const navigation = useNavigation();
+  const { selectedSection, phase, onActionComplete } = route.params;
   const [selectedNumber, setSelectedNumber] = useState(null);
+  const [selectedAction, setSelectedAction] = useState(null);
 
   const handleNumberPress = (number) => {
+    if (selectedAction) {
+      handleAction(selectedAction);
+    }
     setSelectedNumber(number);
+  };
+
+  const handleAction = async (action) => {
+    if (!selectedNumber) return;
+
+    const actionData = {
+      rating: selectedNumber,
+      action: action,
+      phase: phase
+    };
+
+    try {
+      const existingData = await AsyncStorage.getItem('PROCESSOR_DATA');
+      let updatedData = [];
+      
+      if (existingData) {
+        updatedData = JSON.parse(existingData);
+      }
+      
+      updatedData.push(actionData);
+      console.log('Accumulated PROCESSOR Data:', updatedData);
+      await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
+      navigation.goBack();
+      
+    } catch (error) {
+      console.error('Error storing data:', error);
+    }
   };
 
   return (
@@ -21,10 +54,20 @@ const AutoP1 = () => {
       </TouchableOpacity>
       <Text style={styles.title}>Processor</Text>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.makeButton}>
+        <TouchableOpacity 
+          style={[styles.makeButton, selectedAction === 'make' && styles.selectedActionButton]}
+          onPress={() => {
+            setSelectedAction('make');
+          }}
+        >
           <Text style={styles.buttonText}>Make</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.missButton}>
+        <TouchableOpacity 
+          style={[styles.missButton, selectedAction === 'miss' && styles.selectedActionButton]}
+          onPress={() => {
+            setSelectedAction('miss');
+          }}
+        >
           <Text style={styles.buttonText}>Miss</Text>
         </TouchableOpacity>
       </View>
@@ -43,12 +86,6 @@ const AutoP1 = () => {
           </TouchableOpacity>
         ))}
       </View>
-      <TouchableOpacity 
-        style={styles.doneButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.doneButtonText}>Done</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -130,26 +167,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  doneButton: {
-    backgroundColor: '#FF0000',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    elevation: 3,
-    position: 'absolute',
-    bottom: 40,
-  },
-  doneButtonText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
   ratingTitle: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     marginTop: 80,
+  },
+  selectedActionButton: {
+    backgroundColor: '#FFD700',
   },
 });
 

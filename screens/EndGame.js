@@ -1,123 +1,156 @@
 // screens/EndGame.js
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { 
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
+} from 'react-native-reanimated';
 import CheckBox from 'expo-checkbox';
 import Slider from '@react-native-community/slider';  // Make sure to install this package
-import { useNavigation } from '@react-navigation/native';  // Add this import
+import { useNavigation } from '@react-navigation/native';
 
 const EndGame = () => {
-  const navigation = useNavigation();  // Add this
+  const navigation = useNavigation();
   const [shallowHang, setShallowHang] = React.useState(false);
   const [deepHang, setDeepHang] = React.useState(false);
   const [park, setPark] = React.useState(false);
   const [failedClimb, setFailedClimb] = React.useState(false);
   const [hangTime, setHangTime] = React.useState(0);
-  const [isActive, setIsActive] = useState(false);
+  const [isDeep, setIsDeep] = React.useState(false);
+  const [endGameData, setEndGameData] = React.useState([]); // List to store end game data
 
-  // Function to check if any option is selected
-  const isAnyOptionSelected = () => {
-    return shallowHang || deepHang || park || failedClimb;
-  }
+  // Animation values
+  const translateY = useSharedValue(0);
+  const isDeepPosition = useSharedValue(false);
+
+  const handleTap = () => {
+    if (isDeepPosition.value) {
+      // Move up
+      translateY.value = withSpring(0);
+      isDeepPosition.value = false;
+      setIsDeep(false);
+      setShallowHang(true); // Set shallow hang when toggling up
+      setDeepHang(false); // Reset deep hang when toggling up
+    } else {
+      // Move down
+      translateY.value = withSpring(80);
+      isDeepPosition.value = true;
+      setIsDeep(true);
+      setDeepHang(true); // Set deep hang when toggling down
+      setShallowHang(false); // Reset shallow hang when toggling down
+    }
+  };
+
+  const boxStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+
+  const chainStyle = useAnimatedStyle(() => {
+    return {
+      height: translateY.value + 40, // Base height + translation
+    };
+  });
 
   // Function to handle option selection
-  const handleOptionSelect = (option, setter) => {
+  const handleOptionSelect = (option) => {
     // Reset all options first
     setShallowHang(false);
     setDeepHang(false);
     setPark(false);
     setFailedClimb(false);
+    
     // Set the selected option
-    setter(true);
-  }
+    if (option === 'park') {
+      setPark(true);
+    } else if (option === 'failedClimb') {
+      setFailedClimb(true);
+    }
+  };
 
-  const handlePress = () => {
-    setIsActive((prev) => !prev); // Toggle the active state
+  const handleSubmit = () => {
+    // Prepare the data to be submitted
+    const hangStatus = shallowHang ? 'Shallow Hang' : deepHang ? 'Deep Hang' : park ? 'Park' : failedClimb ? 'Failed Park' : null;
+    
+    // Ensure hangStatus is not null before proceeding
+    if (hangStatus) {
+      const hangData = {
+        hang: hangStatus,
+        hangTime: (shallowHang || deepHang) ? hangTime : undefined, // Only include hangTime if shallow or deep is selected
+      };
+
+      // Add the hang data to the endGameData list
+      setEndGameData([...endGameData, hangData]);
+
+      // Log the endGameData to the console
+      console.log('End Game Data:', [...endGameData, hangData]);
+
+      // Navigate to PostGame screen
+      navigation.navigate('PostGame');
+    } else {
+      console.log('No hang status selected. Please select a hang type.');
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>End Game</Text>
       <View style={styles.mainContainer}>
-        {/* Hang type checkboxes */}
-        <View style={styles.visualContainer}>
-          {(!isAnyOptionSelected() || shallowHang) && (
-            <TouchableOpacity 
-              style={styles.hangVisual} 
-              onPress={() => handleOptionSelect('shallow', setShallowHang)}
-            >
-              <View style={styles.chainShallow} />
-              <View style={[styles.rectangle, shallowHang && styles.selectedRectangle]} />
-              <CheckBox
-                style={styles.hiddenCheckbox}
-                value={shallowHang}
-                onValueChange={() => handleOptionSelect('shallow', setShallowHang)}
-              />
-              <Text style={styles.optionText}>Shallow Hang</Text>
+        <GestureHandlerRootView style={styles.visualContainer}>
+          <View style={styles.hangVisual}>
+            <Animated.View style={[styles.chain, chainStyle]} />
+            <TouchableOpacity onPress={handleTap}>
+              <Animated.View style={[styles.rectangle, boxStyle]} />
             </TouchableOpacity>
-          )}
+          </View>
+        </GestureHandlerRootView>
 
-          {(!isAnyOptionSelected() || deepHang) && (
-            <TouchableOpacity 
-              style={[styles.hangVisual, { marginLeft: 40 }]} 
-              onPress={() => handleOptionSelect('deep', setDeepHang)}
-            >
-              <View style={styles.chainDeep} />
-              <View style={[styles.rectangle, deepHang && styles.selectedRectangle]} />
-              <CheckBox
-                style={styles.hiddenCheckbox}
-                value={deepHang}
-                onValueChange={() => handleOptionSelect('deep', setDeepHang)}
-              />
-              <Text style={styles.optionText}>Deep Hang</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* Add hang status text */}
+        <Text style={styles.hangStatusText}>
+          {park || failedClimb ? 'NONE' : (isDeep ? 'Deep Hang' : 'Shallow Hang')}
+        </Text>
 
         {/* Park status checkboxes */}
         <View style={styles.parkOptionsContainer}>
-          {(!isAnyOptionSelected() || park) && (
-            <View style={styles.checkboxRow}>
-              <CheckBox
-                value={park}
-                onValueChange={() => handleOptionSelect('park', setPark)}
-                color={park ? 'red' : 'red'}  // This will make both checked and unchecked states red
-              />
-              <Text style={styles.optionText}>Park</Text>
-            </View>
-          )}
-          {(!isAnyOptionSelected() || failedClimb) && (
-            <View style={styles.checkboxRow}>
-              <CheckBox
-                value={failedClimb}
-                onValueChange={() => handleOptionSelect('failedClimb', setFailedClimb)}
-                color={failedClimb ? 'red' : 'red'}  // This will make both checked and unchecked states red
-              />
-              <Text style={styles.optionText}>Failed Climb/Park</Text>
-            </View>
-          )}
+          <View style={styles.checkboxRow}>
+            <CheckBox
+              value={park}
+              onValueChange={() => handleOptionSelect('park')}
+              style={styles.checkbox}
+            />
+            <Text style={styles.checkboxText}>Park</Text>
+          </View>
+          <View style={styles.checkboxRow}>
+            <CheckBox
+              value={failedClimb}
+              onValueChange={() => handleOptionSelect('failedClimb')}
+              style={styles.checkbox}
+            />
+            <Text style={styles.checkboxText}>Failed Climb/Park</Text>
+          </View>
         </View>
       </View>
+      {/* Move Slider for hang time to the bottom of the screen */}
+      <View style={styles.sliderContainer}>
+        <Text style={styles.sliderLabel}>Hang Time: {hangTime.toFixed(1)} seconds</Text>
+        <Slider
+          style={styles.slider}
+          minimumValue={0}
+          maximumValue={15}
+          step={0.1}
+          value={hangTime}
+          onValueChange={setHangTime}
+          minimumTrackTintColor="#007AFF"
+          maximumTrackTintColor="#000000"
+          thumbTintColor="#007AFF"
+        />
+      </View>
       
-      {/* Only show slider if a hang option is selected */}
-      {(shallowHang || deepHang) && (
-        <View style={styles.sliderContainer}>
-          <Text style={styles.sliderLabel}>Hang Time: {hangTime.toFixed(1)} seconds</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={15}
-            step={0.1}
-            value={hangTime}
-            onValueChange={setHangTime}
-            minimumTrackTintColor="#ff3030"
-            maximumTrackTintColor="#ffffff"
-            thumbTintColor="#ff3030"
-          />
-        </View>
-      )}
-
       <TouchableOpacity 
-        style={styles.undoButton}
+        style={[styles.button, styles.undoButton]}
         onPress={() => {
           setShallowHang(false);
           setDeepHang(false);
@@ -130,8 +163,8 @@ const EndGame = () => {
       </TouchableOpacity>
 
       <TouchableOpacity 
-        style={styles.submitButton}
-        onPress={() => navigation.navigate('PostGame')}
+        style={[styles.button, styles.submitButton]}
+        onPress={handleSubmit} // Call handleSubmit to compile data
       >
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
@@ -166,35 +199,25 @@ const styles = StyleSheet.create({
   },
   hangVisual: {
     alignItems: 'center',
-    justifyContent: 'center',
+    height: 200, // Ensure enough space for animation
   },
-  chainShallow: {
+  chain: {
     width: 3,
-    height: 40,
     backgroundColor: '#808080',
-  },
-  chainDeep: {
-    width: 3,
-    height: 120,
-    backgroundColor: '#808080',
+    position: 'absolute',
+    top: 0,
   },
   rectangle: {
     width: 60,
     height: 80,
     borderWidth: 3,
     borderColor: '#ff3030',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#ff3030',
     opacity: 0.8,
-  },
-  selectedRectangle: {
-    backgroundColor: '#FF0000',
-  },
-  hiddenCheckbox: {
-    display: 'none',
   },
   parkOptionsContainer: {
     marginTop: 40,
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 20,
     justifyContent: 'center',
   },
@@ -203,19 +226,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
   },
-  submitButton: {
-    position: 'absolute',
-    bottom: 40,
-    right: 40,
-    backgroundColor: '#ff3030',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  checkboxText: {
+    fontSize: 25,
+    color: '#ffffff',
   },
-  undoButton: {
+  button: {
     position: 'absolute',
     bottom: 40,
-    left: 40,
     backgroundColor: '#ff3030',
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -225,6 +242,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  undoButton: {
+    left: 40,
+  },
+  submitButton: {
+    right: 40,
   },
   sliderContainer: {
     position: 'absolute',
@@ -246,28 +269,15 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
   },
-  box: {
-    width: 100,
-    height: 100,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    marginBottom: 10,
+  checkbox: {
+    width: 30,
+    height: 30,
   },
-  boxText: {
-    color: 'white',
+  hangStatusText: {
+    fontSize: 28,
+    color: '#ffffff',
     fontWeight: 'bold',
-  },
-  string: {
-    width: 10,
-    backgroundColor: '#FF3B30',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  stringText: {
-    color: 'white',
-    textAlign: 'center',
+    marginBottom: 20,
   },
 });
 

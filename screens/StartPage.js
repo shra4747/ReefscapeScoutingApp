@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const StartPage = () => {
   const navigation = useNavigation();
@@ -18,6 +19,8 @@ const StartPage = () => {
   const [openTeam, setOpenTeam] = useState(false); // Team dropdown open state
   const [valueTeam, setValueTeam] = useState(null); // Selected team value
   const [itemsTeam, setItemsTeam] = useState([]); // Team options
+
+  const [startPageData, setStartPageData] = useState([]); // List to store start page data
 
   const handleInputChange = (value) => {
     // Allow only numeric input
@@ -55,12 +58,21 @@ const StartPage = () => {
   }, [valueMatch]);
 
   const handleSubmit = () => {
-    if (scouterId && valueMatch && valueTeam) {
-      navigation.navigate('Auto');
-    } else {
-      // Optionally add error handling for incomplete fields
-      console.log('Please fill all fields');
-    }
+    // Prepare the data to be submitted
+    const newData = {
+      id: scouterId,
+      match_number: valueMatch,
+      team_number: valueTeam,
+    };
+
+    // Add the new data to the startPageData list
+    setStartPageData([...startPageData, newData]);
+
+    // Log the startPageData to the console
+    console.log('Start Page Data:', [...startPageData, newData]);
+
+    // Navigate to the next screen
+    navigation.navigate('Auto');
   };
 
   return (

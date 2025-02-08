@@ -1,10 +1,11 @@
 // screens/BlankScreen.js
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 import 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Auto = () => {
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
@@ -16,26 +17,77 @@ const Auto = () => {
   const navigation = useNavigation();
   const [selectedSection, setSelectedSection] = useState(null);
   const [showAutoP2, setShowAutoP2] = useState(false);
+  const [reef, setReef] = useState([]);
+  const [currentAction, setCurrentAction] = useState({});
 
   const alliance_color = "Red";
 
   useEffect(() => {
-    if (showNotification) {
-      Animated.sequence([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.delay(2000),
-        Animated.timing(slideAnim, {
-          toValue: -100,
-          duration: 300,
-          useNativeDriver: true,
-        })
-      ]).start(() => setShowNotification(false));
-    }
+    retrieveReefData();
+    
+    // if (showNotification) {
+    //   Animated.sequence([
+    //     Animated.timing(slideAnim, {
+    //       toValue: 0,
+    //       duration: 300,
+    //       useNativeDriver: true,
+    //     }),
+    //     Animated.delay(2000),
+    //     Animated.timing(slideAnim, {
+    //       toValue: -100,
+    //       duration: 300,
+    //       useNativeDriver: true,
+    //     })
+    //   ]).start(() => setShowNotification(false));
+    // }
   }, [showNotification]);
+
+
+  const retrieveReefData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('REEF_DATA');
+      if (value !== null) {
+        setReef(JSON.parse(value));
+      }
+    } catch (error) {
+      console.error('Error retrieving reef data:', error);
+    }
+  };
+
+  const storeReefData = async (newReefData) => {
+    try {
+      await AsyncStorage.setItem('REEF_DATA', JSON.stringify(newReefData));
+    } catch (error) {
+      console.error('Error storing reef data:', error);
+    }
+  };
+
+  const storeAutoData = async () => {
+    const autoData = {
+      groundCount: groundCount,
+      stationCount: stationCount,
+    };
+    try {
+      await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify(autoData));
+      console.log(autoData);
+    } catch (error) {
+      console.error('Error storing auto data:', error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    storeAutoData()
+    navigation.navigate("Teleop");
+  }
+
+  const sectionMap = {
+    'ML': 'HL',
+    'HL': 'HR',
+    'HR': 'MR',
+    'MR': 'BR',
+    'BR': 'BL',
+    'BL': "ML",
+  };
 
   const handleTap = (event) => {
     if (event.nativeEvent.state === State.END) {
@@ -57,16 +109,25 @@ const Auto = () => {
       else if (degrees >= 120 && degrees < 180) section = 'BL';
       else if (degrees >= 180 && degrees < 240) section = 'ML';
       else if (degrees >= 240 && degrees < 300) section = 'HL';
+
+      
       
       setSelectedSection(section);
 
       // Append the selected section to the reef list
 
       if (selectedSection === section) {
-          navigation.navigate('AutoP2', { selectedSection });
+          const ss = sectionMap[section]
+          navigation.navigate('AutoP2', { selectedSection: ss, phase: "auto" });
+          setSelectedSection(null);
       } else {
         setSelectedSection(section);
       }
+
+      setCurrentAction({
+        ...currentAction,
+        slice: section
+      });
     }
   };
 
@@ -74,7 +135,46 @@ const Auto = () => {
     setImageLayout(event.nativeEvent.layout);
   };
 
+  const handleLevelSelect = (level) => {
+    setCurrentAction({
+      ...currentAction,
+      level: level
+    });
+  };
+
+  // const sectionMap = {
+  //   'HL': 'HR',
+  //   'HR': 'MR',
+  //   'MR': 'LR',
+  //   'BR': 'BL',
+  //   'BL': 'ML',
+  //   'ML': 'BL'
+  // };
+
+  const handleActionType = (type) => {
+    setCurrentAction({
+      ...currentAction,
+      action: type // 'make', 'miss', or 'dealgaefy'
+    });
+  };
+
+  const handleDone = () => {
+    if (Object.keys(currentAction).length >= 2) { // Ensure we have at least position and level
+      const newReef = [...reef, currentAction];
+      setReef(newReef);
+      storeReefData(newReef);
+      storeAutoData(); // Save groundCount and stationCount to AsyncStorage
+      setCurrentAction({});
+      setSelectedSection(null);
+    }
+  };
+
   const handleUndo = () => {
+    const newReef = reef.slice(0, -1);
+    setReef(newReef);
+    storeReefData(newReef);
+    setCurrentAction({});
+    setSelectedSection(null);
     setShowNotification(true);
   };
 
@@ -148,7 +248,7 @@ const Auto = () => {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.proceedButton} 
-          onPress={() => navigation.navigate('Teleop')}
+          onPress={handleSubmit}
         >
           <Text style={styles.proceedButtonText}>Proceed</Text>
         </TouchableOpacity>
@@ -181,7 +281,7 @@ const Auto = () => {
       </View>
       <TouchableOpacity 
         style={styles.processorButton}
-        onPress={() => navigation.navigate('AutoP1')}
+        onPress={() => navigation.navigate('AutoP1', { phase: "auto" })}
       >
         <Text style={styles.processorButtonText}>Processor</Text>
       </TouchableOpacity>
@@ -377,6 +477,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100, // Ensure it appears on top
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    padding: 10,
+  },
+  actionButton: {
+    backgroundColor: '#FF0000',
+    padding: 10,
+    margin: 5,
+    borderRadius: 5,
+  },
+  actionButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  doneButton: {
+    backgroundColor: '#00FF00',
+    padding: 10,
+    margin: 5,
+    borderRadius: 5,
+  },
+  doneButtonText: {
+    color: 'black',
+    fontWeight: 'bold',
   },
 });
 

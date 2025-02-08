@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 import 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Teleop = ({ navigation }) => {
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
@@ -34,6 +35,15 @@ const Teleop = ({ navigation }) => {
     }
   }, [showNotification]);
 
+  const sectionMap = {
+    'ML': 'HL',
+    'HL': 'HR',
+    'HR': 'MR',
+    'MR': 'BR',
+    'BR': 'BL',
+    'BL': "ML",
+  };
+
   const handleTap = (event) => {
     if (event.nativeEvent.state === State.END) {
       const { x, y } = event.nativeEvent;
@@ -58,7 +68,9 @@ const Teleop = ({ navigation }) => {
       setSelectedSection(section);
 
       if (selectedSection === section) {
-        navigation.navigate('AutoP2', { selectedSection });
+        const ss = sectionMap[section]
+        navigation.navigate('AutoP2', { selectedSection: ss, phase: "teleop" });
+        setSelectedSection(null);
       } else {
         setSelectedSection(section);
       }
@@ -73,8 +85,21 @@ const Teleop = ({ navigation }) => {
     setShowNotification(true);
   };
 
-  const handleProceed = () => {
-    // Navigate to the EndGame screen
+  const storeTeleopData = async () => {
+    const TeleopData = {
+      groundCount: groundCount,
+      stationCount: stationCount,
+    };
+    try {
+      await AsyncStorage.setItem('TELEOP_PICKUPS', JSON.stringify(TeleopData));
+      console.log(TeleopData)
+    } catch (error) {
+      console.error('Error storing Teleop data:', error);
+    }
+  };
+
+  const handleProceed = async () => {
+    await storeTeleopData();
     navigation.navigate('EndGame');
   };
 
@@ -142,6 +167,8 @@ const Teleop = ({ navigation }) => {
         >
           <Text style={styles.undoButtonText}>Undo</Text>
         </TouchableOpacity>
+
+
         <TouchableOpacity 
           style={styles.proceedButton} 
           onPress={handleProceed}
@@ -177,7 +204,7 @@ const Teleop = ({ navigation }) => {
       </View>
       <TouchableOpacity 
         style={styles.processorButton}
-        onPress={() => navigation.navigate('AutoP1')}
+        onPress={() => navigation.navigate('AutoP1', { phase: "teleop" })}
       >
         <Text style={styles.processorButtonText}>Processor</Text>
       </TouchableOpacity>
