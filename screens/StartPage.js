@@ -22,12 +22,9 @@ const StartPage = () => {
 
   const [startPageData, setStartPageData] = useState([]); // List to store start page data
 
-  const handleInputChange = (value) => {
-    // Allow only numeric input
-    const numericValue = value.replace(/[^0-9]/g, '');
-    setScouterId(numericValue);
-  };
-
+  const [openAlliance, setOpenAlliance] = useState(false); // Alliance color dropdown open state
+  const [allianceColor, setAllianceColor] = useState(null); // Alliance color state
+  
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
@@ -57,19 +54,41 @@ const StartPage = () => {
     }
   }, [valueMatch]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Prepare the data to be submitted
     const newData = {
-      id: scouterId,
       match_number: valueMatch,
       team_number: valueTeam,
+      alliance_color: allianceColor, // Include alliance color in the data
     };
 
     // Add the new data to the startPageData list
-    setStartPageData([...startPageData, newData]);
+    setStartPageData([newData]);
+
+    // Store the alliance color in AsyncStorage
+    await AsyncStorage.setItem('ALLIANCE_COLOR', allianceColor); // Store selected color
+
+    await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify([]));
+    await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify([]));
+    await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify([]));
+    await AsyncStorage.setItem('REEF_DATA', JSON.stringify([]));
+    await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify([]));
+    await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify([]));
+
+    await AsyncStorage.setItem('MATCH_INFO', JSON.stringify(newData));
 
     // Log the startPageData to the console
-    console.log('Start Page Data:', [...startPageData, newData]);
+    console.log('Start Page Data:', newData);
+
+    setScouterId(''); // Reset Scouter ID
+    setOpenMatch(false); // Reset Match dropdown
+    setValueMatch(null); // Reset Match value
+    setItemsTeam([]); // Reset Team options
+    setOpenTeam(false); // Reset Team dropdown
+    setValueTeam(null); // Reset Team value
+    setStartPageData([]); // Reset start page data
+    setOpenAlliance(false); // Reset Alliance dropdown
+    setAllianceColor(null); // Reset Alliance color
 
     // Navigate to the next screen
     navigation.navigate('Auto');
@@ -93,16 +112,22 @@ const StartPage = () => {
           resizeMode="contain"
         />
 
-        {/* Scouter ID Input */}
-        <Text style={styles.title}>Scouter ID</Text>
-        <TextInput
-          style={styles.input}
-          value={scouterId}
-          onChangeText={handleInputChange}
-          keyboardType="numeric"
-          placeholder="Enter Scouter ID"
-          placeholderTextColor="#888"
-        />
+        {/* Alliance Color Selection */}
+        <Text style={styles.title}>Select Alliance Color</Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={[styles.colorButton, allianceColor === 'Red' ? styles.selectedButtonRed : styles.defaultButton]}
+            onPress={() => setAllianceColor('Red')}
+          >
+            <Text style={styles.buttonText}>Red</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.colorButton, allianceColor === 'Blue' ? styles.selectedButtonBlue : styles.defaultButton]}
+            onPress={() => setAllianceColor('Blue')}
+          >
+            <Text style={styles.buttonText}>Blue</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Match Number Dropdown */}
         <Text style={styles.title}>Match Number</Text>
@@ -143,6 +168,7 @@ const StartPage = () => {
         {/* Display Selected Match and Team */}
         <Text style={styles.resultText}>Selected Match: {valueMatch || 'None'}</Text>
         {valueTeam && <Text style={styles.resultText}>Selected Team: {valueTeam}</Text>}
+        <Text style={styles.resultText}>Selected Alliance Color: {allianceColor || 'None'}</Text>
 
         {/* Updated Submit Button */}
         <TouchableOpacity 
@@ -228,6 +254,33 @@ const styles = StyleSheet.create({
     height: 100,
     alignSelf: 'center',
     marginVertical: 20,
+  },
+  colorButton: {
+    width: '49%', // Adjust width as needed
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+    justifyContent: 'center',
+  },
+  selectedButtonRed: {
+    backgroundColor: '#ff3030', // Background color for selected red button
+  },
+  selectedButtonBlue: {
+    backgroundColor: '#308aff', // Background color for selected blue button
+  },
+  defaultButton: {
+    backgroundColor: '#ccc', // Default background color for unselected buttons
+  },
+  buttonText: {
+    color: 'white', // White text for button text
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '80%',
   },
 });
 

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PostGame = () => {
   const navigation = useNavigation();
@@ -40,17 +41,21 @@ const PostGame = () => {
     { label: 'No Hold', value: 'no_hold' },
   ]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!robotTypeValue || !intakeValue || !endEffectorValue) {
       // Don't proceed if any value is null
       return;
     }
     
-    console.log({
+    const postGameData = {
       robotType: robotTypeValue,
       intake: intakeValue,
       endEffector: endEffectorValue
-    });
+    }
+
+    console.log("Post Game Data: ", postGameData);
+    await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify(postGameData));
+
     navigation.navigate('Confirmation');
   };
 

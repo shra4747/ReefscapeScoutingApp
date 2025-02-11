@@ -11,17 +11,16 @@ const AutoP1 = ({ route }) => {
   const [selectedAction, setSelectedAction] = useState(null);
 
   const handleNumberPress = (number) => {
-    if (selectedAction) {
-      handleAction(selectedAction);
-    }
     setSelectedNumber(number);
+    if (selectedAction) {
+      handleAction(selectedAction, number);
+    }
   };
 
-  const handleAction = async (action) => {
-    if (!selectedNumber) return;
+  const handleAction = async (action, number) => {
 
     const actionData = {
-      rating: selectedNumber,
+      rating: number,
       action: action,
       phase: phase
     };

@@ -1,39 +1,100 @@
 // screens/BlankScreen.js
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated, Button } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 import 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Teleop = ({ navigation }) => {
+const Teleop = () => {  
+
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
   const [stationCount, setStationCount] = useState(0);
   const [groundCount, setGroundCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
+  const navigation = useNavigation();
   const [selectedSection, setSelectedSection] = useState(null);
+  const [reef, setReef] = useState([]);
+  const [currentAction, setCurrentAction] = useState({});
 
-  const alliance_color = "Red";
+  const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
 
   useEffect(() => {
-    if (showNotification) {
-      Animated.sequence([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.delay(2000),
-        Animated.timing(slideAnim, {
-          toValue: -100,
-          duration: 300,
-          useNativeDriver: true,
-        })
-      ]).start(() => setShowNotification(false));
-    }
+    const retrieveAllianceColor = async () => {
+      try {
+        const color = await AsyncStorage.getItem('ALLIANCE_COLOR');
+        if (color !== null) {
+          setAllianceColor(color);
+        }
+      } catch (error) {
+        console.error('Error retrieving alliance color:', error);
+      }
+    };
+
+    retrieveAllianceColor();
+  }, []);
+
+  // Use allianceColor to set global_color
+  const global_color = allianceColor === "Blue" ? "#308aff" : "#ff3030"; // Adjust based on your needs
+
+  useEffect(() => {
+    retrieveReefData();
+    
+    // if (showNotification) {
+    //   Animated.sequence([
+    //     Animated.timing(slideAnim, {
+    //       toValue: 0,
+    //       duration: 300,
+    //       useNativeDriver: true,
+    //     }),
+    //     Animated.delay(2000),
+    //     Animated.timing(slideAnim, {
+    //       toValue: -100,
+    //       duration: 300,
+    //       useNativeDriver: true,
+    //     })
+    //   ]).start(() => setShowNotification(false));
+    // }
   }, [showNotification]);
+
+  const retrieveReefData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('REEF_DATA');
+      if (value !== null) {
+        setReef(JSON.parse(value));
+      }
+    } catch (error) {
+      console.error('Error retrieving reef data:', error);
+    }
+  };
+
+  const storeReefData = async (newReefData) => {
+    try {
+      await AsyncStorage.setItem('REEF_DATA', JSON.stringify(newReefData));
+    } catch (error) {
+      console.error('Error storing reef data:', error);
+    }
+  };
+
+  const storeTeleopData = async () => {
+    const TeleopData = {
+      groundCount: groundCount,
+      stationCount: stationCount,
+    };
+    try {
+      await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify(TeleopData));
+      console.log(TeleopData);
+    } catch (error) {
+      console.error('Error storing Teleop data:', error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    storeTeleopData()
+    navigation.navigate("EndGame");
+  }
 
   const sectionMap = {
     'ML': 'HL',
@@ -64,16 +125,25 @@ const Teleop = ({ navigation }) => {
       else if (degrees >= 120 && degrees < 180) section = 'BL';
       else if (degrees >= 180 && degrees < 240) section = 'ML';
       else if (degrees >= 240 && degrees < 300) section = 'HL';
+
+      
       
       setSelectedSection(section);
 
+      // Append the selected section to the reef list
+
       if (selectedSection === section) {
-        const ss = sectionMap[section]
-        navigation.navigate('AutoP2', { selectedSection: ss, phase: "teleop" });
-        setSelectedSection(null);
+          const ss = sectionMap[section]
+          navigation.navigate('AutoP2', { selectedSection: ss, phase: "teleop" });
+          setSelectedSection(null);
       } else {
         setSelectedSection(section);
       }
+
+      setCurrentAction({
+        ...currentAction,
+        slice: section
+      });
     }
   };
 
@@ -81,26 +151,29 @@ const Teleop = ({ navigation }) => {
     setImageLayout(event.nativeEvent.layout);
   };
 
+  const handleLevelSelect = (level) => {
+    setCurrentAction({
+      ...currentAction,
+      level: level
+    });
+  };
+
+  // const sectionMap = {
+  //   'HL': 'HR',
+  //   'HR': 'MR',
+  //   'MR': 'LR',
+  //   'BR': 'BL',
+  //   'BL': 'ML',
+  //   'ML': 'BL'
+  // };
+
   const handleUndo = () => {
+    const newReef = reef.slice(0, -1);
+    setReef(newReef);
+    storeReefData(newReef);
+    setCurrentAction({});
+    setSelectedSection(null);
     setShowNotification(true);
-  };
-
-  const storeTeleopData = async () => {
-    const TeleopData = {
-      groundCount: groundCount,
-      stationCount: stationCount,
-    };
-    try {
-      await AsyncStorage.setItem('TELEOP_PICKUPS', JSON.stringify(TeleopData));
-      console.log(TeleopData)
-    } catch (error) {
-      console.error('Error storing Teleop data:', error);
-    }
-  };
-
-  const handleProceed = async () => {
-    await storeTeleopData();
-    navigation.navigate('EndGame');
   };
 
   // SVG paths for each hexagon section
@@ -148,6 +221,199 @@ const Teleop = ({ navigation }) => {
     return `M ${centerX} ${centerY} L ${x1} ${y1} L ${x2} ${y2} Z`;
   };
 
+  // Define styles after determining global_color
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: "#000000",
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginTop: 40,
+      marginBottom: 10,
+      color: 'white',
+    },
+    topButtonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      paddingHorizontal: 10,
+      marginTop: 10,
+      marginBottom: 20,
+    },
+    undoButton: {
+      backgroundColor: global_color,
+      padding: 10,
+      borderRadius: 5,
+      alignSelf: 'flex-start',
+      zIndex: 1,
+    },
+    undoButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+    },
+    proceedButton: {
+      backgroundColor: global_color,
+      padding: 10,
+      borderRadius: 5,
+      alignSelf: 'flex-start',
+      zIndex: 1,
+    },
+    proceedButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+    },
+    imageContainer: {
+      width: '150%',
+      aspectRatio: 1,
+      marginTop: -45,
+
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    processorButton: {
+      position: 'absolute',
+      bottom: 20,
+      left: 20,
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: global_color,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+    },
+    processorButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    countersContainer: {
+      position: 'absolute',
+      bottom: 20,
+      right: 20,
+    },
+    counterButtonGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    groundButton: {
+      backgroundColor: global_color,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 5,
+      marginRight: 10,
+    },
+    groundButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: 16,
+    },
+    stationButton: {
+      backgroundColor: global_color,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 5,
+      marginRight: 10,
+    },
+    stationButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: 16,
+    },
+    incrementButton: {
+      backgroundColor: global_color,
+      width: 40,
+      height: 40,
+      borderRadius: 5,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 5,
+    },
+    decrementButton: {
+      backgroundColor: global_color,
+      width: 40,
+      height: 40,
+      borderRadius: 5,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    controlButtonText: {
+      color: 'white',
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    notification: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: global_color,
+      padding: 15,
+      alignItems: 'center',
+      zIndex: 100,
+    },
+    notificationText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    redoButton: {
+      backgroundColor: global_color,
+      padding: 10,
+      borderRadius: 5,
+      alignSelf: 'flex-start',
+      zIndex: 1,
+    },
+    TeleopP2Container: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)', // Semi-transparent background
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 100, // Ensure it appears on top
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      padding: 10,
+    },
+    actionButton: {
+      backgroundColor: global_color,
+      padding: 10,
+      margin: 5,
+      borderRadius: 5,
+    },
+    actionButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+    },
+    doneButton: {
+      backgroundColor: '#00FF00',
+      padding: 10,
+      margin: 5,
+      borderRadius: 5,
+    },
+    doneButtonText: {
+      color: 'black',
+      fontWeight: 'bold',
+    },
+  });
+
   return (
     <View style={styles.container}>
       <Animated.View style={[
@@ -167,11 +433,9 @@ const Teleop = ({ navigation }) => {
         >
           <Text style={styles.undoButtonText}>Undo</Text>
         </TouchableOpacity>
-
-
         <TouchableOpacity 
           style={styles.proceedButton} 
-          onPress={handleProceed}
+          onPress={handleSubmit}
         >
           <Text style={styles.proceedButtonText}>Proceed</Text>
         </TouchableOpacity>
@@ -181,7 +445,7 @@ const Teleop = ({ navigation }) => {
         onLayout={handleImageLayout}
       >
         <Image
-          source={alliance_color === "Blue" ? 
+          source={allianceColor === "Blue" ? 
             require('../assets/BlueReefVUSE.png') : 
             require('../assets/RedReefVUSE.png')
           }
@@ -194,14 +458,15 @@ const Teleop = ({ navigation }) => {
             {selectedSection && (
               <Path
                 d={getSectionPath(selectedSection)}
-                fill={alliance_color === "Blue" ? "rgba(0, 0, 255, 0.3)" : "rgba(255, 0, 0, 0.3)"}  // Semi-transparent highlight
-                stroke={alliance_color === "Blue" ? "blue" : "red"}
+                fill={allianceColor === "Blue" ? "rgba(0, 0, 255, 0.3)" : "rgba(255, 0, 0, 0.3)"}  // Semi-transparent highlight
+                stroke={allianceColor === "Blue" ? "blue" : "red"}
                 strokeWidth="2"
               />
             )}
           </Svg>
         </TapGestureHandler>
       </View>
+      <View style={{ height: 100 }} />
       <TouchableOpacity 
         style={styles.processorButton}
         onPress={() => navigation.navigate('AutoP1', { phase: "teleop" })}
@@ -237,159 +502,5 @@ const Teleop = ({ navigation }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 40,
-    marginBottom: 10,
-    color: 'white',
-  },
-  topButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 10,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  undoButton: {
-    backgroundColor: '#FF0000',
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-    zIndex: 1,
-  },
-  undoButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  proceedButton: {
-    backgroundColor: '#FF0000',
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-    zIndex: 1,
-  },
-  proceedButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  imageContainer: {
-    width: '150%',
-    aspectRatio: 1,
-    marginTop: -45,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  processorButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FF0000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  processorButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  countersContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-  },
-  counterButtonGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  groundButton: {
-    backgroundColor: '#FF0000', // Red color
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  groundButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  stationButton: {
-    backgroundColor: '#FF0000',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  stationButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  incrementButton: {
-    backgroundColor: '#FF0000',
-    width: 30,
-    height: 30,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 5,
-  },
-  decrementButton: {
-    backgroundColor: '#FF0000',
-    width: 30,
-    height: 30,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controlButtonText: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  notification: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FF3B30',
-    padding: 15,
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  notificationText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  redoButton: {
-    backgroundColor: '#FF0000',
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: 'flex-start',
-    zIndex: 1,
-  },
-});
 
 export default Teleop;

@@ -10,6 +10,7 @@ import Animated, {
 import CheckBox from 'expo-checkbox';
 import Slider from '@react-native-community/slider';  // Make sure to install this package
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EndGame = () => {
   const navigation = useNavigation();
@@ -71,7 +72,7 @@ const EndGame = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Prepare the data to be submitted
     const hangStatus = shallowHang ? 'Shallow Hang' : deepHang ? 'Deep Hang' : park ? 'Park' : failedClimb ? 'Failed Park' : null;
     
@@ -83,10 +84,11 @@ const EndGame = () => {
       };
 
       // Add the hang data to the endGameData list
-      setEndGameData([...endGameData, hangData]);
+      setEndGameData(hangData);
 
       // Log the endGameData to the console
-      console.log('End Game Data:', [...endGameData, hangData]);
+      console.log('End Game Data:', hangData);
+      await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify(hangData));
 
       // Navigate to PostGame screen
       navigation.navigate('PostGame');
