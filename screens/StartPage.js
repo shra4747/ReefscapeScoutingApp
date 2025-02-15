@@ -6,9 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const StartPage = () => {
   const navigation = useNavigation();
-  const [scouterId, setScouterId] = useState(''); // Scouter ID state
-  const [openMatch, setOpenMatch] = useState(false); // Match dropdown open state
-  const [valueMatch, setValueMatch] = useState(null); // Selected match value
+  const [scouterId, setScouterId] = useState('');
+  const [openMatch, setOpenMatch] = useState(false);
+  const [valueMatch, setValueMatch] = useState(null);
   const [itemsMatch, setItemsMatch] = useState(
     Array.from({ length: 14 }, (_, i) => ({
       label: `Match ${i + 1}`,
@@ -16,21 +16,20 @@ const StartPage = () => {
     }))
   );
 
-  const [openTeam, setOpenTeam] = useState(false); // Team dropdown open state
-  const [valueTeam, setValueTeam] = useState(null); // Selected team value
-  const [itemsTeam, setItemsTeam] = useState([]); // Team options
+  const [openTeam, setOpenTeam] = useState(false);
+  const [valueTeam, setValueTeam] = useState(null);
+  const [itemsTeam, setItemsTeam] = useState([]);
 
-  const [startPageData, setStartPageData] = useState([]); // List to store start page data
+  const [startPageData, setStartPageData] = useState([]);
 
-  const [openAlliance, setOpenAlliance] = useState(false); // Alliance color dropdown open state
-  const [allianceColor, setAllianceColor] = useState(null); // Alliance color state
-  
+  const [openAlliance, setOpenAlliance] = useState(false);
+  const [allianceColor, setAllianceColor] = useState(null);
+
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
   useEffect(() => {
-    // Generate random 5-digit team numbers when a match is selected
     if (valueMatch) {
       const randomTeams = Array.from({ length: 6 }, () => {
         const randomTeamNumber = Math.floor(10000 + Math.random() * 90000).toString();
@@ -41,56 +40,47 @@ const StartPage = () => {
   }, [valueMatch]);
 
   useEffect(() => {
-    // Close the team dropdown when the match dropdown is reopened
     if (openMatch) {
       setOpenTeam(false);
     }
   }, [openMatch]);
 
   useEffect(() => {
-    // Reset the team dropdown if the match selection changes
     if (valueMatch !== null) {
       setValueTeam(null);
     }
   }, [valueMatch]);
 
   const handleSubmit = async () => {
-    // Prepare the data to be submitted
     const newData = {
       match_number: valueMatch,
       team_number: valueTeam,
-      alliance_color: allianceColor, // Include alliance color in the data
+      alliance_color: allianceColor,
     };
 
-    // Add the new data to the startPageData list
     setStartPageData([newData]);
 
-    // Store the alliance color in AsyncStorage
-    await AsyncStorage.setItem('ALLIANCE_COLOR', allianceColor); // Store selected color
-
+    await AsyncStorage.setItem('ALLIANCE_COLOR', allianceColor);
     await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify([]));
     await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify([]));
     await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify([]));
     await AsyncStorage.setItem('REEF_DATA', JSON.stringify([]));
     await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify([]));
     await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify([]));
-
     await AsyncStorage.setItem('MATCH_INFO', JSON.stringify(newData));
 
-    // Log the startPageData to the console
     console.log('Start Page Data:', newData);
 
-    setScouterId(''); // Reset Scouter ID
-    setOpenMatch(false); // Reset Match dropdown
-    setValueMatch(null); // Reset Match value
-    setItemsTeam([]); // Reset Team options
-    setOpenTeam(false); // Reset Team dropdown
-    setValueTeam(null); // Reset Team value
-    setStartPageData([]); // Reset start page data
-    setOpenAlliance(false); // Reset Alliance dropdown
-    setAllianceColor(null); // Reset Alliance color
+    setScouterId('');
+    setOpenMatch(false);
+    setValueMatch(null);
+    setItemsTeam([]);
+    setOpenTeam(false);
+    setValueTeam(null);
+    setStartPageData([]);
+    setOpenAlliance(false);
+    setAllianceColor(null);
 
-    // Navigate to the next screen
     navigation.navigate('Auto');
   };
 
@@ -100,14 +90,24 @@ const StartPage = () => {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Page Title */}
-        <View style={[styles.titleContainer, { position: 'absolute', top: 80 }]}>
+        {/* Profile Button */}
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <View style={styles.profileIcon}>
+            <Text style={styles.profileIconText}>👤</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Rest of the StartPage UI */}
+        <View style={[styles.titleContainer, { position: 'absolute', top: 100 }]}>
           <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
           <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
         </View>
 
-        <Image 
-          source={{uri: 'https://static.wixstatic.com/media/3c0a84_5655d31135124d9fa8073e1c4bcffbd6~mv2.png/v1/fill/w_560,h_198,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/fd_frc_reefscape_wordmark_black_pms_edit.png'}}
+        <Image
+          source={{ uri: 'https://static.wixstatic.com/media/3c0a84_5655d31135124d9fa8073e1c4bcffbd6~mv2.png/v1/fill/w_560,h_198,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/fd_frc_reefscape_wordmark_black_pms_edit.png' }}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -115,13 +115,13 @@ const StartPage = () => {
         {/* Alliance Color Selection */}
         <Text style={styles.title}>Select Alliance Color</Text>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.colorButton, allianceColor === 'Red' ? styles.selectedButtonRed : styles.defaultButton]}
             onPress={() => setAllianceColor('Red')}
           >
             <Text style={styles.buttonText}>Red</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.colorButton, allianceColor === 'Blue' ? styles.selectedButtonBlue : styles.defaultButton]}
             onPress={() => setAllianceColor('Blue')}
           >
@@ -141,11 +141,11 @@ const StartPage = () => {
           containerStyle={styles.dropdownContainer}
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownBox}
-          zIndex={3000}  // Higher z-index for top dropdown
+          zIndex={3000}
           zIndexInverse={1000}
         />
 
-        {/* Team Number Dropdown (Visible only after match selection) */}
+        {/* Team Number Dropdown */}
         {valueMatch && (
           <>
             <Text style={styles.title}>Team Number</Text>
@@ -159,7 +159,7 @@ const StartPage = () => {
               containerStyle={styles.dropdownContainer}
               style={styles.dropdown}
               dropDownContainerStyle={styles.dropdownBox}
-              zIndex={2000} // Lower than match dropdown
+              zIndex={2000}
               zIndexInverse={1000}
             />
           </>
@@ -170,14 +170,13 @@ const StartPage = () => {
         {valueTeam && <Text style={styles.resultText}>Selected Team: {valueTeam}</Text>}
         <Text style={styles.resultText}>Selected Alliance Color: {allianceColor || 'None'}</Text>
 
-        {/* Updated Submit Button */}
-        <TouchableOpacity 
+        {/* Submit Button */}
+        <TouchableOpacity
           style={styles.submitButton}
           onPress={handleSubmit}
         >
           <Text style={styles.submitButtonText}>Submit</Text>
         </TouchableOpacity>
-
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -188,7 +187,29 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000', // Black background
+    backgroundColor: '#000000',
+  },
+  profileButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+  },
+  profileIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileIconText: {
+    fontSize: 24,
   },
   titleContainer: {
     flexDirection: 'row',
@@ -198,24 +219,24 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: '#ffffff', // White text
+    color: '#ffffff',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#ffffff', // White text for other titles
+    color: '#ffffff',
   },
   input: {
     height: 40,
     width: '80%',
-    borderColor: '#ff3030', // Red border
+    borderColor: '#ff3030',
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
     fontSize: 16,
-    color: '#000000', // Black text for input
-    backgroundColor: '#ffffff', // White background for input
+    color: '#000000',
+    backgroundColor: '#ffffff',
     marginBottom: 20,
   },
   dropdownContainer: {
@@ -223,19 +244,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   dropdown: {
-    borderColor: '#ff3030', // Red border
-    backgroundColor: '#ffffff', // White background for dropdown
+    borderColor: '#ff3030',
+    backgroundColor: '#ffffff',
   },
   dropdownBox: {
     borderColor: '#ccc',
-    backgroundColor: '#ffffff', // White background for dropdown box
+    backgroundColor: '#ffffff',
   },
   resultText: {
     fontSize: 16,
-    color: '#ffffff', // White text
+    color: '#ffffff',
   },
   submitButton: {
-    backgroundColor: '#ff3030', // Red button
+    backgroundColor: '#ff3030',
     padding: 15,
     borderRadius: 10,
     width: '80%',
@@ -245,7 +266,7 @@ const styles = StyleSheet.create({
     bottom: 40,
   },
   submitButtonText: {
-    color: 'white', // White text
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -256,7 +277,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   colorButton: {
-    width: '49%', // Adjust width as needed
+    width: '49%',
     padding: 10,
     borderRadius: 10,
     alignItems: 'center',
@@ -264,16 +285,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedButtonRed: {
-    backgroundColor: '#ff3030', // Background color for selected red button
+    backgroundColor: '#ff3030',
   },
   selectedButtonBlue: {
-    backgroundColor: '#308aff', // Background color for selected blue button
+    backgroundColor: '#308aff',
   },
   defaultButton: {
-    backgroundColor: '#ccc', // Default background color for unselected buttons
+    backgroundColor: '#ccc',
   },
   buttonText: {
-    color: 'white', // White text for button text
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
