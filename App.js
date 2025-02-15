@@ -6,6 +6,7 @@ import StartPage from './screens/StartPage';
 import Auto from './screens/Auto';
 import AutoP1 from './screens/AutoP1';
 import AutoP2 from './screens/AutoP2';
+import PitScouting from './screens/PitScouting';
 import Teleop from './screens/Teleop';
 import EndGame from './screens/EndGame';
 import PostGame from './screens/PostGame';
@@ -22,6 +23,11 @@ export default function App() {
           <Stack.Screen 
             name="StartPage" 
             component={StartPage} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="PitScouting" 
+            component={PitScouting} 
             options={{ headerShown: false }}
           />
           <Stack.Screen 

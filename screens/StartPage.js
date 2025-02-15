@@ -3,7 +3,6 @@ import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, 
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 const StartPage = () => {
   const navigation = useNavigation();
   const [scouterId, setScouterId] = useState('');
@@ -93,7 +92,7 @@ const StartPage = () => {
         {/* Left Profile Button */}
         <TouchableOpacity
           style={[styles.profileButton, { left: 20 }]}
-          onPress={() => navigation.navigate('Profile')}
+          onPress={() => navigation.navigate('PitScouting')}
         >
           <View style={styles.profileIcon}>
             <Image

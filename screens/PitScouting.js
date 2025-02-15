@@ -8,9 +8,9 @@ import Slider from '@react-native-community/slider';
 const PitScouting = () => {
   const [teamNumber, setTeamNumber] = useState(''); // State for Team Number
   const [scouterID, setScouterID] = useState(''); // State for Scouter ID
-  const [height, setHeight] = useState('0'); // State for Height
-  const [length, setLength] = useState('0'); // State for Length
-  const [width, setWidth] = useState('0'); // State for Width
+  const [height, setHeight] = useState('42'); // State for Height
+  const [length, setLength] = useState('30'); // State for Length
+  const [width, setWidth] = useState('30'); // State for Width
   const [cycleTime, setCycleTime] = useState(0); // State for Cycle Time (now a slider)
   const [driverExperience, setDriverExperience] = useState(0); // State for Driver Experience (now a slider)
 
