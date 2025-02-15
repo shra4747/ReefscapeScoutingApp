@@ -4,13 +4,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import StartPage from './screens/StartPage';
 import Auto from './screens/Auto';
+import AutoP1 from './screens/AutoP1';
+import AutoP2 from './screens/AutoP2';
 import Teleop from './screens/Teleop';
 import EndGame from './screens/EndGame';
 import PostGame from './screens/PostGame';
 import Confirmation from './screens/Confirmation';
 import Profile from './screens/Profile';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -51,6 +52,16 @@ export default function App() {
           <Stack.Screen 
             name="Profile" 
             component={Profile} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="AutoP1" 
+            component={AutoP1} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="AutoP2" 
+            component={AutoP2} 
             options={{ headerShown: false }}
           />
         </Stack.Navigator>

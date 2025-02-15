@@ -126,17 +126,13 @@ const Auto = () => {
       else if (degrees >= 180 && degrees < 240) section = 'ML';
       else if (degrees >= 240 && degrees < 300) section = 'HL';
 
-      
-      
-      setSelectedSection(section);
-
-      // Append the selected section to the reef list
-
+      // If the same section is clicked again, navigate to AutoP2
       if (selectedSection === section) {
-          const ss = sectionMap[section]
-          navigation.navigate('AutoP2', { selectedSection: ss, phase: "auto" });
-          setSelectedSection(null);
+        const nextSection = sectionMap[section];
+        navigation.navigate('AutoP2', { selectedSection: nextSection, phase: "auto" });
+        setSelectedSection(null);
       } else {
+        // Set the new selected section
         setSelectedSection(section);
       }
 

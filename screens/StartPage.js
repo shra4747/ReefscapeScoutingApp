@@ -90,13 +90,29 @@ const StartPage = () => {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Profile Button */}
+        {/* Left Profile Button */}
         <TouchableOpacity
-          style={styles.profileButton}
+          style={[styles.profileButton, { left: 20 }]}
           onPress={() => navigation.navigate('Profile')}
         >
           <View style={styles.profileIcon}>
-            <Text style={styles.profileIconText}>👤</Text>
+            <Image
+              source={require('../assets/th.jpeg')}
+              style={styles.profileImage}
+            />
+          </View>
+        </TouchableOpacity>
+
+        {/* Right Profile Button */}
+        <TouchableOpacity
+          style={[styles.profileButton, { right: 20 }]}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <View style={styles.profileIcon}>
+            <Image
+              source={require('../assets/converted_image.jpeg')}
+              style={styles.profileImage}
+            />
           </View>
         </TouchableOpacity>
 
@@ -192,7 +208,6 @@ const styles = StyleSheet.create({
   profileButton: {
     position: 'absolute',
     top: 40,
-    right: 20,
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -205,11 +220,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  profileIconText: {
-    fontSize: 24,
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   titleContainer: {
     flexDirection: 'row',
