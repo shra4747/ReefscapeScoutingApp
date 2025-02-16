@@ -1,6 +1,6 @@
 // screens/BlankScreen.js
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated, Modal } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
@@ -18,6 +18,7 @@ const Teleop = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [reef, setReef] = useState([]);
   const [currentAction, setCurrentAction] = useState({});
+  const [showProcessorModal, setShowProcessorModal] = useState(false);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
 
@@ -126,13 +127,17 @@ const Teleop = () => {
       else if (degrees >= 180 && degrees < 240) section = 'ML';
       else if (degrees >= 240 && degrees < 300) section = 'HL';
 
-      // If the same section is clicked again, navigate to AutoP2
+      
+      
+      setSelectedSection(section);
+
+      // Append the selected section to the reef list
+
       if (selectedSection === section) {
-        const nextSection = sectionMap[section];
-        navigation.navigate('AutoP2', { selectedSection: nextSection, phase: "teleop" });
-        setSelectedSection(null);
+          const ss = sectionMap[section]
+          navigation.navigate('AutoP2', { selectedSection: ss, phase: "teleop" });
+          setSelectedSection(null);
       } else {
-        // Set the new selected section
         setSelectedSection(section);
       }
 
@@ -215,6 +220,30 @@ const Teleop = () => {
     const y2 = centerY + radius2 * Math.sin(endRad);
     
     return `M ${centerX} ${centerY} L ${x1} ${y1} L ${x2} ${y2} Z`;
+  };
+
+  const handleProcessorAction = async (action) => {
+    const processorData = {
+      action: action,
+      phase: "teleop",
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const existingData = await AsyncStorage.getItem('PROCESSOR_DATA');
+      let updatedData = [];
+      
+      if (existingData) {
+        updatedData = JSON.parse(existingData);
+      }
+      
+      updatedData.push(processorData);
+      await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
+      setShowProcessorModal(false);
+      
+    } catch (error) {
+      console.error('Error storing processor data:', error);
+    }
   };
 
   // Define styles after determining global_color
@@ -408,6 +437,50 @@ const Teleop = () => {
       color: 'black',
       fontWeight: 'bold',
     },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+      width: '80%',
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      padding: 20,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    driveStationButton: {
+      backgroundColor: global_color,
+      padding: 15,
+      borderRadius: 5,
+      marginVertical: 5,
+      alignItems: 'center',
+      width: '100%', // Fill the modal width
+    },
+    driveStationButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    cancelButton: {
+      backgroundColor: '#ccc',
+      padding: 15,
+      borderRadius: 5,
+      marginTop: 10,
+      alignItems: 'center',
+      width: '100%', // Fill the modal width
+    },
+    cancelButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
   });
 
   return (
@@ -465,7 +538,7 @@ const Teleop = () => {
       <View style={{ height: 100 }} />
       <TouchableOpacity 
         style={styles.processorButton}
-        onPress={() => navigation.navigate('AutoP1', { phase: "teleop" })}
+        onPress={() => setShowProcessorModal(true)}
       >
         <Text style={styles.processorButtonText}>Processor</Text>
       </TouchableOpacity>
@@ -495,6 +568,38 @@ const Teleop = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+            {/* Processor Action Modal */}
+            <Modal
+        visible={showProcessorModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowProcessorModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Processor Action</Text>
+            <TouchableOpacity
+              style={styles.driveStationButton}
+              onPress={() => handleProcessorAction('make')}
+            >
+              <Text style={styles.driveStationButtonText}>Make</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.driveStationButton}
+              onPress={() => handleProcessorAction('miss')}
+            >
+              <Text style={styles.driveStationButtonText}>Miss</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowProcessorModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

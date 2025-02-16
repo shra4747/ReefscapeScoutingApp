@@ -1,6 +1,6 @@
 // screens/BlankScreen.js
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated, Modal, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
@@ -18,6 +18,12 @@ const Auto = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [reef, setReef] = useState([]);
   const [currentAction, setCurrentAction] = useState({});
+  const [showDriveStationModal, setShowDriveStationModal] = useState(false);
+  const [driveStation, setDriveStation] = useState(null);
+  const [showStationTypeModal, setShowStationTypeModal] = useState(false);
+  const [showProcessorModal, setShowProcessorModal] = useState(false);
+  const [stationData, setStationData] = useState([]);
+  const [groundData, setGroundData] = useState([]);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
 
@@ -80,8 +86,8 @@ const Auto = () => {
 
   const storeAutoData = async () => {
     const autoData = {
-      groundCount: groundCount,
-      stationCount: stationCount,
+      groundCount: groundData,
+      stationCount: stationData,
     };
     try {
       await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify(autoData));
@@ -215,6 +221,83 @@ const Auto = () => {
     const y2 = centerY + radius2 * Math.sin(endRad);
     
     return `M ${centerX} ${centerY} L ${x1} ${y1} L ${x2} ${y2} Z`;
+  };
+
+  const handleGroundIncrement = () => {
+    setShowDriveStationModal(true);
+  };
+
+  const handleDriveStationSelect = (station) => {
+    setDriveStation(station);
+    setGroundCount(groundCount + 1);
+    setShowDriveStationModal(false);
+    // Store the drive station information with the ground pickup
+    const newGroundPickup = {
+      type: 'ground',
+      driveStation: station,
+      timestamp: new Date().toISOString()
+    };
+    const newGroundData = [...groundData, newGroundPickup];
+    setGroundData(newGroundData);
+    storeGroundData(newGroundData);
+  };
+
+  const storeGroundData = async (data) => {
+    try {
+      await AsyncStorage.setItem('GROUND_PICKUPS', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error storing ground data:', error);
+    }
+  };
+
+  const handleStationIncrement = () => {
+    setShowStationTypeModal(true);
+  };
+
+  const handleStationTypeSelect = (stationType) => {
+    setStationCount(stationCount + 1);
+    setShowStationTypeModal(false);
+    // Store the station type information with the pickup
+    const newStationPickup = {
+      type: 'station',
+      stationType: stationType,
+      timestamp: new Date().toISOString()
+    };
+    const newStationData = [...stationData, newStationPickup];
+    setStationData(newStationData);
+    storeStationData(newStationData);
+  };
+
+  const storeStationData = async (data) => {
+    try {
+      await AsyncStorage.setItem('STATION_PICKUPS', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error storing station data:', error);
+    }
+  };
+
+  const handleProcessorAction = async (action) => {
+    const processorData = {
+      action: action,
+      phase: "auto",
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const existingData = await AsyncStorage.getItem('PROCESSOR_DATA');
+      let updatedData = [];
+      
+      if (existingData) {
+        updatedData = JSON.parse(existingData);
+      }
+      
+      updatedData.push(processorData);
+      await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
+      setShowProcessorModal(false);
+      
+    } catch (error) {
+      console.error('Error storing processor data:', error);
+    }
   };
 
   // Define styles after determining global_color
@@ -408,6 +491,48 @@ const Auto = () => {
       color: 'black',
       fontWeight: 'bold',
     },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+      width: '80%',
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      padding: 20,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    driveStationButton: {
+      backgroundColor: global_color,
+      padding: 15,
+      borderRadius: 5,
+      marginVertical: 5,
+      alignItems: 'center',
+    },
+    driveStationButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    cancelButton: {
+      backgroundColor: '#ccc',
+      padding: 15,
+      borderRadius: 5,
+      marginTop: 10,
+      alignItems: 'center',
+    },
+    cancelButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
   });
 
   return (
@@ -465,14 +590,17 @@ const Auto = () => {
       <View style={{ height: 100 }} />
       <TouchableOpacity 
         style={styles.processorButton}
-        onPress={() => navigation.navigate('AutoP1', { phase: "auto" })}
+        onPress={() => setShowProcessorModal(true)}
       >
         <Text style={styles.processorButtonText}>Processor</Text>
       </TouchableOpacity>
       
       <View style={styles.countersContainer}>
         <View style={styles.counterButtonGroup}>
-          <TouchableOpacity style={styles.incrementButton} onPress={() => setGroundCount(groundCount + 1)}>
+          <TouchableOpacity 
+            style={styles.incrementButton} 
+            onPress={handleGroundIncrement}
+          >
             <Text style={styles.controlButtonText}>+</Text>
           </TouchableOpacity>
           <View style={styles.groundButton}>
@@ -484,7 +612,10 @@ const Auto = () => {
         </View>
 
         <View style={[styles.counterButtonGroup, { marginTop: 10 }]}>
-          <TouchableOpacity style={styles.incrementButton} onPress={() => setStationCount(stationCount + 1)}>
+          <TouchableOpacity 
+            style={styles.incrementButton} 
+            onPress={handleStationIncrement}
+          >
             <Text style={styles.controlButtonText}>+</Text>
           </TouchableOpacity>
           <View style={styles.stationButton}>
@@ -495,6 +626,96 @@ const Auto = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Station Type Selection Modal */}
+      <Modal
+        visible={showStationTypeModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowStationTypeModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Station Type</Text>
+            {['HP Station Closer to Barge', 'HP Station Further from Barge'].map((stationType) => (
+              <TouchableOpacity
+                key={stationType}
+                style={styles.driveStationButton}
+                onPress={() => handleStationTypeSelect(stationType)}
+              >
+                <Text style={styles.driveStationButtonText}>{stationType}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowStationTypeModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Drive Station Selection Modal */}
+      <Modal
+        visible={showDriveStationModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDriveStationModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Drive Station</Text>
+            {[1, 2, 3].map((station) => (
+              <TouchableOpacity
+                key={station}
+                style={styles.driveStationButton}
+                onPress={() => handleDriveStationSelect(station)}
+              >
+                <Text style={styles.driveStationButtonText}>Drive Station {station}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowDriveStationModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Processor Action Modal */}
+      <Modal
+        visible={showProcessorModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowProcessorModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Processor Action</Text>
+            <TouchableOpacity
+              style={styles.driveStationButton}
+              onPress={() => handleProcessorAction('make')}
+            >
+              <Text style={styles.driveStationButtonText}>Make</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.driveStationButton}
+              onPress={() => handleProcessorAction('miss')}
+            >
+              <Text style={styles.driveStationButtonText}>Miss</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowProcessorModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
