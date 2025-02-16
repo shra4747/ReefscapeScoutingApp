@@ -1,18 +1,29 @@
 // screens/BlankScreen.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker'; // Import Picker from the correct package
 import DropDownPicker from 'react-native-dropdown-picker';
 import Slider from '@react-native-community/slider';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CheckBox from 'expo-checkbox';
 
 const PitScouting = () => {
+  const navigation = useNavigation();
   const [teamNumber, setTeamNumber] = useState(''); // State for Team Number
   const [scouterID, setScouterID] = useState(''); // State for Scouter ID
   const [height, setHeight] = useState('42'); // State for Height
   const [length, setLength] = useState('30'); // State for Length
   const [width, setWidth] = useState('30'); // State for Width
   const [cycleTime, setCycleTime] = useState(0); // State for Cycle Time (now a slider)
-  const [driverExperience, setDriverExperience] = useState(0); // State for Driver Experience (now a slider)
+  const [driverExperience, setDriverExperience] = useState(0); // State for Driver Experience
+  const [shallowHang, setShallowHang] = useState(false);
+  const [deepHang, setDeepHang] = useState(false);
+  const [hpPickup, setHpPickup] = useState(false);
+  const [groundPickup, setGroundPickup] = useState(false);
+  const [coral, setCoral] = useState(false);
+  const [algae, setAlgae] = useState(false);
+  const [shooting, setShooting] = useState(false);
 
   // Drive Train Dropdown
   const [openDriveTrain, setOpenDriveTrain] = useState(false);
@@ -60,6 +71,45 @@ const PitScouting = () => {
   // Function to dismiss the keyboard
   const dismissKeyboard = () => {
     Keyboard.dismiss();
+  };
+
+  const handleSubmit = async () => {
+    // Validate all fields
+    if (!teamNumber || !scouterID || !height || !length || !width || 
+        cycleTime === null || cycleTime === 0 || driverExperience === null || !driveTrainValue) {
+      alert('Please fill out all fields before submitting.');
+      return;
+    }
+
+    try {
+      const pitData = {
+        teamNumber,
+        scouterID,
+        height,
+        length,
+        width,
+        cycleTime,
+        driverExperience,
+        driveTrain: driveTrainValue,
+        shallowHang,
+        deepHang,
+        hpPickup,
+        groundPickup,
+        coral,
+        algae,
+        shooting
+      };
+
+      // Store the data in AsyncStorage
+      await AsyncStorage.setItem('PIT_DATA', JSON.stringify(pitData));
+      console.log('Pit Scouting Data Saved:', pitData);
+
+      // Navigate back to StartPage
+      navigation.navigate('StartPage');
+    } catch (error) {
+      console.error('Error saving pit scouting data:', error);
+      alert('Error saving data. Please try again.');
+    }
   };
 
   const renderContent = () => (
@@ -164,7 +214,7 @@ const PitScouting = () => {
         <Slider
           style={styles.slider}
           minimumValue={0}
-          maximumValue={25}
+          maximumValue={3}
           step={1}
           value={driverExperience}
           onValueChange={(value) => setDriverExperience(value)}
@@ -173,6 +223,92 @@ const PitScouting = () => {
           thumbTintColor="#000000"
         />
       </View>
+      <View style={styles.hangContainer}>
+        <Text style={styles.hangTitle}>Hang</Text>
+        <View style={styles.checkboxContainer}>
+          <View style={styles.checkboxWrapper}>
+            <CheckBox
+              value={shallowHang}
+              onValueChange={setShallowHang}
+              tintColors={{ true: '#000000', false: '#000000' }}
+              style={{ width: 24, height: 24 }}
+            />
+            <Text style={styles.checkboxLabel}>Shallow</Text>
+          </View>
+          <View style={styles.checkboxWrapper}>
+            <CheckBox
+              value={deepHang}
+              onValueChange={setDeepHang}
+              tintColors={{ true: '#000000', false: '#000000' }}
+              style={{ width: 24, height: 24 }}
+            />
+            <Text style={styles.checkboxLabel}>Deep</Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.hangContainer}>
+        <Text style={styles.hangTitle}>Pickup</Text>
+        <View style={styles.checkboxContainer}>
+          <View style={styles.checkboxWrapper}>
+            <CheckBox
+              value={hpPickup}
+              onValueChange={setHpPickup}
+              tintColors={{ true: '#000000', false: '#000000' }}
+              style={{ width: 24, height: 24 }}
+            />
+            <Text style={styles.checkboxLabel}>HP</Text>
+          </View>
+          <View style={styles.checkboxWrapper}>
+            <CheckBox
+              value={groundPickup}
+              onValueChange={setGroundPickup}
+              tintColors={{ true: '#000000', false: '#000000' }}
+              style={{ width: 24, height: 24 }}
+            />
+            <Text style={styles.checkboxLabel}>Ground</Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.hangContainer}>
+        <Text style={styles.hangTitle}>Gameplay</Text>
+        <View style={styles.checkboxContainer}>
+          <View style={styles.checkboxWrapper}>
+            <CheckBox
+              value={coral}
+              onValueChange={setCoral}
+              tintColors={{ true: '#000000', false: '#000000' }}
+              style={{ width: 24, height: 24 }}
+            />
+            <Text style={styles.checkboxLabel}>Coral</Text>
+          </View>
+          <View style={styles.checkboxWrapper}>
+            <CheckBox
+              value={algae}
+              onValueChange={setAlgae}
+              tintColors={{ true: '#000000', false: '#000000' }}
+              style={{ width: 24, height: 24 }}
+            />
+            <Text style={styles.checkboxLabel}>Algae</Text>
+          </View>
+        </View>
+        <View style={[styles.checkboxContainer, { justifyContent: 'center', marginTop: 30 }]}>
+          <View style={styles.checkboxWrapper}>
+            <CheckBox
+              value={shooting}
+              onValueChange={setShooting}
+              tintColors={{ true: '#000000', false: '#000000' }}
+              style={{ width: 24, height: 24 }}
+            />
+            <Text style={styles.checkboxLabel}>Shooting</Text>
+          </View>
+        </View>
+      </View>
+      <TouchableOpacity 
+        style={styles.submitButton}
+        onPress={handleSubmit}
+      >
+        <Text style={styles.submitButtonText}>Submit</Text>
+      </TouchableOpacity>
     </>
   );
 
@@ -183,11 +319,11 @@ const PitScouting = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <FlatList
-          data={[1]} // Single item to render the content
+          data={[1]}
           renderItem={renderContent}
           keyExtractor={(item) => item.toString()}
           contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled" // Ensure keyboard dismisses on tap
+          keyboardShouldPersistTaps="handled"
         />
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
@@ -243,7 +379,7 @@ const styles = StyleSheet.create({
     textAlign: 'center', // Center the text in the wheel
   },
   dropdownTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     alignSelf: 'center',
     marginBottom: 5,
@@ -258,6 +394,48 @@ const styles = StyleSheet.create({
   slider: {
     width: '80%',
     height: 40,
+  },
+  submitButton: {
+    backgroundColor: '#000000',
+    padding: 15,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 40,
+    alignSelf: 'center',
+  },
+  submitButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  hangContainer: {
+    marginTop: 20,
+    width: '80%',
+    alignSelf: 'center',
+  },
+  hangTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'black',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 30,
+  },
+  checkboxWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  checkboxLabel: {
+    marginLeft: 12,
+    fontSize: 18,
+    color: 'black',
   },
 });
 
