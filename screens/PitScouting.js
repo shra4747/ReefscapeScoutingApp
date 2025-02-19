@@ -35,11 +35,16 @@ const PitScouting = () => {
     { label: 'Other', value: 'other' },
   ]);
 
+<<<<<<< HEAD
   // Add state for L1, L2, L3, L4
   const [L1, setL1] = useState(false);
   const [L2, setL2] = useState(false);
   const [L3, setL3] = useState(false);
   const [L4, setL4] = useState(false);
+=======
+  // Remove the Autonomous Start dropdown state and add notes state
+  const [notes, setNotes] = useState('');
+>>>>>>> 6a53e82071f821ba65e4a86dfd056f6a3a5418a8
 
   const handleTeamNumberChange = (text) => {
     const cleanedText = text.replace(/[^0-9]/g, '');
@@ -82,7 +87,8 @@ const PitScouting = () => {
   const handleSubmit = async () => {
     // Validate all fields
     if (!teamNumber || !scouterID || !height || !length || !width || 
-        cycleTime === null || cycleTime === 0 || driverExperience === null || !driveTrainValue) {
+        cycleTime === null || cycleTime === 0 || driverExperience === null || 
+        !driveTrainValue) {
       alert('Please fill out all fields before submitting.');
       return;
     }
@@ -97,6 +103,7 @@ const PitScouting = () => {
         cycleTime,
         driverExperience,
         driveTrain: driveTrainValue,
+        notes, // Add notes to the data
         shallowHang,
         deepHang,
         hpPickup,
@@ -199,6 +206,16 @@ const PitScouting = () => {
           style={styles.dropdown}
           containerStyle={styles.dropdownContainer}
           zIndex={3000}
+        />
+      </View>
+      <View style={styles.centeredInputContainer}>
+        <Text style={styles.dropdownTitle}>Autonomous Notes</Text>
+        <TextInput 
+          style={[styles.centeredInput, { height: 100 }]} 
+          placeholder="Enter notes here" 
+          value={notes} 
+          onChangeText={setNotes} 
+          multiline={true}
         />
       </View>
       <View style={styles.centeredInputContainer}>
@@ -374,7 +391,10 @@ const PitScouting = () => {
           renderItem={renderContent}
           keyExtractor={(item) => item.toString()}
           contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          alwaysBounceVertical={true}
         />
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
