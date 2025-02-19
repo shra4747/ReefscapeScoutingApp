@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginPage from './screens/loginpage';
 import StartPage from './screens/StartPage';
 import Auto from './screens/Auto';
 import AutoP1 from './screens/AutoP1';
@@ -15,15 +16,33 @@ import Profile from './screens/Profile';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const Stack = createNativeStackNavigator();
 
-export default function App() {
+const App = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="StartPage">
+        <StatusBar backgroundColor="#000000" barStyle="light-content" />
+        <Stack.Navigator initialRouteName="LoginPage">
+          <Stack.Screen 
+            name="LoginPage" 
+            component={LoginPage} 
+            options={{ 
+              headerShown: false,
+              statusBarColor: '#000000'
+            }}
+          />
           <Stack.Screen 
             name="StartPage" 
             component={StartPage} 
-            options={{ headerShown: false }}
+            options={{
+              headerStyle: {
+                backgroundColor: '#ff0000',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              statusBarColor: '#ff0000'
+            }}
           />
           <Stack.Screen 
             name="PitScouting" 
@@ -74,7 +93,9 @@ export default function App() {
       </NavigationContainer>
     </GestureHandlerRootView>
   );
-}
+};
+
+export default App;
 
 const styles = StyleSheet.create({
   container: {
