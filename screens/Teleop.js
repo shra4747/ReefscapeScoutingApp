@@ -21,6 +21,7 @@ const Teleop = () => {
   const [showProcessorModal, setShowProcessorModal] = useState(false);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
+  const [driverStation, setDriverStation] = useState(null); // New state for driver station
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -37,8 +38,32 @@ const Teleop = () => {
     retrieveAllianceColor();
   }, []);
 
+  useEffect(() => {
+    const retrieveDriverStation = async () => {
+      try {
+        const station = await AsyncStorage.getItem('DRIVER_STATION');
+        if (station !== null) {
+          setDriverStation(station);
+        }
+      } catch (error) {
+        console.error('Error retrieving driver station:', error);
+      }
+    };
+
+    retrieveDriverStation();
+  }, []);
+
   // Use allianceColor to set global_color
   const global_color = allianceColor === "Blue" ? "#308aff" : "#ff3030"; // Adjust based on your needs
+
+  // Use allianceColor and driverStation to set the image source
+  const imageSource = () => {
+    if (allianceColor === "Red") {
+      return driverStation === "Right" ? require('../assets/Redreverse.png') : require('../assets/RedReefVUSE.png');
+    } else {
+      return driverStation === "Right" ? require('../assets/bluereverse.png') : require('../assets/BlueReefVUSE.png');
+    }
+  };
 
   useEffect(() => {
     retrieveReefData();
@@ -514,10 +539,7 @@ const Teleop = () => {
         onLayout={handleImageLayout}
       >
         <Image
-          source={allianceColor === "Blue" ? 
-            require('../assets/BlueReefVUSE.png') : 
-            require('../assets/RedReefVUSE.png')
-          }
+          source={imageSource()}
           style={styles.image}
           resizeMode="contain"
         />

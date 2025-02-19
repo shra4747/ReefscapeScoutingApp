@@ -19,7 +19,10 @@ const LoginPage = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Robo Raiders: Login</Text>
+      <Text style={styles.title}>
+        <Text style={{ color: '#ff0000' }}>Robo Raiders</Text>
+        <Text style={{ color: '#ffffff' }}>: Login</Text>
+      </Text>
       
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Username</Text>
@@ -27,7 +30,7 @@ const LoginPage = () => {
           style={styles.input}
           placeholder="Enter your username"
           value={username}
-          onChangeText={setUsername} // Directly set state
+          onChangeText={setUsername}
           autoCapitalize="none"
         />
       </View>
@@ -38,7 +41,7 @@ const LoginPage = () => {
           style={styles.input}
           placeholder="Enter your password"
           value={password}
-          onChangeText={setPassword} // Directly set state
+          onChangeText={setPassword}
           secureTextEntry
         />
       </View>

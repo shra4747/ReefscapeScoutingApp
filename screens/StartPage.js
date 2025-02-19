@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -83,6 +83,38 @@ const StartPage = () => {
     navigation.navigate('Auto');
   };
 
+  const handleAllianceColorSelect = (color) => {
+    setAllianceColor(color);
+    
+    // Show popup with options
+    Alert.alert(
+      'Select Driver Station',
+      'Please choose your driver station:',
+      [
+        {
+          text: 'Right Driver Station',
+          onPress: async () => {
+            console.log('Right Driver Station selected');
+            await AsyncStorage.setItem('DRIVER_STATION', 'Right'); // Set driver station
+          },
+          style: 'default',
+        },
+        {
+          text: 'Left Driver Station',
+          onPress: async () => {
+            console.log('Left Driver Station selected');
+            await AsyncStorage.setItem('DRIVER_STATION', 'Left'); // Set driver station
+          },
+          style: 'default',
+        },
+      ],
+      { 
+        cancelable: true,
+        userInterfaceStyle: 'dark', // For iOS
+      }
+    );
+  };
+
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <KeyboardAvoidingView
@@ -132,13 +164,13 @@ const StartPage = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={[styles.colorButton, allianceColor === 'Red' ? styles.selectedButtonRed : styles.defaultButton]}
-            onPress={() => setAllianceColor('Red')}
+            onPress={() => handleAllianceColorSelect('Red')}
           >
             <Text style={styles.buttonText}>Red</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.colorButton, allianceColor === 'Blue' ? styles.selectedButtonBlue : styles.defaultButton]}
-            onPress={() => setAllianceColor('Blue')}
+            onPress={() => handleAllianceColorSelect('Blue')}
           >
             <Text style={styles.buttonText}>Blue</Text>
           </TouchableOpacity>

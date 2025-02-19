@@ -7,48 +7,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const Confirmation = () => {
   const navigation = useNavigation();
 
-  const onSubmit = async () => {
-    try {
-      // Get all the stored data
-      const matchInfo = await AsyncStorage.getItem('MATCH_INFO');
-      const autoPickups = await AsyncStorage.getItem('AUTO_PICKUPS');
-      const teleopPickups = await AsyncStorage.getItem('Teleop_PICKUPS');
-      const processorData = await AsyncStorage.getItem('PROCESSOR_DATA');
-      const reefData = await AsyncStorage.getItem('REEF_DATA');
-      const endgameData = await AsyncStorage.getItem('ENDGAME_DATA');
-      const postgameData = await AsyncStorage.getItem('POSTGAME_DATA');
-
-      // Compile all data into one object
-      const submissionData = {
-        matchInfo: JSON.parse(matchInfo),
-        autoPickups: JSON.parse(autoPickups),
-        teleopPickups: JSON.parse(teleopPickups),
-        processorData: JSON.parse(processorData),
-        reefData: JSON.parse(reefData),
-        endgameData: JSON.parse(endgameData),
-        postgameData: JSON.parse(postgameData)
-      };
-
-      console.log('Final Submission Data:', submissionData);
-
-      // Clear all stored data
-      await AsyncStorage.multiRemove([
-        'MATCH_INFO',
-        'AUTO_PICKUPS',
-        'Teleop_PICKUPS', 
-        'PROCESSOR_DATA',
-        'REEF_DATA',
-        'ENDGAME_DATA',
-        'POSTGAME_DATA',
-        'ALLIANCE_COLOR'
-      ]);
-
-      // Navigate back to start
-      navigation.popToTop();
-
-    } catch (error) {
-      console.error('Error submitting data:', error);
-    }
+  const handleSubmit = () => {
+    // Perform any confirmation logic here
+    
+    // Navigate to StartPage
+    navigation.navigate('StartPage');
   };
 
   return (
@@ -58,10 +21,10 @@ const Confirmation = () => {
       </Text>
 
       <TouchableOpacity 
-        style={styles.backButton}
-        onPress={onSubmit}
+        style={styles.submitButton}
+        onPress={handleSubmit}
       >
-        <Text style={styles.backButtonText}>Submit</Text>
+        <Text style={styles.submitButtonText}>Submit</Text>
       </TouchableOpacity>
     </View>
   );
@@ -81,7 +44,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
   },
-  backButton: {
+  submitButton: {
     position: 'absolute',
     bottom: 30,
     right: 30,
@@ -98,7 +61,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  backButtonText: {
+  submitButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
