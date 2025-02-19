@@ -35,6 +35,12 @@ const PitScouting = () => {
     { label: 'Other', value: 'other' },
   ]);
 
+  // Add state for L1, L2, L3, L4
+  const [L1, setL1] = useState(false);
+  const [L2, setL2] = useState(false);
+  const [L3, setL3] = useState(false);
+  const [L4, setL4] = useState(false);
+
   const handleTeamNumberChange = (text) => {
     const cleanedText = text.replace(/[^0-9]/g, '');
     setTeamNumber(cleanedText);
@@ -303,6 +309,51 @@ const PitScouting = () => {
           </View>
         </View>
       </View>
+      <View style={styles.coralLevelContainer}>
+        <Text style={styles.coralLevelTitle}>Coral Level</Text>
+        <View style={styles.checkboxGrid}>
+          <View style={styles.checkboxRow}>
+            <View style={styles.checkboxContainer}>
+              <Text style={styles.checkboxLabel}>L1</Text>
+              <CheckBox
+                value={L1}
+                onValueChange={setL1}
+                style={styles.checkbox}
+                tintColors={{ true: '#000000', false: '#000000' }}
+              />
+            </View>
+            <View style={styles.checkboxContainer}>
+              <Text style={styles.checkboxLabel}>L2</Text>
+              <CheckBox
+                value={L2}
+                onValueChange={setL2}
+                style={styles.checkbox}
+                tintColors={{ true: '#000000', false: '#000000' }}
+              />
+            </View>
+          </View>
+          <View style={styles.checkboxRow}>
+            <View style={[styles.checkboxContainer, styles.alignL3]}>
+              <Text style={styles.checkboxLabel}>L3</Text>
+              <CheckBox
+                value={L3}
+                onValueChange={setL3}
+                style={styles.checkbox}
+                tintColors={{ true: '#000000', false: '#000000' }}
+              />
+            </View>
+            <View style={styles.checkboxContainer}>
+              <Text style={styles.checkboxLabel}>L4</Text>
+              <CheckBox
+                value={L4}
+                onValueChange={setL4}
+                style={styles.checkbox}
+                tintColors={{ true: '#000000', false: '#000000' }}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
       <TouchableOpacity 
         style={styles.submitButton}
         onPress={handleSubmit}
@@ -435,6 +486,58 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 12,
     fontSize: 18,
+    color: 'black',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '80%',
+    marginTop: 20,
+    alignSelf: 'center',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+  },
+  coralLevelContainer: {
+    width: '80%',
+    alignSelf: 'center',
+    marginTop: 20,
+  },
+  coralLevelTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'black',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  checkboxGrid: {
+    width: '100%',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  alignL3: {
+    marginLeft: 0,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+  },
+  checkboxLabel: {
+    fontSize: 20,
     color: 'black',
   },
 });
