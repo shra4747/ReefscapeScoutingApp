@@ -33,7 +33,8 @@ const AutoP2 = ({ navigation, route }) => {
       phase: phase,
       slice: selectedSection,
       dealgaefy: deAlgaefySelected,
-      dealgaefyWithAttempt: deAlgaefyWithAttempt
+      dealgaefyWithAttempt: deAlgaefyWithAttempt,
+      timestamp: new Date().toISOString()
     };
 
     storeData(actionData);
@@ -47,7 +48,8 @@ const AutoP2 = ({ navigation, route }) => {
         phase: phase,
         slice: selectedSection,
         dealgaefy: true,
-        dealgaefyWithAttempt: false
+        dealgaefyWithAttempt: false,
+        timestamp: new Date().toISOString()
       };
       storeData(actionData);
       setDeAlgaefySelected(false);
@@ -64,7 +66,8 @@ const AutoP2 = ({ navigation, route }) => {
       action: 'dealgaefy_only',
       phase: phase,
       slice: selectedSection,
-      dealgaefy: true
+      dealgaefy: true,
+      timestamp: new Date().toISOString()
     };
     storeData(actionData);
     navigation.goBack();

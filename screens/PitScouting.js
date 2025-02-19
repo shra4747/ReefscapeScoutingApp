@@ -83,27 +83,59 @@ const PitScouting = () => {
 
     try {
       const pitData = {
-        teamNumber,
-        scouterID,
-        height,
-        length,
-        width,
-        cycleTime,
-        driverExperience,
-        driveTrain: driveTrainValue,
-        shallowHang,
-        deepHang,
-        hpPickup,
-        groundPickup,
-        coral,
-        algae,
-        shooting
+        team_number: parseInt(teamNumber, 10),
+        event_code: "TEST",
+        robot_height: parseInt(height, 10),
+        robot_dimensions:`${length} x ${width}`,
+        cycle_time:cycleTime,
+        driver_experience:driverExperience,
+        drive_train:driveTrainValue,
+        can_shallow_hang:shallowHang,
+        can_deep_hang:deepHang,
+        pickup_HP:hpPickup,
+        pickup_ground:groundPickup,
+        can_coral:coral,
+        can_algae:algae,
+        can_shoot_in_net:shooting
       };
 
-      // Store the data in AsyncStorage
-      await AsyncStorage.setItem('PIT_DATA', JSON.stringify(pitData));
-      console.log('Pit Scouting Data Saved:', pitData);
+      const loginData = {
+        username: "roshi-boshi", // Assuming scouterID is used as the username
+        password: "75" // Assuming driverExperience is used as the password
+      };
 
+      const loginResponse = await fetch('http://10.75.226.156:5001/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData),
+      });
+
+      if (!loginResponse.ok) {
+        alert('Error saving data. Please try again.');
+      }
+
+      const x = await loginResponse.json();
+      const access_token = x['access_token']
+    
+
+      const response = await fetch('http://10.75.226.156:5001/pit_scout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${access_token}`
+        },
+        body: JSON.stringify({ pit_scout: pitData }),
+      });
+
+      if (!response.ok) {
+        alert('Error saving data. Please try again.');
+      }
+      // Store the data in AsyncStorage
+      // await AsyncStorage.setItem('PIT_DATA', JSON.stringify(pitData));
+      // console.log('Pit Scouting Data Saved:', pitData);
+      alert(`Pit Scouting Saved for Team ${teamNumber}`)
       // Navigate back to StartPage
       navigation.navigate('StartPage');
     } catch (error) {
