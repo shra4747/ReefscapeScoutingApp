@@ -26,6 +26,7 @@ const Auto = () => {
   const [groundData, setGroundData] = useState([]);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
+  const [driverStation, setDriverStation] = useState(null); // New state for driver station
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -40,6 +41,21 @@ const Auto = () => {
     };
 
     retrieveAllianceColor();
+  }, []);
+
+  useEffect(() => {
+    const retrieveDriverStation = async () => {
+      try {
+        const station = await AsyncStorage.getItem('DRIVER_STATION');
+        if (station !== null) {
+          setDriverStation(station);
+        }
+      } catch (error) {
+        console.error('Error retrieving driver station:', error);
+      }
+    };
+
+    retrieveDriverStation();
   }, []);
 
   // Use allianceColor to set global_color
@@ -351,6 +367,15 @@ const Auto = () => {
     }
   };
 
+  // Use allianceColor and driverStation to set the image source
+  const imageSource = () => {
+    if (allianceColor === "Red") {
+      return driverStation === "Right" ? require('../assets/Redreverse.png') : require('../assets/RedReefVUSE.png');
+    } else {
+      return driverStation === "Right" ? require('../assets/bluereverse.png') : require('../assets/BlueReefVUSE.png');
+    }
+  };
+
   // Define styles after determining global_color
   const styles = StyleSheet.create({
     container: {
@@ -617,10 +642,7 @@ const Auto = () => {
         onLayout={handleImageLayout}
       >
         <Image
-          source={allianceColor === "Blue" ? 
-            require('../assets/BlueReefVUSE.png') : 
-            require('../assets/RedReefVUSE.png')
-          }
+          source={imageSource()}
           style={styles.image}
           resizeMode="contain"
         />
