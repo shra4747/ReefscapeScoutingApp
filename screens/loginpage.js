@@ -14,7 +14,7 @@ const LoginPage = () => {
     console.log('Username:', username);
     console.log('Password:', password);
     
-    navigation.navigate('StartPage');
+    navigation.replace('StartPage');
   };
 
   return (

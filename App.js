@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginPage from './screens/loginpage';
+import LoginPage from './screens/LoginPage';
 import StartPage from './screens/StartPage';
 import Auto from './screens/Auto';
 import AutoP1 from './screens/AutoP1';
@@ -25,24 +25,12 @@ const App = () => {
           <Stack.Screen 
             name="LoginPage" 
             component={LoginPage} 
-            options={{ 
-              headerShown: false,
-              statusBarColor: '#000000'
-            }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen 
             name="StartPage" 
             component={StartPage} 
-            options={{
-              headerStyle: {
-                backgroundColor: '#ff0000',
-              },
-              headerTintColor: '#fff',
-              headerTitleStyle: {
-                fontWeight: 'bold',
-              },
-              statusBarColor: '#ff0000'
-            }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen 
             name="PitScouting" 
