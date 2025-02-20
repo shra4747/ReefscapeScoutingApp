@@ -4,49 +4,54 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingVi
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LoginPage = () => {
+const RegisterPage = () => {
   const navigation = useNavigation();
   const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleLogin = async () => {
-    // Log the username and password on login attempt
-    console.log('Login attempt with:');
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+    
+    console.log('Register attempt with:');
+    console.log("First name: " + firstName);
     console.log('Username:', username);
     console.log('Password:', password);
 
-    const loginData = {
-      username, // Assuming scouterID is used as the username
-      password,
-    };
 
-    const loginResponse = await fetch('http://10.75.226.156:5001/login', {
+    const regsterData = {
+        username, // Assuming scouterID is used as the username
+        password,
+        first_name: firstName,
+        scouter_id: Math.floor(Math.random() * 100000), // Random number for scouter_id
+      };
+    // console.log("Hello1")
+    const regiserResponse = await fetch('http://10.75.226.156:5001/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(loginData),
+        body: JSON.stringify(regsterData),
       });
 
-    if (!loginResponse.ok) {
-      alert('Error registering. Please try again.');
-      return;
+    if (!regiserResponse.ok) {
+        alert('Error registering. Please try again.');
     }
-
-    const res = await loginResponse.json();
-    console.log(res);
-    const access_token = res['access_token'];
-    
-    try {
-      // Store the access token in AsyncStorage
-      await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
-      console.log('Access token stored successfully');
-      navigation.replace('StartPage');
-    } catch (error) {
-      console.error('Error storing access token:', error);
-      alert('Error saving login information. Please try again.');
+    else {
+        
     }
+    const res = await regiserResponse.json();
+    const access_token = res['access_token']
+    console.log(access_token)
+    // Store the first name in AsyncStorage
+    await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
+    navigation.replace('StartPage');
   };
 
   return (
@@ -61,9 +66,20 @@ const LoginPage = () => {
         />
         <Text style={styles.title}>
           <Text style={{ color: '#ff0000' }}>Robo Raiders</Text>
-          <Text style={{ color: '#ffffff' }}>: Login</Text>
+          <Text style={{ color: '#ffffff' }}>: Register</Text>
         </Text>
         
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>First Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your first name"
+            value={firstName}
+            onChangeText={setFirstName}
+            autoCapitalize="words"
+          />
+        </View>
+
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Username</Text>
           <TextInput
@@ -94,11 +110,30 @@ const LoginPage = () => {
           </View>
         </View>
 
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Confirm Password</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showConfirmPassword}
+            />
+            <TouchableOpacity 
+              style={styles.eyeButton}
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <Text style={styles.eyeIcon}>{showConfirmPassword ? '🚫👁️‍🗨️' : '👁️‍🗨️'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <TouchableOpacity 
           style={styles.loginButton}
-          onPress={handleLogin}
+          onPress={handleRegister}
         >
-          <Text style={styles.loginButtonText}>Login</Text>
+          <Text style={styles.loginButtonText}>Register</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -180,4 +215,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginPage;
+export default RegisterPage;

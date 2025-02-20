@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const CircularProgressBar = ({ total, current, label, color }) => {
@@ -85,8 +86,9 @@ const AllianceMeter = ({ redMatches, blueMatches }) => {
 };
 
 
-const Profile = () => {
+const Profile = ({ route }) => {
  const navigation = useNavigation();
+ const [firstName, setFirstName] = useState('');
  const totalMatches = 420; // Total matches (arbitrary value)
  const redMatches = 1; // Red Alliance matches (arbitrary value)
  const blueMatches = 1; // Blue Alliance matches (arbitrary value)
@@ -104,6 +106,34 @@ const Profile = () => {
  let scoutingLevel;
 
 
+ useEffect(() => {
+   const fetchUserData = async () => {
+     try {
+       const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+       if (accessToken) {
+         const response = await fetch('http://10.75.226.156:5001/who_am_i', {
+           method: 'GET',
+           headers: {
+             'Authorization': `Bearer ${accessToken}`
+           }
+         });
+
+         if (response.ok) {
+           const userData = await response.json();
+           setFirstName(userData.first_name);
+         } else {
+           console.error('Failed to fetch user data');
+         }
+       }
+     } catch (error) {
+       console.error('Error fetching user data:', error);
+     }
+   };
+
+   fetchUserData();
+ }, []);
+
+
  if (currentMinutes <= 60) {
    scoutingLevel = "Clapped Scouter";
  } else if (currentMinutes >= 60 && currentMinutes <= 120) {
@@ -118,7 +148,7 @@ const Profile = () => {
  return (
    <View style={styles.container}>
      <View style={styles.headerContainer}>
-       <Text style={styles.boldGreeting}>Hi, Neel</Text>
+       <Text style={styles.boldGreeting}>Hi, {firstName}</Text>
        <Text style={styles.statsText}>Your Scouting Stats:</Text>
      </View>
      <View style={styles.progressBarContainer}>

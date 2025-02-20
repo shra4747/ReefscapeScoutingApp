@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import RegisterPage from './screens/RegisterPage';
 import LoginPage from './screens/LoginPage';
 import StartPage from './screens/StartPage';
 import Auto from './screens/Auto';
@@ -14,14 +15,70 @@ import PostGame from './screens/PostGame';
 import Confirmation from './screens/Confirmation';
 import Profile from './screens/Profile';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
+
 const Stack = createNativeStackNavigator();
 
 const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [initialRoute, setInitialRoute] = useState('RegisterPage');
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+        console.log(accessToken)
+        
+        if (accessToken) {
+          // Try to validate the token with your API
+          const response = await fetch('http://10.75.226.156:5001/who_am_i', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+
+          if (response.ok) {
+            setInitialRoute('StartPage');
+            console.log("Startpage")
+          } else {
+            setInitialRoute('LoginPage');
+            console.log("LoginPage")
+          }
+        } else {
+          setInitialRoute('RegisterPage');
+          console.log("Startpage")
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setInitialRoute('LoginPage');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
         <StatusBar backgroundColor="#000000" barStyle="light-content" />
-        <Stack.Navigator initialRouteName="LoginPage">
+        <Stack.Navigator initialRouteName={initialRoute}>
+          <Stack.Screen 
+            name="RegisterPage" 
+            component={RegisterPage} 
+            options={{ headerShown: false }}
+          />
           <Stack.Screen 
             name="LoginPage" 
             component={LoginPage} 
@@ -83,9 +140,13 @@ const App = () => {
   );
 };
 
-export default App;
-
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
@@ -93,3 +154,5 @@ const styles = StyleSheet.create({
     margin: 0,
   },
 });
+
+export default App;

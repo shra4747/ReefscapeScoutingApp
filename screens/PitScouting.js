@@ -167,18 +167,13 @@ const PitScouting = () => {
 
  const renderContent = () => (
    <View style={styles.contentContainer}>
-     <View style={[styles.centeredInputContainer, { marginTop: 80 }]}>
-       <Text style={styles.centeredTitle}>Scouter ID</Text>
-       <TextInput
-         style={styles.centeredInput}
-         keyboardType="numeric"
-         placeholder="Enter scouter ID"
-         value={scouterID}
-         onChangeText={handleScouterIDChange}
-         maxLength={5}
-       />
-     </View>
-     <View style={styles.centeredInputContainer}>
+     <TouchableOpacity 
+       style={styles.backButton}
+       onPress={() => navigation.goBack()}
+     >
+       <Text style={styles.backButtonText}>← Back</Text>
+     </TouchableOpacity>
+     <View style={[styles.centeredInputContainer, { marginTop: 20 }]}>
        <Text style={styles.centeredTitle}>Team Number</Text>
        <TextInput
          style={styles.centeredInput}
@@ -186,6 +181,17 @@ const PitScouting = () => {
          placeholder="Enter team number"
          value={teamNumber}
          onChangeText={handleTeamNumberChange}
+         maxLength={5}
+       />
+     </View>
+     <View style={styles.centeredInputContainer}>
+       <Text style={styles.centeredTitle}>Scouter ID</Text>
+       <TextInput
+         style={styles.centeredInput}
+         keyboardType="numeric"
+         placeholder="Enter scouter ID"
+         value={scouterID}
+         onChangeText={handleScouterIDChange}
          maxLength={5}
        />
      </View>
@@ -268,9 +274,9 @@ const PitScouting = () => {
            step={1}
            value={cycleTime}
            onValueChange={(value) => setCycleTime(value)}
-           minimumTrackTintColor="#000000"
+           minimumTrackTintColor="#ff0000"
            maximumTrackTintColor="#CCCCCC"
-           thumbTintColor="#000000"
+           thumbTintColor="#ff0000"
          />
        </View>
      </View>
@@ -284,9 +290,9 @@ const PitScouting = () => {
            step={1}
            value={driverExperience}
            onValueChange={(value) => setDriverExperience(value)}
-           minimumTrackTintColor="#000000"
+           minimumTrackTintColor="#ff0000"
            maximumTrackTintColor="#CCCCCC"
-           thumbTintColor="#000000"
+           thumbTintColor="#ff0000"
          />
        </View>
      </View>
@@ -297,7 +303,7 @@ const PitScouting = () => {
            <CheckBox
              value={shallowHang}
              onValueChange={setShallowHang}
-             tintColors={{ true: '#000000', false: '#000000' }}
+             color={shallowHang ? '#ff0000' : undefined}
              style={{ width: 24, height: 24 }}
            />
            <Text style={styles.checkboxLabel}>Shallow</Text>
@@ -306,7 +312,7 @@ const PitScouting = () => {
            <CheckBox
              value={deepHang}
              onValueChange={setDeepHang}
-             tintColors={{ true: '#000000', false: '#000000' }}
+             color={deepHang ? '#ff0000' : undefined}
              style={{ width: 24, height: 24 }}
            />
            <Text style={styles.checkboxLabel}>Deep</Text>
@@ -320,7 +326,7 @@ const PitScouting = () => {
            <CheckBox
              value={hpPickup}
              onValueChange={setHpPickup}
-             tintColors={{ true: '#000000', false: '#000000' }}
+             color={hpPickup ? '#ff0000' : undefined}
              style={{ width: 24, height: 24 }}
            />
            <Text style={styles.checkboxLabel}>HP</Text>
@@ -329,7 +335,7 @@ const PitScouting = () => {
            <CheckBox
              value={groundPickup}
              onValueChange={setGroundPickup}
-             tintColors={{ true: '#000000', false: '#000000' }}
+             color={groundPickup ? '#ff0000' : undefined}
              style={{ width: 24, height: 24 }}
            />
            <Text style={styles.checkboxLabel}>Ground</Text>
@@ -343,7 +349,7 @@ const PitScouting = () => {
            <CheckBox
              value={coral}
              onValueChange={setCoral}
-             tintColors={{ true: '#000000', false: '#000000' }}
+             color={coral ? '#ff0000' : undefined}
              style={{ width: 24, height: 24 }}
            />
            <Text style={styles.checkboxLabel}>Coral</Text>
@@ -352,7 +358,7 @@ const PitScouting = () => {
            <CheckBox
              value={algae}
              onValueChange={setAlgae}
-             tintColors={{ true: '#000000', false: '#000000' }}
+             color={algae ? '#ff0000' : undefined}
              style={{ width: 24, height: 24 }}
            />
            <Text style={styles.checkboxLabel}>Algae</Text>
@@ -363,7 +369,7 @@ const PitScouting = () => {
            <CheckBox
              value={shooting}
              onValueChange={setShooting}
-             tintColors={{ true: '#000000', false: '#000000' }}
+             color={shooting ? '#ff0000' : undefined}
              style={{ width: 24, height: 24 }}
            />
            <Text style={styles.checkboxLabel}>Shooting</Text>
@@ -379,8 +385,8 @@ const PitScouting = () => {
              <CheckBox
                value={L1}
                onValueChange={setL1}
+               color={L1 ? '#ff0000' : undefined}
                style={styles.checkbox}
-               tintColors={{ true: '#000000', false: '#000000' }}
              />
            </View>
            <View style={styles.checkboxContainer}>
@@ -388,8 +394,8 @@ const PitScouting = () => {
              <CheckBox
                value={L2}
                onValueChange={setL2}
+               color={L2 ? '#ff0000' : undefined}
                style={styles.checkbox}
-               tintColors={{ true: '#000000', false: '#000000' }}
              />
            </View>
          </View>
@@ -399,8 +405,8 @@ const PitScouting = () => {
              <CheckBox
                value={L3}
                onValueChange={setL3}
+               color={L3 ? '#ff0000' : undefined}
                style={styles.checkbox}
-               tintColors={{ true: '#000000', false: '#000000' }}
              />
            </View>
            <View style={styles.checkboxContainer}>
@@ -408,8 +414,8 @@ const PitScouting = () => {
              <CheckBox
                value={L4}
                onValueChange={setL4}
+               color={L4 ? '#ff0000' : undefined}
                style={styles.checkbox}
-               tintColors={{ true: '#000000', false: '#000000' }}
              />
            </View>
          </View>
@@ -436,10 +442,11 @@ const PitScouting = () => {
          renderItem={renderContent}
          keyExtractor={(item) => item.toString()}
          contentContainerStyle={styles.scrollContainer}
-         keyboardShouldPersistTaps="always"
+         keyboardShouldPersistTaps="handled"
          showsVerticalScrollIndicator={true}
          scrollEnabled={true}
          alwaysBounceVertical={true}
+         style={styles.scrollView}
        />
      </KeyboardAvoidingView>
    </TouchableWithoutFeedback>
@@ -450,6 +457,7 @@ const PitScouting = () => {
 const styles = StyleSheet.create({
  container: {
    flex: 1,
+   backgroundColor: '#000000',
  },
  scrollContainer: {
    alignItems: 'center',
@@ -462,21 +470,23 @@ const styles = StyleSheet.create({
  centeredTitle: {
    alignSelf: 'center',
    marginBottom: 8,
-   color: 'black',
+   color: '#ffffff',
  },
  centeredInput: {
    height: 40,
-   borderColor: 'gray',
+   borderColor: '#ccc',
    borderWidth: 1,
    width: 300,
    paddingLeft: 8,
    textAlign: 'center',
+   backgroundColor: '#ffffff',
+   color: '#000000',
  },
  rowContainer: {
    flexDirection: 'row',
    justifyContent: 'space-between',
    marginTop: 20,
-   width: '90%',
+   width: '100%',
  },
  pickerColumn: {
    alignItems: 'center',
@@ -485,22 +495,24 @@ const styles = StyleSheet.create({
  pickerTitle: {
    alignSelf: 'center',
    marginBottom: 8,
-   color: 'black',
+   color: '#ffffff',
  },
  picker: {
-   height: 150, // Height of the picker
+   height: 150,
    width: '100%',
+   backgroundColor: '#ffffff',
  },
  pickerItem: {
-   fontSize: 24, // Larger font size for better visibility
-   textAlign: 'center', // Center the text in the wheel
+   fontSize: 24,
+   textAlign: 'center',
+   color: '#000000',
  },
  dropdownTitle: {
    fontSize: 20,
    fontWeight: '600',
    alignSelf: 'center',
    marginBottom: 5,
-   color: 'black',
+   color: '#ffffff',
  },
  dropdown: {
    borderColor: 'gray',
@@ -517,7 +529,7 @@ const styles = StyleSheet.create({
    height: 40,
  },
  submitButton: {
-   backgroundColor: '#000000',
+   backgroundColor: '#ff0000',
    padding: 15,
    borderRadius: 10,
    width: '80%',
@@ -539,7 +551,7 @@ const styles = StyleSheet.create({
  hangTitle: {
    fontSize: 20,
    fontWeight: '600',
-   color: 'black',
+   color: '#ffffff',
    marginBottom: 20,
    textAlign: 'center',
  },
@@ -556,7 +568,7 @@ const styles = StyleSheet.create({
  checkboxLabel: {
    marginLeft: 12,
    fontSize: 18,
-   color: 'black',
+   color: '#ffffff',
  },
  checkboxRow: {
    flexDirection: 'row',
@@ -573,6 +585,7 @@ const styles = StyleSheet.create({
  checkbox: {
    width: 24,
    height: 24,
+   tintColor: '#ff0000',
  },
  coralLevelContainer: {
    width: '80%',
@@ -582,7 +595,7 @@ const styles = StyleSheet.create({
  coralLevelTitle: {
    fontSize: 20,
    fontWeight: '600',
-   color: 'black',
+   color: '#ffffff',
    marginBottom: 10,
    textAlign: 'center',
  },
@@ -605,10 +618,27 @@ const styles = StyleSheet.create({
  checkbox: {
    width: 24,
    height: 24,
+   tintColor: '#ff0000',
  },
  checkboxLabel: {
    fontSize: 20,
-   color: 'black',
+   color: '#ffffff',
+ },
+ backButton: {
+   marginTop: 75,
+   alignSelf: 'center',
+   padding: 10,
+   backgroundColor: '#ff0000',
+   borderRadius: 5,
+   zIndex: 1000,
+ },
+ backButtonText: {
+   color: '#ffffff',
+   fontSize: 16,
+   fontWeight: 'bold',
+ },
+ scrollView: {
+   width: '100%',
  },
 });
 
