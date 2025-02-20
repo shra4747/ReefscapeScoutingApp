@@ -89,9 +89,9 @@ const AllianceMeter = ({ redMatches, blueMatches }) => {
 const Profile = ({ route }) => {
  const navigation = useNavigation();
  const [firstName, setFirstName] = useState('');
- const totalMatches = 420; // Total matches (arbitrary value)
- const redMatches = 1; // Red Alliance matches (arbitrary value)
- const blueMatches = 1; // Blue Alliance matches (arbitrary value)
+ const totalMatches = 4; // Total matches (arbitrary value)
+ const redMatches = 50; // Red Alliance matches (arbitrary value)
+ const blueMatches = 100; // Blue Alliance matches (arbitrary value)
  const currentMinutes = (redMatches + blueMatches) * 2.5; // Current minutes as a fraction of totalMatches
 
 
@@ -154,13 +154,13 @@ const Profile = ({ route }) => {
      <View style={styles.progressBarContainer}>
        <CircularProgressBar
          total={100}
-         current={currentMinutes}
+         current={100}
          label="Minutes"
          color="#ff3030"
        />
        <CircularProgressBar
-         total={totalMatches}
-         current={totalMatchesScouted}
+         total={redMatches+blueMatches}
+         current={redMatches+blueMatches}
          label="Matches"
          color={progressBarColor}
        />

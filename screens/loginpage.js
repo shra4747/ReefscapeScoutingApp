@@ -28,18 +28,24 @@ const LoginPage = () => {
         },
         body: JSON.stringify(loginData),
       });
+    const res = await loginResponse.json();
 
+    // console.log(await loginResponse.json())
     if (!loginResponse.ok) {
-      alert('Error registering. Please try again.');
+      alert(res.message);
       return;
     }
 
-    const res = await loginResponse.json();
-    console.log(res);
-    const access_token = res['access_token'];
+    try {
+      const _ = res['access_token'];
+    }
+    catch (error) {
+      alert(res.message);
+    }
     
     try {
       // Store the access token in AsyncStorage
+      const access_token = res['access_token'];
       await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
       console.log('Access token stored successfully');
       navigation.replace('StartPage');
