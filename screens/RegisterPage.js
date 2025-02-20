@@ -14,6 +14,12 @@ const RegisterPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async () => {
+    // Add validation for empty fields
+    if (!firstName.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
+      alert('Please fill in all fields');
+      return;
+    }
+
     if (password !== confirmPassword) {
       alert('Passwords do not match!');
       return;

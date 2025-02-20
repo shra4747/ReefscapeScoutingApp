@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 const LoginPage = () => {
   const navigation = useNavigation();
@@ -61,6 +62,14 @@ const LoginPage = () => {
       style={styles.container}
     >
       <View style={styles.innerContainer}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.replace('RegisterPage')}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
+          <Text style={styles.backButtonText}>Registration</Text>
+        </TouchableOpacity>
+        
         <Image
           source={require('../assets/Team75LogoVUSE.png')}
           style={styles.logo}
@@ -183,6 +192,21 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     fontSize: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ff0000',
+    padding: 10,
+    borderRadius: 5,
+  },
+  backButtonText: {
+    color: '#ffffff',
+    marginLeft: 5,
+    fontSize: 16,
   },
 });
 
