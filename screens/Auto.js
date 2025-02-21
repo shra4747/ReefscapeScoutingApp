@@ -637,7 +637,7 @@ const Auto = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Station Type</Text>
-            {['HP Station Closer to Barge', 'HP Station Further from Barge'].map((stationType) => (
+            {['Close Processor', 'Far Processor'].map((stationType) => (
               <TouchableOpacity
                 key={stationType}
                 style={styles.driveStationButton}
