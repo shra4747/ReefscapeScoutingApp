@@ -228,6 +228,13 @@ const PitScouting = () => {
       //   password: "75" // Assuming driverExperience is used as the password
       // };
 
+      const loginResponse = await fetch('http://10.0.0.215:5001/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData),
+      });
       // const loginResponse = await fetch('http://10.75.226.156:5001/login', {
       //   method: 'POST',
       //   headers: {
@@ -244,6 +251,14 @@ const PitScouting = () => {
       // const access_token = x['access_token']
     
 
+      const response = await fetch('http://10.0.0.215:5001/pit_scout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${access_token}`
+        },
+        body: JSON.stringify({ pit_scout: pitData }),
+      });
       // const response = await fetch('http://10.75.226.156:5001/pit_scout', {
       //   method: 'POST',
       //   headers: {

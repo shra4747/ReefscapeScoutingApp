@@ -54,6 +54,7 @@ const StartPage = () => {
     const newData = {
       match_number: valueMatch,
       team_number: valueTeam,
+      match_start_time: new Date().toISOString(),
       alliance_color: allianceColor,
     };
 
