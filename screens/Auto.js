@@ -13,7 +13,7 @@ const Auto = () => {
   const [stationCount, setStationCount] = useState(0);
   const [groundCount, setGroundCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-100)).current;
+  const slideAnim = useRef(new Animated.Value(-150)).current;
   const navigation = useNavigation();
   const [selectedSection, setSelectedSection] = useState(null);
   const [reef, setReef] = useState([]);
@@ -26,6 +26,7 @@ const Auto = () => {
   const [groundData, setGroundData] = useState([]);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
+  const [driverStation, setDriverStation] = useState(null); // New state for driver station
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -42,27 +43,42 @@ const Auto = () => {
     retrieveAllianceColor();
   }, []);
 
+  useEffect(() => {
+    const retrieveDriverStation = async () => {
+      try {
+        const station = await AsyncStorage.getItem('DRIVER_STATION');
+        if (station !== null) {
+          setDriverStation(station);
+        }
+      } catch (error) {
+        console.error('Error retrieving driver station:', error);
+      }
+    };
+
+    retrieveDriverStation();
+  }, []);
+
   // Use allianceColor to set global_color
   const global_color = allianceColor === "Blue" ? "#308aff" : "#ff3030"; // Adjust based on your needs
 
   useEffect(() => {
     retrieveReefData();
     
-    // if (showNotification) {
-    //   Animated.sequence([
-    //     Animated.timing(slideAnim, {
-    //       toValue: 0,
-    //       duration: 300,
-    //       useNativeDriver: true,
-    //     }),
-    //     Animated.delay(2000),
-    //     Animated.timing(slideAnim, {
-    //       toValue: -100,
-    //       duration: 300,
-    //       useNativeDriver: true,
-    //     })
-    //   ]).start(() => setShowNotification(false));
-    // }
+    if (showNotification) {
+      Animated.sequence([
+        Animated.timing(slideAnim, {
+          toValue: 50,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(2000),
+        Animated.timing(slideAnim, {
+          toValue: -150,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start(() => setShowNotification(false));
+    }
   }, [showNotification]);
 
   const retrieveReefData = async () => {
@@ -169,13 +185,63 @@ const Auto = () => {
   //   'ML': 'BL'
   // };
 
-  const handleUndo = () => {
-    const newReef = reef.slice(0, -1);
-    setReef(newReef);
-    storeReefData(newReef);
-    setCurrentAction({});
-    setSelectedSection(null);
-    setShowNotification(true);
+  const handleUndo = async () => {
+    try {
+        // Get both REEF and PROCESSOR data
+        const reefValue = await AsyncStorage.getItem('REEF_DATA');
+        const processorValue = await AsyncStorage.getItem('PROCESSOR_DATA');
+        
+        let reefData = reefValue ? JSON.parse(reefValue) : [];
+        let processorData = processorValue ? JSON.parse(processorValue) : [];
+
+        console.log(JSON.stringify(reefData))
+        console.log(JSON.stringify(processorData))
+        // Find the most recent action across both lists
+        let mostRecentAction = null;
+        let actionType = null;
+        
+        // Check last reef action
+        if (reefData.length > 0) {
+            const lastReef = reefData[reefData.length - 1];
+            if (!mostRecentAction || new Date(lastReef.timestamp).getTime() > new Date(mostRecentAction.timestamp).getTime()) {
+                mostRecentAction = lastReef;
+                actionType = 'REEF';
+            }
+        }
+
+        console.log("reef" + JSON.stringify(mostRecentAction))
+        
+        // Check last processor action
+        if (processorData.length > 0) {
+            const lastProcessor = processorData[processorData.length - 1];
+            if (!mostRecentAction || new Date(lastProcessor.timestamp).getTime() > new Date(mostRecentAction.timestamp).getTime()) {
+                mostRecentAction = lastProcessor;
+                actionType = 'PROCESSOR';
+            }
+        }
+
+        console.log("prces" + JSON.stringify(mostRecentAction))
+        
+        if (mostRecentAction) {
+            if (actionType === 'REEF') {
+                // Remove last reef action
+                reefData = reefData.slice(0, -1);
+                await AsyncStorage.setItem('REEF_DATA', JSON.stringify(reefData));
+                setReef(reefData);
+                setShowNotification(`REEF action undone: ${mostRecentAction.slice} ${mostRecentAction.level}`);
+            } else {
+                // Remove last processor action
+                processorData = processorData.slice(0, -1);
+                await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(processorData));
+                setShowNotification(`PROCESSOR action undone: ${mostRecentAction.action}`);
+            }
+        } else {
+            setShowNotification('No actions to undo');
+        }
+    } catch (error) {
+        console.error('Error undoing last action:', error);
+        setShowNotification('Error undoing last action');
+    }
   };
 
   // SVG paths for each hexagon section
@@ -279,7 +345,7 @@ const Auto = () => {
   const handleProcessorAction = async (action) => {
     const processorData = {
       action: action,
-      phase: "auto",
+      phase: "teleop",
       timestamp: new Date().toISOString()
     };
 
@@ -293,10 +359,20 @@ const Auto = () => {
       
       updatedData.push(processorData);
       await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
+      console.log('Processor Data:', updatedData);
       setShowProcessorModal(false);
       
     } catch (error) {
       console.error('Error storing processor data:', error);
+    }
+  };
+
+  // Use allianceColor and driverStation to set the image source
+  const imageSource = () => {
+    if (allianceColor === "Red") {
+      return driverStation === "Right" ? require('../assets/Redreverse.png') : require('../assets/RedReefVUSE.png');
+    } else {
+      return driverStation === "Right" ? require('../assets/bluereverse.png') : require('../assets/BlueReefVUSE.png');
     }
   };
 
@@ -543,7 +619,7 @@ const Auto = () => {
           transform: [{ translateY: slideAnim }]
         }
       ]}>
-        <Text style={styles.notificationText}>Last action has been undone</Text>
+        <Text style={styles.notificationText}>{showNotification}</Text>
       </Animated.View>
 
       <Text style={styles.title}>Autonomous</Text>
@@ -566,10 +642,7 @@ const Auto = () => {
         onLayout={handleImageLayout}
       >
         <Image
-          source={allianceColor === "Blue" ? 
-            require('../assets/BlueReefVUSE.png') : 
-            require('../assets/RedReefVUSE.png')
-          }
+          source={imageSource()}
           style={styles.image}
           resizeMode="contain"
         />

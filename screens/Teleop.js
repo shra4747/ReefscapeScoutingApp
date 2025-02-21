@@ -13,7 +13,7 @@ const Teleop = () => {
   const [stationCount, setStationCount] = useState(0);
   const [groundCount, setGroundCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-100)).current;
+  const slideAnim = useRef(new Animated.Value(-150)).current;
   const navigation = useNavigation();
   const [selectedSection, setSelectedSection] = useState(null);
   const [reef, setReef] = useState([]);
@@ -21,6 +21,7 @@ const Teleop = () => {
   const [showProcessorModal, setShowProcessorModal] = useState(false);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
+  const [driverStation, setDriverStation] = useState(null); // New state for driver station
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -37,27 +38,51 @@ const Teleop = () => {
     retrieveAllianceColor();
   }, []);
 
+  useEffect(() => {
+    const retrieveDriverStation = async () => {
+      try {
+        const station = await AsyncStorage.getItem('DRIVER_STATION');
+        if (station !== null) {
+          setDriverStation(station);
+        }
+      } catch (error) {
+        console.error('Error retrieving driver station:', error);
+      }
+    };
+
+    retrieveDriverStation();
+  }, []);
+
   // Use allianceColor to set global_color
   const global_color = allianceColor === "Blue" ? "#308aff" : "#ff3030"; // Adjust based on your needs
+
+  // Use allianceColor and driverStation to set the image source
+  const imageSource = () => {
+    if (allianceColor === "Red") {
+      return driverStation === "Right" ? require('../assets/Redreverse.png') : require('../assets/RedReefVUSE.png');
+    } else {
+      return driverStation === "Right" ? require('../assets/bluereverse.png') : require('../assets/BlueReefVUSE.png');
+    }
+  };
 
   useEffect(() => {
     retrieveReefData();
     
-    // if (showNotification) {
-    //   Animated.sequence([
-    //     Animated.timing(slideAnim, {
-    //       toValue: 0,
-    //       duration: 300,
-    //       useNativeDriver: true,
-    //     }),
-    //     Animated.delay(2000),
-    //     Animated.timing(slideAnim, {
-    //       toValue: -100,
-    //       duration: 300,
-    //       useNativeDriver: true,
-    //     })
-    //   ]).start(() => setShowNotification(false));
-    // }
+    if (showNotification) {
+      Animated.sequence([
+        Animated.timing(slideAnim, {
+          toValue: 50,  // Match Auto's value
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(2000),
+        Animated.timing(slideAnim, {
+          toValue: -150,  // Match Auto's value
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start(() => setShowNotification(false));
+    }
   }, [showNotification]);
 
   const retrieveReefData = async () => {
@@ -168,13 +193,57 @@ const Teleop = () => {
   //   'ML': 'BL'
   // };
 
-  const handleUndo = () => {
-    const newReef = reef.slice(0, -1);
-    setReef(newReef);
-    storeReefData(newReef);
-    setCurrentAction({});
-    setSelectedSection(null);
-    setShowNotification(true);
+  const handleUndo = async () => {
+    try {
+        // Get both REEF and PROCESSOR data
+        const reefValue = await AsyncStorage.getItem('REEF_DATA');
+        const processorValue = await AsyncStorage.getItem('PROCESSOR_DATA');
+        
+        let reefData = reefValue ? JSON.parse(reefValue) : [];
+        let processorData = processorValue ? JSON.parse(processorValue) : [];
+        
+        // Find the most recent action across both lists
+        let mostRecentAction = null;
+        let actionType = null;
+        
+        // Check last reef action
+        if (reefData.length > 0) {
+            const lastReef = reefData[reefData.length - 1];
+            if (!mostRecentAction || new Date(lastReef.timestamp) > new Date(mostRecentAction.timestamp)) {
+                mostRecentAction = lastReef;
+                actionType = 'REEF';
+            }
+        }
+        
+        // Check last processor action
+        if (processorData.length > 0) {
+            const lastProcessor = processorData[processorData.length - 1];
+            if (!mostRecentAction || new Date(lastProcessor.timestamp) > new Date(mostRecentAction.timestamp)) {
+                mostRecentAction = lastProcessor;
+                actionType = 'PROCESSOR';
+            }
+        }
+        
+        if (mostRecentAction) {
+            if (actionType === 'REEF') {
+                // Remove last reef action
+                reefData = reefData.slice(0, -1);
+                await AsyncStorage.setItem('REEF_DATA', JSON.stringify(reefData));
+                setReef(reefData);
+                setShowNotification(`REEF action undone: ${mostRecentAction.slice} ${mostRecentAction.level}`);
+            } else {
+                // Remove last processor action
+                processorData = processorData.slice(0, -1);
+                await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(processorData));
+                setShowNotification(`PROCESSOR action undone: ${mostRecentAction.action}`);
+            }
+        } else {
+            setShowNotification('No actions to undo');
+        }
+    } catch (error) {
+        console.error('Error undoing last action:', error);
+        setShowNotification('Error undoing last action');
+    }
   };
 
   // SVG paths for each hexagon section
@@ -239,6 +308,7 @@ const Teleop = () => {
       
       updatedData.push(processorData);
       await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
+      console.log('Processor Data:', updatedData);
       setShowProcessorModal(false);
       
     } catch (error) {
@@ -491,7 +561,7 @@ const Teleop = () => {
           transform: [{ translateY: slideAnim }]
         }
       ]}>
-        <Text style={styles.notificationText}>Last action has been undone</Text>
+        <Text style={styles.notificationText}>{showNotification}</Text>
       </Animated.View>
 
       <Text style={styles.title}>Teleop</Text>
@@ -514,10 +584,7 @@ const Teleop = () => {
         onLayout={handleImageLayout}
       >
         <Image
-          source={allianceColor === "Blue" ? 
-            require('../assets/BlueReefVUSE.png') : 
-            require('../assets/RedReefVUSE.png')
-          }
+          source={imageSource()}
           style={styles.image}
           resizeMode="contain"
         />
