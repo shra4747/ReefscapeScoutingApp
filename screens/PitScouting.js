@@ -1,12 +1,14 @@
 // screens/BlankScreen.js
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker'; // Import Picker from the correct package
 import DropDownPicker from 'react-native-dropdown-picker';
 import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CheckBox from 'expo-checkbox';
+import * as ImagePicker from 'expo-image-picker';
+import placeholder from '../assets/placeholder.jpg'; // Make sure to add this image to your assets
 
 
 const PitScouting = () => {
@@ -45,6 +47,7 @@ const PitScouting = () => {
  const [L4, setL4] = useState(false);
  // Remove the Autonomous Start dropdown state and add notes state
  const [notes, setNotes] = useState('');
+ const [images, setImages] = useState([]); // Changed from single image to array
 
 
  const handleTeamNumberChange = (text) => {
@@ -92,6 +95,103 @@ const PitScouting = () => {
  };
 
 
+ // Convert image URI to base64
+ const convertImageToBase64 = async (uri) => {
+   try {
+     const response = await fetch(uri);
+     const blob = await response.blob();
+     return new Promise((resolve, reject) => {
+       const reader = new FileReader();
+       reader.onload = () => resolve(reader.result);
+       reader.onerror = (error) => reject(error);
+       reader.readAsDataURL(blob);
+     });
+   } catch (error) {
+     console.error('Error converting image to base64:', error);
+     return null;
+   }
+ };
+
+
+ const handleImageUpload = async (source) => {
+   try {
+     let result;
+     if (source === 'camera') {
+       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+       if (!cameraPermission.granted) {
+         alert('Camera permission is required to take photos');
+         return;
+       }
+       result = await ImagePicker.launchCameraAsync({
+         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+         allowsEditing: true,
+         aspect: [4, 3],
+         quality: 1,
+         allowsMultipleSelection: true, // Enable multiple selection
+       });
+     } else if (source === 'gallery') {
+       const galleryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+       if (!galleryPermission.granted) {
+         alert('Gallery permission is required to select photos');
+         return;
+       }
+       result = await ImagePicker.launchImageLibraryAsync({
+         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+         allowsEditing: true,
+         aspect: [4, 3],
+         quality: 1,
+         allowsMultipleSelection: true, // Enable multiple selection
+       });
+     } else if (source === 'remove') {
+       setImages([]);
+       return;
+     }
+
+     if (!result.canceled) {
+       const newImages = await Promise.all(
+         result.assets.map(async (asset) => {
+           const base64 = await convertImageToBase64(asset.uri);
+           return base64;
+         })
+       );
+       setImages(prevImages => [...prevImages, ...newImages]);
+     }
+   } catch (error) {
+     console.error('Error uploading image:', error);
+     alert('Error uploading image. Please try again.');
+   }
+ };
+
+ const removeImage = (index) => {
+   setImages(prevImages => prevImages.filter((_, i) => i !== index));
+ };
+
+ const showImageOptions = () => {
+   Alert.alert(
+     'Upload Image',
+     'Choose an option',
+     [
+       {
+         text: 'Use Camera',
+         onPress: () => handleImageUpload('camera'),
+       },
+       {
+         text: 'Choose from Gallery',
+         onPress: () => handleImageUpload('gallery'),
+       },
+       {
+         text: 'Remove ALL Images',
+         onPress: () => handleImageUpload('remove'),
+         style: 'destructive',
+       },
+       {
+         text: 'Cancel',
+         style: 'cancel',
+       },
+     ]
+   );
+ };
+
  const handleSubmit = async () => {
    // Validate all fields
    if (!teamNumber || !scouterID || !height || !length || !width ||
@@ -117,46 +217,49 @@ const PitScouting = () => {
         pickup_ground:groundPickup,
         can_coral:coral,
         can_algae:algae,
-        can_shoot_in_net:shooting
+        can_shoot_in_net:shooting,
+        images: images, // Add base64 encoded images to the data
       };
 
-      const loginData = {
-        username: "roshi-boshi", // Assuming scouterID is used as the username
-        password: "75" // Assuming driverExperience is used as the password
-      };
+      console.log(pitData)
 
-      const loginResponse = await fetch('http://10.75.226.156:5001/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginData),
-      });
+      // const loginData = {
+      //   username: "roshi-boshi", // Assuming scouterID is used as the username
+      //   password: "75" // Assuming driverExperience is used as the password
+      // };
 
-      if (!loginResponse.ok) {
-        alert('Error saving data. Please try again.');
-      }
+      // const loginResponse = await fetch('http://10.75.226.156:5001/login', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(loginData),
+      // });
 
-      const x = await loginResponse.json();
-      const access_token = x['access_token']
+      // if (!loginResponse.ok) {
+      //   alert('Error saving data. Please try again.');
+      // }
+
+      // const x = await loginResponse.json();
+      // const access_token = x['access_token']
     
 
-      const response = await fetch('http://10.75.226.156:5001/pit_scout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`
-        },
-        body: JSON.stringify({ pit_scout: pitData }),
-      });
+      // const response = await fetch('http://10.75.226.156:5001/pit_scout', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${access_token}`
+      //   },
+      //   body: JSON.stringify({ pit_scout: pitData }),
+      // });
 
-      if (!response.ok) {
-        alert('Error saving data. Please try again.');
-      }
-      // Store the data in AsyncStorage
+      // if (!response.ok) {
+      //   alert('Error saving data. Please try again.');
+      // }
+      // // Store the data in AsyncStorage
       // await AsyncStorage.setItem('PIT_DATA', JSON.stringify(pitData));
       // console.log('Pit Scouting Data Saved:', pitData);
-      alert(`Pit Scouting Saved for Team ${teamNumber}`)
+      // alert(`Pit Scouting Saved for Team ${teamNumber}`)
       // Navigate back to StartPage
       navigation.navigate('StartPage');
     } catch (error) {
@@ -164,6 +267,24 @@ const PitScouting = () => {
       alert('Error saving data. Please try again.');
     }
   };
+
+  // When loading the component, retrieve images from AsyncStorage
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        const storedData = await AsyncStorage.getItem('PIT_DATA');
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          if (parsedData.images) {
+            setImages(parsedData.images);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading images:', error);
+      }
+    };
+    loadImages();
+  }, []);
 
  const renderContent = () => (
    <View style={styles.contentContainer}>
@@ -422,6 +543,32 @@ const PitScouting = () => {
        </View>
      </View>
      <TouchableOpacity
+       style={styles.imageUploadButton}
+       onPress={showImageOptions}
+     >
+       <Text style={styles.imageUploadButtonText}>
+         {images.length > 0 ? 'Add More Images' : 'Upload Images'}
+       </Text>
+     </TouchableOpacity>
+     {images.length > 0 && (
+       <View style={styles.imageGrid}>
+         {images.map((imageBase64, index) => (
+           <View key={index} style={styles.imageContainer}>
+             <Image
+               source={{ uri: imageBase64 }}
+               style={styles.imagePreview}
+             />
+             <TouchableOpacity
+               style={styles.removeImageButton}
+               onPress={() => removeImage(index)}
+             >
+               <Text style={styles.removeImageButtonText}>×</Text>
+             </TouchableOpacity>
+           </View>
+         ))}
+       </View>
+     )}
+     <TouchableOpacity
        style={styles.submitButton}
        onPress={handleSubmit}
      >
@@ -639,6 +786,53 @@ const styles = StyleSheet.create({
  },
  scrollView: {
    width: '100%',
+ },
+ imageUploadButton: {
+   backgroundColor: '#007AFF',
+   padding: 15,
+   borderRadius: 10,
+   width: '80%',
+   alignItems: 'center',
+   marginTop: 20,
+   marginBottom: 20,
+   alignSelf: 'center',
+ },
+ imageUploadButtonText: {
+   color: '#ffffff',
+   fontSize: 16,
+   fontWeight: 'bold',
+ },
+ imageGrid: {
+   flexDirection: 'row',
+   flexWrap: 'wrap',
+   justifyContent: 'center',
+   marginBottom: 20,
+ },
+ imageContainer: {
+   position: 'relative',
+   margin: 5,
+ },
+ imagePreview: {
+   width: 100,
+   height: 100,
+   borderRadius: 10,
+ },
+ removeImageButton: {
+   position: 'absolute',
+   top: 5,
+   right: 5,
+   backgroundColor: 'rgba(255, 0, 0, 0.8)',
+   width: 20,
+   height: 20,
+   borderRadius: 10,
+   justifyContent: 'center',
+   alignItems: 'center',
+ },
+ removeImageButtonText: {
+   color: '#ffffff',
+   fontSize: 16,
+   fontWeight: 'bold',
+   lineHeight: 18,
  },
 });
 
