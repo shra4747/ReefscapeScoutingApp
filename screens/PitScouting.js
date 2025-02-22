@@ -1,6 +1,6 @@
 // screens/BlankScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
 import { Picker } from '@react-native-picker/picker'; // Import Picker from the correct package
 import DropDownPicker from 'react-native-dropdown-picker';
 import Slider from '@react-native-community/slider';
@@ -8,7 +8,6 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CheckBox from 'expo-checkbox';
 import * as ImagePicker from 'expo-image-picker';
-import placeholder from '../assets/placeholder.jpg'; // Make sure to add this image to your assets
 
 
 const PitScouting = () => {
@@ -18,8 +17,8 @@ const PitScouting = () => {
  const [height, setHeight] = useState('42'); // State for Height
  const [length, setLength] = useState('30'); // State for Length
  const [width, setWidth] = useState('30'); // State for Width
- const [cycleTime, setCycleTime] = useState(0); // State for Cycle Time (now a slider)
- const [driverExperience, setDriverExperience] = useState(0); // State for Driver Experience
+ const [cycleTime, setCycleTime] = useState(10); // State for Cycle Time (now a slider)
+ const [driverExperience, setDriverExperience] = useState(1); // State for Driver Experience
  const [shallowHang, setShallowHang] = useState(false);
  const [deepHang, setDeepHang] = useState(false);
  const [hpPickup, setHpPickup] = useState(false);
@@ -45,8 +44,9 @@ const PitScouting = () => {
  const [L2, setL2] = useState(false);
  const [L3, setL3] = useState(false);
  const [L4, setL4] = useState(false);
- // Remove the Autonomous Start dropdown state and add notes state
- const [notes, setNotes] = useState('');
+ // Remove the Autonomous Start dropdown state and add auto_notes state
+ const [auto_notes, setauto_notes] = useState('');
+ const [notes, setnotes] = useState('');
  const [image, setImage] = useState(null); // Changed from images array to single image
 
 
@@ -181,7 +181,7 @@ const PitScouting = () => {
        team_number: parseInt(teamNumber, 10),
        event_code: "TEST",
        robot_height: parseInt(height, 10),
-       robot_dimensions: `${length} x ${width}`,
+       robot_dimensions: `${length}x${width}`,
        cycle_time: cycleTime,
        driver_experience: driverExperience,
        drive_train: driveTrainValue,
@@ -196,7 +196,8 @@ const PitScouting = () => {
        can_L2: L2, 
        can_L3: L3, 
        can_L4: L4,
-       auto_notes: notes
+       auto_auto_notes: auto_notes,
+       other_notes: notes
      };
 
      const formData = new FormData();
@@ -251,81 +252,73 @@ const PitScouting = () => {
  }, []);
 
  const renderContent = () => (
-   <View style={styles.contentContainer}>
+   <ScrollView 
+     contentContainerStyle={styles.scrollContainer}
+     showsVerticalScrollIndicator={false}
+   >
      <TouchableOpacity 
        style={styles.backButton}
        onPress={() => navigation.goBack()}
      >
        <Text style={styles.backButtonText}>← Back</Text>
      </TouchableOpacity>
-     <View style={[styles.centeredInputContainer, { marginTop: 20 }]}>
-       <Text style={styles.centeredTitle}>Team Number</Text>
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Team Info</Text>
        <TextInput
-         style={styles.centeredInput}
-         keyboardType="numeric"
-         placeholder="Enter team number"
+         style={styles.inputField}
+         placeholder="Team Number"
+         placeholderTextColor="#888"
          value={teamNumber}
          onChangeText={handleTeamNumberChange}
          maxLength={5}
        />
      </View>
-     <View style={styles.centeredInputContainer}>
-       <Text style={styles.centeredTitle}>Scouter ID</Text>
-       <TextInput
-         style={styles.centeredInput}
-         keyboardType="numeric"
-         placeholder="Enter scouter ID"
-         value={scouterID}
-         onChangeText={handleScouterIDChange}
-         maxLength={5}
-       />
-     </View>
-     <View style={styles.rowContainer}>
-       <View style={styles.pickerColumn}>
-         <Text style={styles.pickerTitle}>Length</Text>
-         <Picker
-           selectedValue={length}
-           style={styles.picker}
-           onValueChange={(itemValue) => setLength(itemValue)}
-           itemStyle={styles.pickerItem}
-           zIndex={1000}
-         >
-           {lengthNumbers.map((num) => (
-             <Picker.Item key={num} label={num} value={num} />
-           ))}
-         </Picker>
-       </View>
-       <View style={styles.pickerColumn}>
-         <Text style={styles.pickerTitle}>Width</Text>
-         <Picker
-           selectedValue={width}
-           style={styles.picker}
-           onValueChange={(itemValue) => setWidth(itemValue)}
-           itemStyle={styles.pickerItem}
-           zIndex={1000}
-         >
-           {widthNumbers.map((num) => (
-             <Picker.Item key={num} label={num} value={num} />
-           ))}
-         </Picker>
-       </View>
-       <View style={styles.pickerColumn}>
-         <Text style={styles.pickerTitle}>Height</Text>
-         <Picker
-           selectedValue={height}
-           style={styles.picker}
-           onValueChange={(itemValue) => setHeight(itemValue)}
-           itemStyle={styles.pickerItem}
-           zIndex={1000}
-         >
-           {heightNumbers.map((num) => (
-             <Picker.Item key={num} label={num} value={num} />
-           ))}
-         </Picker>
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Robot Dimensions (in)</Text>
+       <View style={styles.dimensionsContainer}>
+         <View style={styles.dimensionPicker}>
+           <Text style={styles.dimensionLabel}>Height</Text>
+           <Picker
+             selectedValue={height}
+             style={styles.picker}
+             onValueChange={setHeight}
+             itemStyle={styles.pickerItem}
+           >
+             {heightNumbers.map((num) => (
+               <Picker.Item key={num} label={num} value={num} />
+             ))}
+           </Picker>
+         </View>
+         <View style={styles.dimensionPicker}>
+           <Text style={styles.dimensionLabel}>Length</Text>
+           <Picker
+             selectedValue={length}
+             style={styles.picker}
+             onValueChange={setLength}
+             itemStyle={styles.pickerItem}
+           >
+             {lengthNumbers.map((num) => (
+               <Picker.Item key={num} label={num} value={num} />
+             ))}
+           </Picker>
+         </View>
+         <View style={styles.dimensionPicker}>
+           <Text style={styles.dimensionLabel}>Width</Text>
+           <Picker
+             selectedValue={width}
+             style={styles.picker}
+             onValueChange={setWidth}
+             itemStyle={styles.pickerItem}
+           >
+             {widthNumbers.map((num) => (
+               <Picker.Item key={num} label={num} value={num} />
+             ))}
+           </Picker>
+         </View>
        </View>
      </View>
-     <View style={[styles.centeredInputContainer, { marginTop: 60 }]}>
-       <Text style={styles.dropdownTitle}>Drive Train</Text>
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Drive Train</Text>
        <DropDownPicker
          open={openDriveTrain}
          value={driveTrainValue}
@@ -339,18 +332,67 @@ const PitScouting = () => {
          zIndex={3000}
        />
      </View>
-     <View style={styles.centeredInputContainer}>
-       <Text style={styles.dropdownTitle}>Autonomous Notes</Text>
-       <TextInput
-         style={[styles.centeredInput, { height: 100 }]}
-         placeholder="Enter notes here"
-         value={notes}
-         onChangeText={setNotes}
-         multiline={true}
-       />
+     <View style={styles.sectionContainer}>
+      <Text style={styles.sectionTitle}>Scoring Elements</Text>
+      <View style={styles.checkboxRow}>
+          <CheckboxItem label="Coral" value={coral} setValue={setCoral} />
+      </View>
+      <View style={styles.checkboxRow}>
+          <CheckboxItem label="Algae" value={algae} setValue={setAlgae} />
+      </View>
+      <View style={styles.checkboxRow}>
+           <CheckboxItem label="Shoot into Net" value={shooting} setValue={setShooting} />
+        </View>
      </View>
-     <View style={styles.centeredInputContainer}>
-       <Text style={styles.centeredTitle}>Cycle Time: {cycleTime}</Text>
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Coral Scoring</Text>
+       <View style={styles.branchContainer}>
+         <Image 
+           source={require('../assets/branch.png')}
+           style={styles.branchImage}
+         />
+         <View style={styles.verticalCheckboxes}>
+           <CheckboxItem label="L4" value={L4} setValue={setL4} />
+           <CheckboxItem label="L3" value={L3} setValue={setL3} />
+           <CheckboxItem label="L2" value={L2} setValue={setL2} />
+         </View>
+       </View>
+       <CheckboxItem label="L1" value={L1} setValue={setL1} />
+     </View>
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Intake</Text>
+       <View style={styles.checkboxGrid}>
+         
+         <View style={styles.checkboxRow}>
+           <CheckboxItem label="HP Pickup" value={hpPickup} setValue={setHpPickup} />
+           
+         </View>
+
+         <View style={styles.checkboxRow}>
+           <CheckboxItem label="Ground Pickup" value={groundPickup} setValue={setGroundPickup} />
+         </View>
+         
+       </View>
+     </View>
+
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Endgame</Text>
+       <View style={styles.checkboxGrid}>
+         
+         <View style={styles.checkboxRow}>
+         <CheckboxItem label="Shallow Hang" value={shallowHang} setValue={setShallowHang} />
+           
+         </View>
+
+         <View style={styles.checkboxRow}>
+         <CheckboxItem label="Deep Hang" value={deepHang} setValue={setDeepHang} />
+         </View>
+         
+       </View>
+     </View>
+     
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Cycle Time: {cycleTime} seconds</Text>
        <View style={styles.sliderContainer}>
          <Slider
            style={styles.slider}
@@ -365,8 +407,8 @@ const PitScouting = () => {
          />
        </View>
      </View>
-     <View style={styles.centeredInputContainer}>
-       <Text style={styles.centeredTitle}>Driver Experience: {driverExperience}</Text>
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Driver Experience: {driverExperience} year(s)</Text>
        <View style={styles.sliderContainer}>
          <Slider
            style={styles.slider}
@@ -381,137 +423,36 @@ const PitScouting = () => {
          />
        </View>
      </View>
-     <View style={styles.hangContainer}>
-       <Text style={styles.hangTitle}>Hang</Text>
-       <View style={styles.checkboxContainer}>
-         <View style={styles.checkboxWrapper}>
-           <CheckBox
-             value={shallowHang}
-             onValueChange={setShallowHang}
-             color={shallowHang ? '#ff0000' : undefined}
-             style={{ width: 24, height: 24 }}
-           />
-           <Text style={styles.checkboxLabel}>Shallow</Text>
-         </View>
-         <View style={styles.checkboxWrapper}>
-           <CheckBox
-             value={deepHang}
-             onValueChange={setDeepHang}
-             color={deepHang ? '#ff0000' : undefined}
-             style={{ width: 24, height: 24 }}
-           />
-           <Text style={styles.checkboxLabel}>Deep</Text>
-         </View>
-       </View>
+     
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Autonomous Paths</Text>
+       <TextInput
+         style={[styles.inputField, { height: 100 }]}
+         placeholder="Enter auto paths"
+         placeholderTextColor="#888"
+         value={auto_notes}
+         onChangeText={setauto_notes}
+         multiline={true}
+       />
      </View>
-     <View style={styles.hangContainer}>
-       <Text style={styles.hangTitle}>Pickup</Text>
-       <View style={styles.checkboxContainer}>
-         <View style={styles.checkboxWrapper}>
-           <CheckBox
-             value={hpPickup}
-             onValueChange={setHpPickup}
-             color={hpPickup ? '#ff0000' : undefined}
-             style={{ width: 24, height: 24 }}
-           />
-           <Text style={styles.checkboxLabel}>HP</Text>
-         </View>
-         <View style={styles.checkboxWrapper}>
-           <CheckBox
-             value={groundPickup}
-             onValueChange={setGroundPickup}
-             color={groundPickup ? '#ff0000' : undefined}
-             style={{ width: 24, height: 24 }}
-           />
-           <Text style={styles.checkboxLabel}>Ground</Text>
-         </View>
-       </View>
-     </View>
-     <View style={styles.hangContainer}>
-       <Text style={styles.hangTitle}>Gameplay</Text>
-       <View style={styles.checkboxContainer}>
-         <View style={styles.checkboxWrapper}>
-           <CheckBox
-             value={coral}
-             onValueChange={setCoral}
-             color={coral ? '#ff0000' : undefined}
-             style={{ width: 24, height: 24 }}
-           />
-           <Text style={styles.checkboxLabel}>Coral</Text>
-         </View>
-         <View style={styles.checkboxWrapper}>
-           <CheckBox
-             value={algae}
-             onValueChange={setAlgae}
-             color={algae ? '#ff0000' : undefined}
-             style={{ width: 24, height: 24 }}
-           />
-           <Text style={styles.checkboxLabel}>Algae</Text>
-         </View>
-       </View>
-       <View style={[styles.checkboxContainer, { justifyContent: 'center', marginTop: 30 }]}>
-         <View style={styles.checkboxWrapper}>
-           <CheckBox
-             value={shooting}
-             onValueChange={setShooting}
-             color={shooting ? '#ff0000' : undefined}
-             style={{ width: 24, height: 24 }}
-           />
-           <Text style={styles.checkboxLabel}>Shooting</Text>
-         </View>
-       </View>
-     </View>
-     <View style={styles.coralLevelContainer}>
-       <Text style={styles.coralLevelTitle}>Coral Level</Text>
-       <View style={styles.checkboxGrid}>
-         <View style={styles.checkboxRow}>
-           <View style={styles.checkboxContainer}>
-             <Text style={styles.checkboxLabel}>L1</Text>
-             <CheckBox
-               value={L1}
-               onValueChange={setL1}
-               color={L1 ? '#ff0000' : undefined}
-               style={styles.checkbox}
-             />
-           </View>
-           <View style={styles.checkboxContainer}>
-             <Text style={styles.checkboxLabel}>L2</Text>
-             <CheckBox
-               value={L2}
-               onValueChange={setL2}
-               color={L2 ? '#ff0000' : undefined}
-               style={styles.checkbox}
-             />
-           </View>
-         </View>
-         <View style={styles.checkboxRow}>
-           <View style={[styles.checkboxContainer, styles.alignL3]}>
-             <Text style={styles.checkboxLabel}>L3</Text>
-             <CheckBox
-               value={L3}
-               onValueChange={setL3}
-               color={L3 ? '#ff0000' : undefined}
-               style={styles.checkbox}
-             />
-           </View>
-           <View style={styles.checkboxContainer}>
-             <Text style={styles.checkboxLabel}>L4</Text>
-             <CheckBox
-               value={L4}
-               onValueChange={setL4}
-               color={L4 ? '#ff0000' : undefined}
-               style={styles.checkbox}
-             />
-           </View>
-         </View>
-       </View>
+
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Other Notes</Text>
+       <TextInput
+         style={[styles.inputField, { height: 100 }]}
+         placeholder="Enter other notes here"
+         placeholderTextColor="#888"
+         value={notes}
+         onChangeText={setnotes}
+         multiline={true}
+       />
      </View>
      <TouchableOpacity
        style={styles.imageUploadButton}
        onPress={showImageOptions}
      >
        <Text style={styles.imageUploadButtonText}>
-         {image ? 'Change Image' : 'Upload Image'}
+         {image ? 'Change Image' : 'Upload Robot Photo'}
        </Text>
      </TouchableOpacity>
      {image && (
@@ -520,12 +461,6 @@ const PitScouting = () => {
            source={{ uri: image.uri }}
            style={styles.imagePreview}
          />
-         <TouchableOpacity
-           style={styles.removeImageButton}
-           onPress={() => setImage(null)}
-         >
-           <Text style={styles.removeImageButtonText}>×</Text>
-         </TouchableOpacity>
        </View>
      )}
      <TouchableOpacity
@@ -534,7 +469,7 @@ const PitScouting = () => {
      >
        <Text style={styles.submitButtonText}>Submit</Text>
      </TouchableOpacity>
-   </View>
+   </ScrollView>
  );
 
 
@@ -552,7 +487,6 @@ const PitScouting = () => {
          keyboardShouldPersistTaps="handled"
          showsVerticalScrollIndicator={true}
          scrollEnabled={true}
-         alwaysBounceVertical={true}
          style={styles.scrollView}
        />
      </KeyboardAvoidingView>
@@ -564,45 +498,50 @@ const PitScouting = () => {
 const styles = StyleSheet.create({
  container: {
    flex: 1,
-   backgroundColor: '#000000',
+   backgroundColor: '#1A1A1A',
  },
  scrollContainer: {
-   alignItems: 'center',
-   paddingBottom: 20, // Add padding to ensure content is not cut off
+   paddingBottom: 40, // Add some padding at the bottom
  },
- centeredInputContainer: {
-   alignItems: 'center',
-   marginTop: 50,
- },
- centeredTitle: {
+ sectionContainer: {
+   width: '90%',
+   backgroundColor: '#2A2A2A',
+   borderRadius: 15,
+   padding: 20,
+   marginVertical: 10,
    alignSelf: 'center',
-   marginBottom: 8,
-   color: '#ffffff',
  },
- centeredInput: {
-   height: 40,
-   borderColor: '#ccc',
-   borderWidth: 1,
-   width: 300,
-   paddingLeft: 8,
+ sectionTitle: {
+   color: '#FFF',
+   fontSize: 20,
+   fontWeight: '600',
+   marginBottom: 15,
    textAlign: 'center',
-   backgroundColor: '#ffffff',
-   color: '#000000',
  },
- rowContainer: {
+ inputField: {
+   backgroundColor: '#333333',
+   borderRadius: 10,
+   padding: 15,
+   color: '#FFF',
+   fontSize: 16,
+   marginVertical: 8,
+ },
+ dimensionsContainer: {
    flexDirection: 'row',
    justifyContent: 'space-between',
-   marginTop: 20,
-   width: '100%',
+   marginTop: 10,
  },
- pickerColumn: {
-   alignItems: 'center',
+ dimensionPicker: {
    width: '30%',
+   backgroundColor: '#333333',
+   borderRadius: 10,
+   overflow: 'hidden',
  },
- pickerTitle: {
-   alignSelf: 'center',
-   marginBottom: 8,
-   color: '#ffffff',
+ dimensionLabel: {
+   color: '#FFF',
+   textAlign: 'center',
+   paddingVertical: 5,
+   backgroundColor: '#404040',
  },
  picker: {
    height: 150,
@@ -614,18 +553,10 @@ const styles = StyleSheet.create({
    textAlign: 'center',
    color: '#000000',
  },
- dropdownTitle: {
-   fontSize: 20,
-   fontWeight: '600',
-   alignSelf: 'center',
-   marginBottom: 5,
-   color: '#ffffff',
- },
  dropdown: {
-   borderColor: 'gray',
  },
  dropdownContainer: {
-   width: '80%',
+   width: '100%',
  },
  sliderContainer: {
    width: '100%',
@@ -635,101 +566,74 @@ const styles = StyleSheet.create({
    width: '100%',
    height: 40,
  },
- submitButton: {
-   backgroundColor: '#ff0000',
-   padding: 15,
-   borderRadius: 10,
-   width: '80%',
-   alignItems: 'center',
-   marginTop: 20,
-   marginBottom: 40,
-   alignSelf: 'center',
- },
- submitButtonText: {
-   color: '#ffffff',
-   fontSize: 18,
-   fontWeight: 'bold',
- },
- hangContainer: {
-   marginTop: 20,
-   width: '80%',
-   alignSelf: 'center',
- },
- hangTitle: {
-   fontSize: 20,
-   fontWeight: '600',
-   color: '#ffffff',
-   marginBottom: 20,
-   textAlign: 'center',
- },
- checkboxContainer: {
+ checkboxGrid: {
    flexDirection: 'row',
+   flexWrap: 'wrap',
    justifyContent: 'space-between',
-   paddingHorizontal: 30,
- },
- checkboxWrapper: {
-   flexDirection: 'row',
-   alignItems: 'center',
-   marginHorizontal: 20,
- },
- checkboxLabel: {
-   marginLeft: 12,
-   fontSize: 18,
-   color: '#ffffff',
+   marginTop: 10,
  },
  checkboxRow: {
    flexDirection: 'row',
    justifyContent: 'space-between',
-   width: '80%',
-   marginTop: 20,
-   alignSelf: 'center',
+   width: '100%',
+   marginVertical: 8,
  },
  checkboxContainer: {
    flexDirection: 'row',
    alignItems: 'center',
-   gap: 10,
- },
- checkbox: {
-   width: 24,
-   height: 24,
-   tintColor: '#ff0000',
- },
- coralLevelContainer: {
-   width: '80%',
-   alignSelf: 'center',
-   marginTop: 20,
- },
- coralLevelTitle: {
-   fontSize: 20,
-   fontWeight: '600',
-   color: '#ffffff',
-   marginBottom: 10,
-   textAlign: 'center',
- },
- checkboxGrid: {
+   backgroundColor: '#333333',
+   padding: 8,
+   borderRadius: 6,
+   marginVertical: 4,
    width: '100%',
  },
- checkboxRow: {
-   flexDirection: 'row',
-   justifyContent: 'space-between',
-   marginBottom: 20,
- },
- checkboxContainer: {
-   flexDirection: 'row',
-   alignItems: 'center',
-   gap: 10,
- },
- alignL3: {
-   marginLeft: 0,
- },
  checkbox: {
-   width: 24,
-   height: 24,
-   tintColor: '#ff0000',
+   width: 28,
+   height: 28,
+   borderRadius: 6,
+   marginRight: 10,
  },
  checkboxLabel: {
-   fontSize: 20,
-   color: '#ffffff',
+   color: '#FFF',
+   fontSize: 14,
+ },
+ imageUploadButton: {
+   backgroundColor: '#444444',
+   padding: 15,
+   borderRadius: 10,
+   width: '90%',
+   alignSelf: 'center',
+   marginVertical: 20,
+ },
+ imageUploadButtonText: {
+   color: '#FFF',
+   fontSize: 16,
+   fontWeight: '600',
+   textAlign: 'center',
+ },
+ imageContainer: {
+   position: 'relative',
+   margin: 5,
+ },
+ imagePreview: {
+   width: 200,
+   height: 200,
+   borderRadius: 15,
+   alignSelf: 'center',
+ },
+ submitButton: {
+   backgroundColor: '#FF4444',
+   padding: 20,
+   borderRadius: 15,
+   width: '90%',
+   alignSelf: 'center',
+   marginVertical: 20,
+ },
+ submitButtonText: {
+   color: '#FFF',
+   fontSize: 18,
+   fontWeight: '600',
+   textAlign: 'center',
  },
  backButton: {
    marginTop: 75,
@@ -747,48 +651,40 @@ const styles = StyleSheet.create({
  scrollView: {
    width: '100%',
  },
- imageUploadButton: {
-   backgroundColor: '#007AFF',
-   padding: 15,
-   borderRadius: 10,
-   width: '80%',
-   alignItems: 'center',
-   marginTop: 20,
-   marginBottom: 20,
-   alignSelf: 'center',
+ branchContainer: {
+   flexDirection: 'row',
+   alignItems: 'flex-start',
+   marginBottom: 15,
  },
- imageUploadButtonText: {
-   color: '#ffffff',
-   fontSize: 16,
-   fontWeight: 'bold',
+ branchImage: {
+   width: 80,
+   height: 150,
+   resizeMode: 'contain',
+   marginRight: 15,
  },
- imageContainer: {
-   position: 'relative',
-   margin: 5,
- },
- imagePreview: {
-   width: 100,
-   height: 100,
-   borderRadius: 10,
- },
- removeImageButton: {
-   position: 'absolute',
-   top: 5,
-   right: 5,
-   backgroundColor: 'rgba(255, 0, 0, 0.8)',
-   width: 20,
-   height: 20,
-   borderRadius: 10,
-   justifyContent: 'center',
-   alignItems: 'center',
- },
- removeImageButtonText: {
-   color: '#ffffff',
-   fontSize: 16,
-   fontWeight: 'bold',
-   lineHeight: 18,
+ verticalCheckboxes: {
+   flex: 1,
+   justifyContent: 'space-between',
+   height: 150, // Match branchImage height
  },
 });
+
+// Helper component for checkboxes
+const CheckboxItem = ({ label, value, setValue }) => (
+  <TouchableOpacity 
+    style={styles.checkboxContainer}
+    onPress={() => setValue(!value)}
+    activeOpacity={0.7}
+  >
+    <CheckBox
+      value={value}
+      onValueChange={setValue}
+      color={value ? '#FF4444' : undefined}
+      style={styles.checkbox}
+    />
+    <Text style={styles.checkboxLabel}>{label}</Text>
+  </TouchableOpacity>
+);
 
 
 export default PitScouting;
