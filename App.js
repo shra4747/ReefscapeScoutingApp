@@ -32,7 +32,7 @@ const App = () => {
         
         if (accessToken) {
           // Try to validate the token with your API
-          const response = await fetch('http://localhost:5001/who_am_i', {
+          const response = await fetch('http://10.0.0.215:5001/who_am_i', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`

@@ -169,7 +169,7 @@ const PitScouting = () => {
 
  const handleSubmit = async () => {
    // Validate all fields
-   if (!teamNumber || !scouterID || !height || !length || !width ||
+   if (!teamNumber || !height || !length || !width ||
        cycleTime === null || cycleTime === 0 || driverExperience === null ||
        !driveTrainValue) {
      alert('Please fill out all fields before submitting.');
@@ -196,7 +196,7 @@ const PitScouting = () => {
        can_L2: L2, 
        can_L3: L3, 
        can_L4: L4,
-       auto_auto_notes: auto_notes,
+       auto_notes: auto_notes,
        other_notes: notes
      };
 
@@ -214,7 +214,7 @@ const PitScouting = () => {
      await console.log(formData)
 
     // console.log(JSON.stringify(formData))
-     const response = await fetch('http://localhost:5001/pit_scout', {
+     const response = await fetch('http://10.0.0.215:5001/pit_scout', {
        method: 'POST',
        body: formData,
         headers: {
@@ -276,19 +276,7 @@ const PitScouting = () => {
      <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Robot Dimensions (in)</Text>
        <View style={styles.dimensionsContainer}>
-         <View style={styles.dimensionPicker}>
-           <Text style={styles.dimensionLabel}>Height</Text>
-           <Picker
-             selectedValue={height}
-             style={styles.picker}
-             onValueChange={setHeight}
-             itemStyle={styles.pickerItem}
-           >
-             {heightNumbers.map((num) => (
-               <Picker.Item key={num} label={num} value={num} />
-             ))}
-           </Picker>
-         </View>
+         
          <View style={styles.dimensionPicker}>
            <Text style={styles.dimensionLabel}>Length</Text>
            <Picker
@@ -311,6 +299,19 @@ const PitScouting = () => {
              itemStyle={styles.pickerItem}
            >
              {widthNumbers.map((num) => (
+               <Picker.Item key={num} label={num} value={num} />
+             ))}
+           </Picker>
+         </View>
+         <View style={styles.dimensionPicker}>
+           <Text style={styles.dimensionLabel}>Height</Text>
+           <Picker
+             selectedValue={height}
+             style={styles.picker}
+             onValueChange={setHeight}
+             itemStyle={styles.pickerItem}
+           >
+             {heightNumbers.map((num) => (
                <Picker.Item key={num} label={num} value={num} />
              ))}
            </Picker>
@@ -474,23 +475,24 @@ const PitScouting = () => {
 
 
  return (
-   <TouchableWithoutFeedback onPress={dismissKeyboard}>
-     <KeyboardAvoidingView
-       style={styles.container}
-       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+   <KeyboardAvoidingView
+     style={styles.container}
+     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+   >
+     <ScrollView
+       contentContainerStyle={styles.scrollContainer}
+       keyboardShouldPersistTaps="handled"
+       showsVerticalScrollIndicator={true}
+       scrollEnabled={true}
+       nestedScrollEnabled={true}
      >
-       <FlatList
-         data={[1]}
-         renderItem={renderContent}
-         keyExtractor={(item) => item.toString()}
-         contentContainerStyle={styles.scrollContainer}
-         keyboardShouldPersistTaps="handled"
-         showsVerticalScrollIndicator={true}
-         scrollEnabled={true}
-         style={styles.scrollView}
-       />
-     </KeyboardAvoidingView>
-   </TouchableWithoutFeedback>
+       <TouchableWithoutFeedback onPress={dismissKeyboard}>
+         <View>
+           {renderContent()}
+         </View>
+       </TouchableWithoutFeedback>
+     </ScrollView>
+   </KeyboardAvoidingView>
  );
 };
 
@@ -501,7 +503,8 @@ const styles = StyleSheet.create({
    backgroundColor: '#1A1A1A',
  },
  scrollContainer: {
-   paddingBottom: 40, // Add some padding at the bottom
+   flexGrow: 1,  // Changed from paddingBottom
+   paddingBottom: 40,
  },
  sectionContainer: {
    width: '90%',
