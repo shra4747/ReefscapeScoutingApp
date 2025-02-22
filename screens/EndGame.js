@@ -58,17 +58,17 @@ const EndGame = () => {
 
   // Function to handle option selection
   const handleOptionSelect = (option) => {
-    // Reset all options first
-    setShallowHang(false);
-    setDeepHang(false);
-    setPark(false);
-    setFailedClimb(false);
-    
-    // Set the selected option
+    // Toggle the selected option
     if (option === 'park') {
-      setPark(true);
+      setPark(prev => !prev);
+      setFailedClimb(false);
     } else if (option === 'failedClimb') {
-      setFailedClimb(true);
+      setFailedClimb(prev => !prev);
+      setPark(false);
+    } else {
+      // For other options, reset both park and failedClimb
+      setPark(false);
+      setFailedClimb(false);
     }
   };
 
@@ -151,19 +151,6 @@ const EndGame = () => {
         />
       </View>
       
-      <TouchableOpacity 
-        style={[styles.button, styles.undoButton]}
-        onPress={() => {
-          setShallowHang(false);
-          setDeepHang(false);
-          setPark(false);
-          setFailedClimb(false);
-          setHangTime(0);
-        }}
-      >
-        <Text style={styles.buttonText}>Undo</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity 
         style={[styles.button, styles.submitButton]}
         onPress={handleSubmit} // Call handleSubmit to compile data
