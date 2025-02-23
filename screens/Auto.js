@@ -118,13 +118,22 @@ const Auto = () => {
     navigation.navigate("Teleop");
   }
 
-  const sectionMap = {
+  const sectionMapDSLeft = {
     'ML': 'HL',
     'HL': 'HR',
     'HR': 'MR',
     'MR': 'BR',
     'BR': 'BL',
     'BL': "ML",
+  };
+
+  const sectionMapDSRight = {
+    'ML': 'BR',
+    'HL': 'BL',
+    'HR': 'ML',
+    'MR': 'HL',
+    'BR': 'HR',
+    'BL': "MR",
   };
 
   const handleTap = (event) => {
@@ -150,7 +159,7 @@ const Auto = () => {
 
       // If the same section is clicked again, navigate to AutoP2
       if (selectedSection === section) {
-        const nextSection = sectionMap[section];
+        const nextSection = driverStation == "Right" ? sectionMapDSRight[section] : sectionMapDSLeft[section]
         navigation.navigate('AutoP2', { selectedSection: nextSection, phase: "auto" });
         setSelectedSection(null);
       } else {
@@ -176,14 +185,6 @@ const Auto = () => {
     });
   };
 
-  // const sectionMap = {
-  //   'HL': 'HR',
-  //   'HR': 'MR',
-  //   'MR': 'LR',
-  //   'BR': 'BL',
-  //   'BL': 'ML',
-  //   'ML': 'BL'
-  // };
 
   const handleUndo = async () => {
     try {

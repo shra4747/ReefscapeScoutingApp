@@ -122,13 +122,22 @@ const Teleop = () => {
     navigation.navigate("EndGame");
   }
 
-  const sectionMap = {
+  const sectionMapDSLeft = {
     'ML': 'HL',
     'HL': 'HR',
     'HR': 'MR',
     'MR': 'BR',
     'BR': 'BL',
     'BL': "ML",
+  };
+
+  const sectionMapDSRight = {
+    'ML': 'BR',
+    'HL': 'BL',
+    'HR': 'ML',
+    'MR': 'HL',
+    'BR': 'HR',
+    'BL': "MR",
   };
 
   const handleTap = (event) => {
@@ -159,8 +168,8 @@ const Teleop = () => {
       // Append the selected section to the reef list
 
       if (selectedSection === section) {
-          const ss = sectionMap[section]
-          navigation.navigate('AutoP2', { selectedSection: ss, phase: "teleop" });
+          const nextSection = driverStation == "Right" ? sectionMapDSRight[section] : sectionMapDSLeft[section]
+          navigation.navigate('AutoP2', { selectedSection: nextSection, phase: "teleop" });
           setSelectedSection(null);
       } else {
         setSelectedSection(section);
@@ -183,15 +192,6 @@ const Teleop = () => {
       level: level
     });
   };
-
-  // const sectionMap = {
-  //   'HL': 'HR',
-  //   'HR': 'MR',
-  //   'MR': 'LR',
-  //   'BR': 'BL',
-  //   'BL': 'ML',
-  //   'ML': 'BL'
-  // };
 
   const handleUndo = async () => {
     try {

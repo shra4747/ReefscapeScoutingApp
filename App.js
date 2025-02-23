@@ -64,7 +64,7 @@ const App = () => {
 
     // Create promises for both auth check and minimum loading time
     const authCheckPromise = checkAuth();
-    const loadingDelayPromise = new Promise(resolve => setTimeout(resolve, 4700));
+    const loadingDelayPromise = new Promise(resolve => setTimeout(resolve, 5000));
 
     Promise.all([authCheckPromise, loadingDelayPromise])
       .catch(error => console.error('Error:', error))
