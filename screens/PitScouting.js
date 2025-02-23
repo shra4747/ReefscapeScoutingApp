@@ -215,7 +215,7 @@ const PitScouting = () => {
      await console.log(formData)
 
     // console.log(JSON.stringify(formData))
-     const response = await fetch('http://10.0.0.215:5002/pit_scout', {
+     const response = await fetch('http://10.75.226.156:5002/pit_scout', {
        method: 'POST',
        body: formData,
         headers: {

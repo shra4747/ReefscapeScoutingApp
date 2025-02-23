@@ -3,6 +3,13 @@ import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, 
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, { 
+  useAnimatedStyle, 
+  withSpring,
+  useSharedValue,
+  interpolate
+} from 'react-native-reanimated';
+
 const StartPage = () => {
   const navigation = useNavigation();
   const [scouterId, setScouterId] = useState('');
@@ -21,22 +28,80 @@ const StartPage = () => {
 
   const [startPageData, setStartPageData] = useState([]);
 
-  const [openAlliance, setOpenAlliance] = useState(false);
+  const [scheduleData, setScheduleData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [allianceColor, setAllianceColor] = useState(null);
+  const [driverStation, setDriverStation] = useState('Left');
+  const rotation = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{
+        rotateY: `${interpolate(rotation.value, [0, 1], [0, 180])}deg`
+      }]
+    };
+  });
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
   useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+        
+        const response = await fetch(`http://10.75.226.156:5002/schedule`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch schedule');
+        
+        const data = await response.json();
+        setScheduleData(data);
+        
+        // Update matches dropdown
+        const uniqueMatches = [...new Set(data.map(item => item.match_number))];
+        setItemsMatch(uniqueMatches.map(match => ({
+          label: `Match ${match}`,
+          value: match.toString()
+        })));
+
+      } catch (error) {
+        Alert.alert('Error', 'Failed to load schedule');
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSchedule();
+  }, []);
+
+  useEffect(() => {
     if (valueMatch) {
-      const randomTeams = Array.from({ length: 6 }, () => {
-        const randomTeamNumber = Math.floor(10000 + Math.random() * 90000).toString();
-        return { label: `Team ${randomTeamNumber}`, value: randomTeamNumber };
-      });
-      setItemsTeam(randomTeams);
+      const teamsForMatch = scheduleData
+        .filter(item => item.match_number.toString() === valueMatch)
+        .map(item => ({
+          label: `Team ${item.team_number}`,
+          value: item.team_number.toString(),
+          alliance: item.alliance_color
+        }));
+      
+      setItemsTeam(teamsForMatch);
     }
-  }, [valueMatch]);
+  }, [valueMatch, scheduleData]);
+
+  useEffect(() => {
+    if (valueTeam && itemsTeam.length > 0) {
+      const selectedTeam = itemsTeam.find(team => team.value === valueTeam);
+      if (selectedTeam) {
+        setAllianceColor(selectedTeam.alliance.toLowerCase());
+      }
+    }
+  }, [valueTeam, itemsTeam]);
 
   useEffect(() => {
     if (openMatch) {
@@ -50,17 +115,60 @@ const StartPage = () => {
     }
   }, [valueMatch]);
 
+  useEffect(() => {
+    const loadDriverStation = async () => {
+      const storedStation = await AsyncStorage.getItem('START_DRIVER_STATION');
+      if (storedStation) {
+        setDriverStation(storedStation);
+        // Set initial rotation if needed
+        rotation.value = withSpring(storedStation === 'Right' ? 1 : 0, {
+          damping: 12,
+          stiffness: 90,
+          mass: 1
+        });
+      } else {
+        await AsyncStorage.setItem('START_DRIVER_STATION', 'Left');
+      }
+    };
+    loadDriverStation();
+  }, []);
+
+  const toggleDriverStation = () => {
+    const newValue = driverStation === 'Left' ? 'Right' : 'Left';
+    console.log(newValue)
+    console.log(allianceColor)
+    setDriverStation(newValue);
+    AsyncStorage.setItem('START_DRIVER_STATION', newValue);
+    
+    rotation.value = withSpring(newValue === 'Right' ? 1 : 0, {
+      damping: 12,
+      stiffness: 90,
+      mass: 1
+    });
+  };
+
   const handleSubmit = async () => {
+
+    if (driverStation == "Left" && allianceColor == "red") {
+      await AsyncStorage.setItem('DRIVER_STATION', "Right");
+    }
+    else if (driverStation == "Right" && allianceColor == "blue") {
+      await AsyncStorage.setItem('DRIVER_STATION', "Right");
+    }
+    else {
+      await AsyncStorage.setItem('DRIVER_STATION', "Left");
+    }
+
     const newData = {
       match_number: valueMatch,
       team_number: valueTeam,
       match_start_time: new Date().toISOString(),
-      alliance_color: allianceColor,
+      alliance_color: allianceColor == "red" ? "Red" : "Blue",
     };
 
     setStartPageData([newData]);
 
-    await AsyncStorage.setItem('ALLIANCE_COLOR', allianceColor);
+    await AsyncStorage.setItem('ALLIANCE_COLOR', allianceColor == "red" ? "Red" : "Blue");
     await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify([]));
     await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify([]));
     await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify([]));
@@ -78,42 +186,8 @@ const StartPage = () => {
     setOpenTeam(false);
     setValueTeam(null);
     setStartPageData([]);
-    setOpenAlliance(false);
-    setAllianceColor(null);
 
     navigation.navigate('Auto');
-  };
-
-  const handleAllianceColorSelect = (color) => {
-    setAllianceColor(color);
-    
-    // Show popup with options
-    Alert.alert(
-      'Select Driver Station',
-      'Please choose your driver station:',
-      [
-        {
-          text: 'Right Driver Station',
-          onPress: async () => {
-            console.log('Right Driver Station selected');
-            await AsyncStorage.setItem('DRIVER_STATION', 'Right'); // Set driver station
-          },
-          style: 'default',
-        },
-        {
-          text: 'Left Driver Station',
-          onPress: async () => {
-            console.log('Left Driver Station selected');
-            await AsyncStorage.setItem('DRIVER_STATION', 'Left'); // Set driver station
-          },
-          style: 'default',
-        },
-      ],
-      { 
-        cancelable: true,
-        userInterfaceStyle: 'dark', // For iOS
-      }
-    );
   };
 
   return (
@@ -155,27 +229,17 @@ const StartPage = () => {
         </View>
 
         <Image
-          source={{ uri: 'https://static.wixstatic.com/media/3c0a84_5655d31135124d9fa8073e1c4bcffbd6~mv2.png/v1/fill/w_560,h_198,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/fd_frc_reefscape_wordmark_black_pms_edit.png' }}
+          source={require('../assets/logo.jpg')}
           style={styles.logo}
           resizeMode="contain"
         />
 
-        {/* Alliance Color Selection */}
-        <Text style={styles.title}>Select Alliance Color</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.colorButton, allianceColor === 'Red' ? styles.selectedButtonRed : styles.defaultButton]}
-            onPress={() => handleAllianceColorSelect('Red')}
-          >
-            <Text style={styles.buttonText}>Red</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.colorButton, allianceColor === 'Blue' ? styles.selectedButtonBlue : styles.defaultButton]}
-            onPress={() => handleAllianceColorSelect('Blue')}
-          >
-            <Text style={styles.buttonText}>Blue</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
+          <Animated.Image
+            source={require('../assets/field.png')}
+            style={[styles.fieldImage, animatedStyle]}
+          />
+        </TouchableOpacity>
 
         {/* Match Number Dropdown */}
         <Text style={styles.title}>Match Number</Text>
@@ -213,10 +277,12 @@ const StartPage = () => {
           </>
         )}
 
-        {/* Display Selected Match and Team */}
+        {/* Display Selected Match, Team, and Alliance */}
         <Text style={styles.resultText}>Selected Match: {valueMatch || 'None'}</Text>
         {valueTeam && <Text style={styles.resultText}>Selected Team: {valueTeam}</Text>}
-        <Text style={styles.resultText}>Selected Alliance Color: {allianceColor || 'None'}</Text>
+        <Text style={styles.resultText}>
+          Alliance Color: {allianceColor ? allianceColor.charAt(0).toUpperCase() + allianceColor.slice(1) : 'None'}
+        </Text>
 
         {/* Submit Button */}
         <TouchableOpacity
@@ -321,10 +387,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   logo: {
-    width: '80%',
+    width: '50%',
     height: 100,
     alignSelf: 'center',
-    marginVertical: 20,
+    // marginVertical: 20,
   },
   colorButton: {
     width: '49%',
@@ -352,6 +418,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '80%',
+  },
+  fieldContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  fieldImage: {
+    width: 200,
+    height: 100,
+    resizeMode: 'contain',
   },
 });
 

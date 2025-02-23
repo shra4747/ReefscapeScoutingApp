@@ -86,7 +86,7 @@ const Confirmation = () => {
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request
-        const response = await fetch('http://10.0.0.215:5002/match', {
+        const response = await fetch('http://10.75.226.156:5002/match', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
