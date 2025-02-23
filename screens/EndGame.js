@@ -16,43 +16,64 @@ const EndGame = () => {
   const navigation = useNavigation();
   const [shallowHang, setShallowHang] = React.useState(false);
   const [deepHang, setDeepHang] = React.useState(false);
-  const [park, setPark] = React.useState(false);
+  const [park, setPark] = React.useState(true); // Start in park position
   const [failedClimb, setFailedClimb] = React.useState(false);
   const [hangTime, setHangTime] = React.useState(0);
   const [isDeep, setIsDeep] = React.useState(false);
   const [endGameData, setEndGameData] = React.useState([]); // List to store end game data
+  const [allianceColor, setAllianceColor] = React.useState('#ff3030'); // Default to red
 
   // Animation values
   const translateY = useSharedValue(0);
-  const isDeepPosition = useSharedValue(false);
+  const rotateZ = useSharedValue(90); // Start horizontal (park position)
+  const chainHeight = useSharedValue(0); // Start with no chain
+
+  // Get alliance color from AsyncStorage
+  React.useEffect(() => {
+    const getColor = async () => {
+      const color = await AsyncStorage.getItem('ALLIANCE_COLOR');
+      setAllianceColor(color?.toLowerCase() === 'blue' ? '#007AFF' : '#ff3030');
+    };
+    getColor();
+  }, []);
 
   const handleTap = () => {
-    if (isDeepPosition.value) {
-      // Move up
-      translateY.value = withSpring(0);
-      isDeepPosition.value = false;
-      setIsDeep(false);
-      setShallowHang(true); // Set shallow hang when toggling up
-      setDeepHang(false); // Reset deep hang when toggling up
+    if (park) {
+      // Move to shallow hang position from park
+      translateY.value = withSpring(40); // Move up
+      rotateZ.value = withSpring(0); // Rotate to vertical
+      chainHeight.value = withSpring(40); // Show chain
+      setShallowHang(true);
+      setPark(false);
+    } else if (shallowHang) {
+      // Move to deep hang position from shallow
+      translateY.value = withSpring(130); // Move up further
+      chainHeight.value = withSpring(130); // Extend chain
+      setDeepHang(true);
+      setShallowHang(false);
     } else {
-      // Move down
-      translateY.value = withSpring(80);
-      isDeepPosition.value = true;
-      setIsDeep(true);
-      setDeepHang(true); // Set deep hang when toggling down
-      setShallowHang(false); // Reset shallow hang when toggling down
+      // Move back to park position from deep
+      translateY.value = withSpring(0); // Move down
+      rotateZ.value = withSpring(90); // Rotate to horizontal
+      chainHeight.value = withSpring(0); // Hide chain
+      setPark(true);
+      setDeepHang(false);
     }
   };
 
   const boxStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateY: translateY.value }],
+      transform: [
+        { translateY: translateY.value },
+        { rotateZ: `${rotateZ.value}deg` }
+      ],
+      backgroundColor: allianceColor, // Use alliance color
     };
   });
 
   const chainStyle = useAnimatedStyle(() => {
     return {
-      height: translateY.value + 40, // Base height + translation
+      height: chainHeight.value,
     };
   });
 
@@ -73,28 +94,25 @@ const EndGame = () => {
   };
 
   const handleSubmit = async () => {
-    // Prepare the data to be submitted
-    const hangStatus = shallowHang ? 'Shallow Hang' : deepHang ? 'Deep Hang' : park ? 'Park' : failedClimb ? 'Failed Park' : null;
+    // Determine the hang status based on animation values
+    const hangStatus = park ? 'Park' : 
+                      deepHang ? 'Deep Hang' : 
+                      'Shallow Hang';
     
-    // Ensure hangStatus is not null before proceeding
-    if (hangStatus) {
-      const hangData = {
-        hang: hangStatus,
-        hangTime: (shallowHang || deepHang) ? hangTime : undefined, // Only include hangTime if shallow or deep is selected
-      };
+    const hangData = {
+      hang: hangStatus,
+      hangTime: (hangStatus !== 'Park' && !failedClimb) ? hangTime : undefined, // Only include hangTime if not in park and not failed
+    };
 
-      // Add the hang data to the endGameData list
-      setEndGameData(hangData);
+    // Add the hang data to the endGameData list
+    setEndGameData(hangData);
 
-      // Log the endGameData to the console
-      console.log('End Game Data:', hangData);
-      await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify(hangData));
+    // Log the endGameData to the console
+    console.log('End Game Data:', hangData);
+    await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify(hangData));
 
-      // Navigate to PostGame screen
-      navigation.navigate('PostGame');
-    } else {
-      console.log('No hang status selected. Please select a hang type.');
-    }
+    // Navigate to PostGame screen
+    navigation.navigate('PostGame');
   };
 
   return (
@@ -110,50 +128,47 @@ const EndGame = () => {
           </View>
         </GestureHandlerRootView>
 
-        {/* Add hang status text */}
+        {/* Keep hang status text unchanged */}
         <Text style={styles.hangStatusText}>
-          {park || failedClimb ? 'NONE' : (isDeep ? 'Deep Hang' : 'Shallow Hang')}
+          {park ? 'Park' : (deepHang ? 'Deep Hang' : 'Shallow Hang')}
         </Text>
 
-        {/* Park status checkboxes */}
-        <View style={styles.parkOptionsContainer}>
-          <View style={styles.checkboxRow}>
-            <CheckBox
-              value={park}
-              onValueChange={() => handleOptionSelect('park')}
-              style={styles.checkbox}
-            />
-            <Text style={styles.checkboxText}>Park</Text>
+        {/* Conditionally render failed climb checkbox */}
+        {!park && (
+          <View style={styles.parkOptionsContainer}>
+            <View style={styles.checkboxRow}>
+              <CheckBox
+                value={failedClimb}
+                onValueChange={() => setFailedClimb(prev => !prev)}
+                style={styles.checkbox}
+              />
+              <Text style={styles.checkboxText}>Failed Climb/Park</Text>
+            </View>
           </View>
-          <View style={styles.checkboxRow}>
-            <CheckBox
-              value={failedClimb}
-              onValueChange={() => handleOptionSelect('failedClimb')}
-              style={styles.checkbox}
-            />
-            <Text style={styles.checkboxText}>Failed Climb/Park</Text>
-          </View>
+        )}
+      </View>
+
+      {/* Conditionally render hang time slider */}
+      {!park && (
+        <View style={styles.sliderContainer}>
+          <Text style={styles.sliderLabel}>Hang Time: {hangTime.toFixed(1)} seconds</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={15}
+            step={0.1}
+            value={hangTime}
+            onValueChange={setHangTime}
+            minimumTrackTintColor="#007AFF"
+            maximumTrackTintColor="#000000"
+            thumbTintColor="#007AFF"
+          />
         </View>
-      </View>
-      {/* Move Slider for hang time to the bottom of the screen */}
-      <View style={styles.sliderContainer}>
-        <Text style={styles.sliderLabel}>Hang Time: {hangTime.toFixed(1)} seconds</Text>
-        <Slider
-          style={styles.slider}
-          minimumValue={0}
-          maximumValue={15}
-          step={0.1}
-          value={hangTime}
-          onValueChange={setHangTime}
-          minimumTrackTintColor="#ff3030"
-          maximumTrackTintColor="#000000"
-          thumbTintColor="#ff3030"
-        />
-      </View>
+      )}
       
       <TouchableOpacity 
         style={[styles.button, styles.submitButton]}
-        onPress={handleSubmit} // Call handleSubmit to compile data
+        onPress={handleSubmit}
       >
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
@@ -199,8 +214,6 @@ const styles = StyleSheet.create({
   rectangle: {
     width: 60,
     height: 80,
-    borderWidth: 3,
-    borderColor: '#ff3030',
     backgroundColor: '#ff3030',
     opacity: 0.8,
   },

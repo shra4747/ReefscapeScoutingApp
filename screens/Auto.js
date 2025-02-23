@@ -27,6 +27,7 @@ const Auto = () => {
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
   const [driverStation, setDriverStation] = useState(null); // New state for driver station
+  const [driverStationOrder, setDriverStationOrder] = useState('normal');
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -298,7 +299,7 @@ const Auto = () => {
     setDriveStation(station);
     setGroundCount(groundCount + 1);
     setShowDriveStationModal(false);
-    // Store the drive station information with the ground pickup
+    
     const newGroundPickup = {
       type: 'ground',
       driveStation: station,
@@ -376,6 +377,21 @@ const Auto = () => {
       return driverStation === "Right" ? require('../assets/bluereverse.png') : require('../assets/BlueReefVUSE.png');
     }
   };
+
+  // Fetch driver station order on component mount
+  useEffect(() => {
+    const fetchDriverStationOrder = async () => {
+      try {
+        const order = await AsyncStorage.getItem('DRIVER_STATION_ORDER');
+        if (order) {
+          setDriverStationOrder(order);
+        }
+      } catch (error) {
+        console.error('Error fetching driver station order:', error);
+      }
+    };
+    fetchDriverStationOrder();
+  }, []);
 
   // Define styles after determining global_color
   const styles = StyleSheet.create({
@@ -572,45 +588,82 @@ const Auto = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
       width: '80%',
-      backgroundColor: '#fff',
+      backgroundColor: '#333',
       borderRadius: 10,
       padding: 20,
+      alignItems: 'center',
     },
     modalTitle: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: 'bold',
-      marginBottom: 20,
-      textAlign: 'center',
+      color: '#fff',
+      marginBottom: 15,
     },
     driveStationButton: {
-      backgroundColor: global_color,
+      width: '100%',
       padding: 15,
+      backgroundColor: '#444',
       borderRadius: 5,
-      marginVertical: 5,
+      marginBottom: 10,
       alignItems: 'center',
     },
     driveStationButtonText: {
-      color: 'white',
+      color: '#fff',
       fontSize: 16,
       fontWeight: 'bold',
     },
     cancelButton: {
-      backgroundColor: '#ccc',
+      width: '100%',
       padding: 15,
+      backgroundColor: '#ff4444',
       borderRadius: 5,
-      marginTop: 10,
       alignItems: 'center',
     },
     cancelButtonText: {
-      color: '#000',
+      color: '#fff',
       fontSize: 16,
       fontWeight: 'bold',
     },
   });
+
+  // Render the drive station modal
+  const renderDriveStationModal = () => {
+    const stations = driverStationOrder === 'reversed' ? [3, 2, 1] : [1, 2, 3];
+
+    return (
+      <Modal
+        visible={showDriveStationModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDriveStationModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Drive Station</Text>
+            {stations.map((station) => (
+              <TouchableOpacity
+                key={station}
+                style={styles.driveStationButton}
+                onPress={() => handleDriveStationSelect(station)}
+              >
+                <Text style={styles.driveStationButtonText}>Drive Station {station}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowDriveStationModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -711,7 +764,7 @@ const Auto = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Station Type</Text>
-            {['HP Close to Processor', 'HP Far from Processor'].map((stationType) => (
+            {['HP Station Closer to Barge', 'HP Station Further from Barge'].map((stationType) => (
               <TouchableOpacity
                 key={stationType}
                 style={styles.driveStationButton}
@@ -730,34 +783,7 @@ const Auto = () => {
         </View>
       </Modal>
 
-      {/* Drive Station Selection Modal */}
-      <Modal
-        visible={showDriveStationModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowDriveStationModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Drive Station</Text>
-            {[1, 2, 3].map((station) => (
-              <TouchableOpacity
-                key={station}
-                style={styles.driveStationButton}
-                onPress={() => handleDriveStationSelect(station)}
-              >
-                <Text style={styles.driveStationButtonText}>Drive Station {station}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowDriveStationModal(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {renderDriveStationModal()}
 
       {/* Processor Action Modal */}
       <Modal

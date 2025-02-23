@@ -190,6 +190,39 @@ const StartPage = () => {
     navigation.navigate('Auto');
   };
 
+  const handleAllianceColorSelect = (color) => {
+    setAllianceColor(color);
+    
+    Alert.alert(
+      'Select Driver Station',
+      'Please choose your driver station:',
+      [
+        {
+          text: 'Right Driver Station',
+          onPress: async () => {
+            console.log('Right Driver Station selected');
+            await AsyncStorage.setItem('DRIVER_STATION', 'Right');
+            await AsyncStorage.setItem('DRIVER_STATION_ORDER', 'reversed');
+          },
+          style: 'default',
+        },
+        {
+          text: 'Left Driver Station',
+          onPress: async () => {
+            console.log('Left Driver Station selected');
+            await AsyncStorage.setItem('DRIVER_STATION', 'Left');
+            await AsyncStorage.setItem('DRIVER_STATION_ORDER', 'normal');
+          },
+          style: 'default',
+        },
+      ],
+      { 
+        cancelable: true,
+        userInterfaceStyle: 'dark',
+      }
+    );
+  };
+
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <KeyboardAvoidingView
