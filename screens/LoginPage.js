@@ -22,7 +22,7 @@ const LoginPage = () => {
       password,
     };
 
-    const loginResponse = await fetch('http://10.75.226.157:5001/login', {
+    const loginResponse = await fetch('http://10.0.0.215:5002/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,14 +62,6 @@ const LoginPage = () => {
       style={styles.container}
     >
       <View style={styles.innerContainer}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.replace('RegisterPage')}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-          <Text style={styles.backButtonText}>Registration</Text>
-        </TouchableOpacity>
-        
         <Image
           source={require('../assets/Team75LogoVUSE.png')}
           style={styles.logo}
@@ -114,6 +106,13 @@ const LoginPage = () => {
           onPress={handleLogin}
         >
           <Text style={styles.loginButtonText}>Login</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.registerRedirectButton}
+          onPress={() => navigation.replace('RegisterPage')}
+        >
+          <Text style={styles.registerRedirectText}>Don't have an account? Register here</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -193,20 +192,20 @@ const styles = StyleSheet.create({
   eyeIcon: {
     fontSize: 20,
   },
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 20,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ff0000',
-    padding: 10,
+  registerRedirectButton: {
+    backgroundColor: '#ffffff',
+    padding: 15,
     borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ff0000',
+    marginTop: 10,
+    width: '100%',
   },
-  backButtonText: {
-    color: '#ffffff',
-    marginLeft: 5,
-    fontSize: 16,
+  registerRedirectText: {
+    color: '#ff0000',
+    fontWeight: 'bold',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 

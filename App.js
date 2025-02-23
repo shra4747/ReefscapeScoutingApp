@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Image, Animated, Easing } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import RegisterPage from './screens/RegisterPage';
@@ -17,12 +17,18 @@ import Profile from './screens/Profile';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
+import { Video } from 'expo-av';
 
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [initialRoute, setInitialRoute] = useState('RegisterPage');
+  const [dotAnimations] = useState([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0)
+  ]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,7 +38,7 @@ const App = () => {
         
         if (accessToken) {
           // Try to validate the token with your API
-          const response = await fetch('http://10.75.226.157:5001/who_am_i', {
+          const response = await fetch('http://10.0.0.215:5002/who_am_i', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -53,18 +59,91 @@ const App = () => {
       } catch (error) {
         console.error('Auth check error:', error);
         setInitialRoute('LoginPage');
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    checkAuth();
+    // Create promises for both auth check and minimum loading time
+    const authCheckPromise = checkAuth();
+    const loadingDelayPromise = new Promise(resolve => setTimeout(resolve, 4700));
+
+    Promise.all([authCheckPromise, loadingDelayPromise])
+      .catch(error => console.error('Error:', error))
+      .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      const animateDots = () => {
+        const animations = dotAnimations.map((dot) => {
+          return Animated.loop(
+            Animated.sequence([
+              Animated.timing(dot, {
+                toValue: 1,
+                duration: 500,
+                easing: Easing.linear,
+                useNativeDriver: true,
+              }),
+              Animated.timing(dot, {
+                toValue: 0,
+                duration: 500,
+                easing: Easing.linear,
+                useNativeDriver: true,
+              }),
+            ])
+          );
+        });
+
+        // Stagger the animations
+        animations.forEach((anim, index) => {
+          setTimeout(() => anim.start(), index * 300);
+        });
+      };
+
+      animateDots();
+    }
+  }, [isLoading]);
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <Video
+          source={require('./assets/assembly.mp4')}
+          style={styles.video}
+          useNativeControls={false}
+          isLooping={true}
+          shouldPlay={true}
+          resizeMode="contain"
+          isMuted={true}
+          rate={1.9}
+          shouldCorrectPitch={true}
+        />
+        
+        <View style={styles.dotsContainer}>
+          {dotAnimations.map((animation, index) => (
+            <Animated.View
+              key={index}
+              style={[
+                styles.dot,
+                {
+                  transform: [
+                    {
+                      translateY: animation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, -10],
+                      }),
+                    },
+                    {
+                      scale: animation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1.3],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          ))}
+        </View>
       </View>
     );
   }
@@ -143,15 +222,32 @@ const App = () => {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#323238',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
   },
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
     padding: 0,
     margin: 0,
+  },
+  dotsContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ffffff',
+    marginHorizontal: 5,
   },
 });
 

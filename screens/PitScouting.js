@@ -35,6 +35,7 @@ const PitScouting = () => {
    { label: 'Select drive train...', value: null },
    { label: 'Swerve', value: 'swerve' },
    { label: 'Tank', value: 'tank' },
+   { label: 'Mechanum', value: 'mechanum' },
    { label: 'Other', value: 'other' },
  ]);
 
@@ -214,7 +215,7 @@ const PitScouting = () => {
      await console.log(formData)
 
     // console.log(JSON.stringify(formData))
-     const response = await fetch('http://10.75.226.157:5001/pit_scout', {
+     const response = await fetch('http://10.0.0.215:5002/pit_scout', {
        method: 'POST',
        body: formData,
         headers: {
@@ -255,6 +256,7 @@ const PitScouting = () => {
    <ScrollView 
      contentContainerStyle={styles.scrollContainer}
      showsVerticalScrollIndicator={false}
+     nestedScrollEnabled={true}
    >
      <TouchableOpacity 
        style={styles.backButton}
@@ -329,8 +331,13 @@ const PitScouting = () => {
          setItems={setDriveTrainItems}
          placeholder="Select Drive Train"
          style={styles.dropdown}
-         containerStyle={styles.dropdownContainer}
-         zIndex={3000}
+         containerStyle={[styles.dropdownContainer, { zIndex: 5000 }]}
+         listMode="SCROLLVIEW"
+         scrollViewProps={{
+           nestedScrollEnabled: true,
+         }}
+         zIndex={5000}
+         zIndexInverse={6000}
        />
      </View>
      <View style={styles.sectionContainer}>
@@ -487,7 +494,7 @@ const PitScouting = () => {
        nestedScrollEnabled={true}
      >
        <TouchableWithoutFeedback onPress={dismissKeyboard}>
-         <View>
+         <View style={{ flex: 1 }}>
            {renderContent()}
          </View>
        </TouchableWithoutFeedback>

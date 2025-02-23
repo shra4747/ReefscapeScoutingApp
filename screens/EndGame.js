@@ -145,9 +145,9 @@ const EndGame = () => {
           step={0.1}
           value={hangTime}
           onValueChange={setHangTime}
-          minimumTrackTintColor="#007AFF"
+          minimumTrackTintColor="#ff3030"
           maximumTrackTintColor="#000000"
-          thumbTintColor="#007AFF"
+          thumbTintColor="#ff3030"
         />
       </View>
       

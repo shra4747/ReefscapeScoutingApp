@@ -38,7 +38,7 @@ const RegisterPage = () => {
         scouter_id: Math.floor(Math.random() * 100000), // Random number for scouter_id
       };
     // console.log("Hello1")
-    const regiserResponse = await fetch('http://10.75.226.157:5001/register', {
+    const regiserResponse = await fetch('http://10.0.0.215:5002/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,11 +143,12 @@ const RegisterPage = () => {
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.loginButton, { backgroundColor: '#0000ff', marginTop: 10 }]}
+          style={styles.loginRedirectButton}
           onPress={() => navigation.replace('LoginPage')}
         >
-          <Text style={styles.loginButtonText}>Login</Text>
+          <Text style={styles.loginRedirectText}>Already have an account? Login here</Text>
         </TouchableOpacity>
+
       </View>
     </KeyboardAvoidingView>
   );
@@ -199,6 +200,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  loginRedirectButton: {
+    backgroundColor: '#ffffff',
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#ff0000'
+  },
+  loginRedirectText: {
+    color: '#ff0000',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   logo: {
     width: 100,
