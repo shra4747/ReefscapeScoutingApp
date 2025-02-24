@@ -347,7 +347,7 @@ const Auto = () => {
   const handleProcessorAction = async (action) => {
     const processorData = {
       action: action,
-      phase: "teleop",
+      phase: "auto",
       timestamp: new Date().toISOString()
     };
 

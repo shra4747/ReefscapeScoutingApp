@@ -61,7 +61,7 @@ const Confirmation = () => {
               team_number: parseInt(matchInfo.team_number),
               match_number: parseInt(matchInfo.match_number),
               game_phase: item.phase,
-              make_miss: item.action == "dealgaefy_only" ? 2 : (item.action == "make" ? 1 : 0),
+              make_miss: item.action == "dealgaefy_only" ? null : (item.action == "make" ? 1 : 0),
               is_dealgify: item.dealgaefy,
               level: item.level,
               reef_face: item.slice,
