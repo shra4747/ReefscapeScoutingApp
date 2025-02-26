@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 const CircularProgressBar = ({ total, current, label, color }) => {
@@ -86,13 +87,25 @@ const AllianceMeter = ({ redMatches, blueMatches }) => {
 };
 
 
+const getScoutingLevel = (matches) => {
+  if (matches >= 150) return { level: 'Platinum', emoji: '🔥', color: '#E5E4E2' };
+  if (matches >= 100) return { level: 'Diamond', emoji: '💎', color: '#40BFFF' };
+  if (matches >= 70) return { level: 'Gold', emoji: '🏆', color: '#FFD700' };
+  if (matches >= 40) return { level: 'Silver', emoji: '🥈', color: '#C0C0C0' };
+  if (matches >= 10) return { level: 'Bronze', emoji: '🥉', color: '#CD7F32' };
+  return { level: 'Rookie', emoji: '🚀', color: '#FFFFFF' };
+};
+
+
 const Profile = ({ route }) => {
  const navigation = useNavigation();
  const [firstName, setFirstName] = useState('');
- const totalMatches = 4; // Total matches (arbitrary value)
- const redMatches = 50; // Red Alliance matches (arbitrary value)
- const blueMatches = 100; // Blue Alliance matches (arbitrary value)
+ const [redMatches, setRedMatches] = useState(0);
+ const [blueMatches, setBlueMatches] = useState(0);
  const currentMinutes = (redMatches + blueMatches) * 2.5; // Current minutes as a fraction of totalMatches
+ const [rank, setRank] = useState(0);
+ const [isTied, setIsTied] = useState(false);
+ const [totalScouters, setTotalScouters] = useState(0);
 
 
  // Ensure redMatches + blueMatches equals totalMatches
@@ -103,7 +116,7 @@ const Profile = ({ route }) => {
  const progressBarColor = redMatches >= blueMatches ? '#ff3030' : '#3078ff';
 
 
- let scoutingLevel;
+ const scoutingLevel = getScoutingLevel(totalMatchesScouted);
 
 
  useEffect(() => {
@@ -111,19 +124,19 @@ const Profile = ({ route }) => {
      try {
        const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
        if (accessToken) {
-         const response = await fetch('http://10.75.226.156:5002/who_am_i', {
+         const response = await fetch('http://10.75.226.156:5002/user_stats', {
            method: 'GET',
            headers: {
              'Authorization': `Bearer ${accessToken}`
            }
          });
-
-         if (response.ok) {
-           const userData = await response.json();
-           setFirstName(userData.first_name);
-         } else {
-           console.error('Failed to fetch user data');
-         }
+         const data = await response.json();
+         setFirstName(data.user_info.first_name);
+         setRedMatches(data.red_matches);
+         setBlueMatches(data.blue_matches);
+         setRank(data.rank);
+         setIsTied(data.is_tied); 
+         setTotalScouters(data.total_scouters)
        }
      } catch (error) {
        console.error('Error fetching user data:', error);
@@ -134,17 +147,6 @@ const Profile = ({ route }) => {
  }, []);
 
 
- if (currentMinutes <= 60) {
-   scoutingLevel = "Clapped Scouter";
- } else if (currentMinutes >= 60 && currentMinutes <= 120) {
-   scoutingLevel = "Experienced Scouter";
- } else if (currentMinutes > 180 && currentMinutes <= 240) {
-   scoutingLevel = "Professional Scouter";
- } else {
-   scoutingLevel = "Legendary Scouter";
- }
-
-
  return (
    <View style={styles.container}>
      <View style={styles.headerContainer}>
@@ -153,8 +155,8 @@ const Profile = ({ route }) => {
      </View>
      <View style={styles.progressBarContainer}>
        <CircularProgressBar
-         total={100}
-         current={100}
+         total={currentMinutes}
+         current={currentMinutes}
          label="Minutes"
          color="#ff3030"
        />
@@ -167,14 +169,42 @@ const Profile = ({ route }) => {
      </View>
      <View style={styles.rankContainer}>
        <Text style={styles.rankText}>
-         You are <Text style={styles.highlightedRank}>Rank 1</Text> out of 234 Scouters on Team 75!
+         You are {isTied ? "tied for " : ""}<Text style={styles.highlightedRank}>Rank {rank}</Text> out of <Text style={{fontWeight: 'bold'}}>{totalScouters}</Text> RoboScouters!
        </Text>
      </View>
      <View style={styles.allianceMeterWrapper}>
        <AllianceMeter redMatches={redMatches} blueMatches={blueMatches} />
      </View>
-     <View style={styles.scoutingLevelContainer}>
-       <Text style={styles.scoutingLevelText}>Your Scouting Level: {scoutingLevel}</Text>
+     <View style={[styles.scoutingLevelContainer, { borderColor: scoutingLevel.color }]}>
+       <LinearGradient 
+         colors={[scoutingLevel.color, darkenColor(scoutingLevel.color, 0.3)]}
+         style={styles.gradientBackground}
+         start={{ x: 0, y: 0 }}
+         end={{ x: 1, y: 1 }}
+       >
+         <View style={styles.emojiContainer}>
+           <Text style={styles.scoutingLevelEmoji}>{scoutingLevel.emoji}</Text>
+           {/* Particle effects */}
+           <View style={[styles.particle, styles.particle1]} />
+           <View style={[styles.particle, styles.particle2]} />
+           <View style={[styles.particle, styles.particle3]} />
+         </View>
+         
+         <View style={styles.scoutingLevelTextContainer}>
+           <Text style={styles.scoutingLevelTitle}>SCOUTING LEVEL</Text>
+           <Text style={[styles.scoutingLevelText, { textShadowColor: 'rgba(0,0,0,0.2)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 }]}>
+             {scoutingLevel.level} TIER
+           </Text>
+         </View>
+         
+         {/* Progress bar */}
+         <View style={styles.progressBarBackground}>
+           <View style={[styles.progressBarFill, { width: `${(totalMatchesScouted/275)*100}%` }]} />
+         </View>
+         
+         <Text style={styles.matchesCount}>{totalMatchesScouted} matches scouted</Text>
+       </LinearGradient>
+       <View style={styles.shineOverlay} />
      </View>
      <TouchableOpacity 
        style={styles.backButton}
@@ -184,6 +214,20 @@ const Profile = ({ route }) => {
      </TouchableOpacity>
    </View>
  );
+};
+
+
+const darkenColor = (color, amount = 0.4) => {
+  let col = color.replace('#', '');
+  let r = parseInt(col.substring(0, 2), 16);
+  let g = parseInt(col.substring(2, 4), 16);
+  let b = parseInt(col.substring(4, 6), 16);
+  
+  r = Math.max(0, r - (r * amount));
+  g = Math.max(0, g - (g * amount));
+  b = Math.max(0, b - (b * amount));
+  
+  return `#${[r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('')}`;
 };
 
 
@@ -289,13 +333,81 @@ const styles = StyleSheet.create({
    fontSize: 18,
  },
  scoutingLevelContainer: {
-   marginTop: 20,
-   alignItems: 'center',
+   marginTop: 30,
+   borderRadius: 20,
+   width: '100%',
+   height: 140,
+   overflow: 'hidden',
+   borderWidth: 2,
+   position: 'relative',
+   elevation: 5,
+   shadowColor: '#000',
+   shadowOffset: { width: 0, height: 4 },
+   shadowOpacity: 0.3,
+   shadowRadius: 6,
+ },
+ gradientBackground: {
+   flex: 1,
+   padding: 20,
+ },
+ emojiContainer: {
+   position: 'absolute',
+   right: 20,
+   top: 0,
+ },
+ scoutingLevelEmoji: {
+   fontSize: 80,
+   textShadowColor: 'rgba(0,0,0,0.2)',
+   textShadowOffset: { width: 2, height: 2 },
+   textShadowRadius: 4,
+ },
+ scoutingLevelTextContainer: {
+   flex: 1,
+ },
+ scoutingLevelTitle: {
+   fontSize: 12,
+   fontWeight: 'bold',
+   letterSpacing: 1,
+   color: '#666',
  },
  scoutingLevelText: {
-   color: 'white',
-   fontSize: 20,
+   fontSize: 24,
    fontWeight: 'bold',
+   marginTop: 4,
+ },
+ progressBarBackground: {
+   position: 'absolute',
+   bottom: 0,
+   left: 0,
+   right: 0,
+   height: 6,
+   backgroundColor: 'rgba(0,0,0,0.1)',
+ },
+ progressBarFill: {
+   height: '100%',
+   backgroundColor: 'rgba(255,255,255,0.5)',
+ },
+ particle: {
+   position: 'absolute',
+   backgroundColor: 'rgba(255,255,255,0.3)',
+   borderRadius: 50,
+ },
+ particle1: { width: 8, height: 8, top: 30, left: -10 },
+ particle2: { width: 12, height: 12, top: 50, left: -20 },
+ particle3: { width: 6, height: 6, top: 10, left: 20 },
+ matchesCount: {
+   position: 'absolute',
+   bottom: 12,
+   right: 12,
+   fontSize: 16,
+   fontWeight: '900',
+   color: 'rgba(0,0,0,0.7)',
+   fontStyle: 'italic',
+ },
+ shineOverlay: {
+   ...StyleSheet.absoluteFillObject,
+   backgroundColor: 'rgba(255,255,255,0.15)',
+   transform: [{ rotate: '20deg' }, { skewY: '30deg' }],
  },
  backButton: {
    position: 'absolute',
