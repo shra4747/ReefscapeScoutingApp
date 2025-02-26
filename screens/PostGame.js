@@ -16,7 +16,6 @@ const PostGame = () => {
     { label: 'Coral', value: 'coral' },
     { label: 'Algae', value: 'algae' },
     { label: 'Shooter', value: 'shooter' },
-    { label: 'Feeder', value: 'feeder' },
     { label: 'Chassis', value: 'chassis' },
     { label: 'Defense', value: 'defense' },
   ]);
