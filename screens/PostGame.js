@@ -1,6 +1,6 @@
 // screens/PostGame.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,48 +9,27 @@ const PostGame = () => {
   const navigation = useNavigation();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [openRobotType, setOpenRobotType] = useState(false);
-  const [openIntake, setOpenIntake] = useState(false);
-  const [openEndEffector, setOpenEndEffector] = useState(false);
-  const [robotTypeValue, setRobotTypeValue] = useState(null);
-  const [intakeValue, setIntakeValue] = useState(null);
-  const [endEffectorValue, setEndEffectorValue] = useState(null);
+  const [robotTypeValue, setRobotTypeValue] = useState([]);
+  const [defenseNotes, setDefenseNotes] = useState('');
   
   const [robotTypeItems, setRobotTypeItems] = useState([
-    { label: 'Select a robot type...', value: null },
     { label: 'Coral', value: 'coral' },
     { label: 'Algae', value: 'algae' },
-    { label: 'Coral and Algae', value: 'coral_and_algae' },
     { label: 'Shooter', value: 'shooter' },
     { label: 'Feeder', value: 'feeder' },
     { label: 'Chassis', value: 'chassis' },
     { label: 'Defense', value: 'defense' },
   ]);
 
-  const [intakeItems, setIntakeItems] = useState([
-    { label: 'Select an intake method...', value: null },
-    { label: 'Human Player Station', value: 'human_station' },
-    { label: 'Ground', value: 'ground' },
-    { label: 'Both', value: 'both' },
-  ]);
-
-  const [endEffectorItems, setEndEffectorItems] = useState([
-    { label: 'Select an end-effector type...', value: null },
-    { label: '2-in-1 Hold', value: '2in1_hold' },
-    { label: 'Double Hold', value: 'double_hold' },
-    { label: 'Single Hold', value: 'single_hold' },
-    { label: 'No Hold', value: 'no_hold' },
-  ]);
-
   const handleSubmit = async () => {
-    if (!robotTypeValue || !intakeValue || !endEffectorValue) {
-      // Don't proceed if any value is null
+    if (robotTypeValue.length === 0) {
+      // Don't proceed if no robot types are selected
       return;
     }
     
     const postGameData = {
       robotType: robotTypeValue,
-      intake: intakeValue,
-      endEffector: endEffectorValue
+      defenseNotes: robotTypeValue.includes('defense') ? defenseNotes : null
     }
 
     console.log("Post Game Data: ", postGameData);
@@ -87,39 +66,28 @@ const PostGame = () => {
         setOpen={setOpenRobotType}
         setValue={setRobotTypeValue}
         setItems={setRobotTypeItems}
-        placeholder="Select Robot Type"
+        placeholder="Select Robot Type(s)"
+        multiple={true}
+        mode="BADGE"
+        badgeDotColors={["#ff3030"]}
         style={styles.dropdown}
         containerStyle={styles.dropdownContainer}
         zIndex={3000}
       />
 
-      <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Robot Intake</Text>
-      <DropDownPicker
-        open={openIntake}
-        value={intakeValue}
-        items={intakeItems}
-        setOpen={setOpenIntake}
-        setValue={setIntakeValue}
-        setItems={setIntakeItems}
-        placeholder="Select Robot Intake"
-        style={styles.dropdown}
-        containerStyle={styles.dropdownContainer}
-        zIndex={2000}
-      />
-
-      <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Robot End-Effector</Text>
-      <DropDownPicker
-        open={openEndEffector}
-        value={endEffectorValue}
-        items={endEffectorItems}
-        setOpen={setOpenEndEffector}
-        setValue={setEndEffectorValue}
-        setItems={setEndEffectorItems}
-        placeholder="Select End-Effector Type"
-        style={styles.dropdown}
-        containerStyle={styles.dropdownContainer}
-        zIndex={1000}
-      />
+      {robotTypeValue.includes('defense') && (
+        <>
+          <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Defense Notes</Text>
+          <TextInput
+            style={styles.notesInput}
+            placeholder="Enter defense notes..."
+            placeholderTextColor="#888"
+            value={defenseNotes}
+            onChangeText={setDefenseNotes}
+            multiline
+          />
+        </>
+      )}
 
       <TouchableOpacity 
         style={[styles.submitButton, { marginTop: 20 }]} 
@@ -204,6 +172,18 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  notesInput: {
+    width: '80%',
+    minHeight: 100,
+    borderColor: '#ff3030',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+    color: '#fff',
+    backgroundColor: '#222',
+    textAlignVertical: 'top',
   },
 });
 
