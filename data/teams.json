@@ -1,0 +1,582 @@
+{
+  "teams": [
+    {
+      "rank": 1,
+      "team_number": 1676,
+      "ranking_score": 2.33,
+      "avg_coop": 0.42,
+      "avg_match": 47.08,
+      "avg_auto": 17.00,
+      "avg_stage": 6.50,
+      "record": {
+        "wins": 10,
+        "losses": 2,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 28
+    },
+    {
+      "rank": 2,
+      "team_number": 222,
+      "ranking_score": 2.08,
+      "avg_coop": 0.50,
+      "avg_match": 44.83,
+      "avg_auto": 12.08,
+      "avg_stage": 4.92,
+      "record": {
+        "wins": 9,
+        "losses": 3,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 25
+    },
+    {
+      "rank": 3,
+      "team_number": 11,
+      "ranking_score": 2.08,
+      "avg_coop": 0.42,
+      "avg_match": 39.25,
+      "avg_auto": 11.83,
+      "avg_stage": 5.00,
+      "record": {
+        "wins": 10,
+        "losses": 2,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 25
+    },
+    {
+      "rank": 4,
+      "team_number": 4361,
+      "ranking_score": 2.08,
+      "avg_coop": 0.25,
+      "avg_match": 39.42,
+      "avg_auto": 13.67,
+      "avg_stage": 5.83,
+      "record": {
+        "wins": 10,
+        "losses": 2,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 25
+    },
+    {
+      "rank": 5,
+      "team_number": 3142,
+      "ranking_score": 2.00,
+      "avg_coop": 0.33,
+      "avg_match": 40.33,
+      "avg_auto": 8.42,
+      "avg_stage": 5.33,
+      "record": {
+        "wins": 9,
+        "losses": 3,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 24
+    },
+    {
+      "rank": 6,
+      "team_number": 8513,
+      "ranking_score": 2.00,
+      "avg_coop": 0.25,
+      "avg_match": 42.58,
+      "avg_auto": 16.25,
+      "avg_stage": 7.92,
+      "record": {
+        "wins": 9,
+        "losses": 3,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 24
+    },
+    {
+      "rank": 7,
+      "team_number": 219,
+      "ranking_score": 1.67,
+      "avg_coop": 0.17,
+      "avg_match": 43.42,
+      "avg_auto": 20.42,
+      "avg_stage": 3.92,
+      "record": {
+        "wins": 8,
+        "losses": 4,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 20
+    },
+    {
+      "rank": 8,
+      "team_number": 8117,
+      "ranking_score": 1.58,
+      "avg_coop": 0.33,
+      "avg_match": 32.00,
+      "avg_auto": 9.75,
+      "avg_stage": 2.67,
+      "record": {
+        "wins": 8,
+        "losses": 4,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 19
+    },
+    {
+      "rank": 9,
+      "team_number": 223,
+      "ranking_score": 1.50,
+      "avg_coop": 0.42,
+      "avg_match": 42.33,
+      "avg_auto": 17.25,
+      "avg_stage": 3.75,
+      "record": {
+        "wins": 8,
+        "losses": 4,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 18
+    },
+    {
+      "rank": 10,
+      "team_number": 56,
+      "ranking_score": 1.50,
+      "avg_coop": 0.25,
+      "avg_match": 37.50,
+      "avg_auto": 13.25,
+      "avg_stage": 4.25,
+      "record": {
+        "wins": 7,
+        "losses": 5,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 18
+    },
+    {
+      "rank": 11,
+      "team_number": 1672,
+      "ranking_score": 1.42,
+      "avg_coop": 0.33,
+      "avg_match": 35.25,
+      "avg_auto": 11.83,
+      "avg_stage": 5.33,
+      "record": {
+        "wins": 7,
+        "losses": 5,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 17
+    },
+    {
+      "rank": 12,
+      "team_number": 1279,
+      "ranking_score": 1.33,
+      "avg_coop": 0.33,
+      "avg_match": 39.67,
+      "avg_auto": 17.42,
+      "avg_stage": 4.67,
+      "record": {
+        "wins": 6,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 16
+    },
+    {
+      "rank": 13,
+      "team_number": 1811,
+      "ranking_score": 1.33,
+      "avg_coop": 0.08,
+      "avg_match": 41.50,
+      "avg_auto": 17.42,
+      "avg_stage": 5.50,
+      "record": {
+        "wins": 6,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 16
+    },
+    {
+      "rank": 14,
+      "team_number": 75,
+      "ranking_score": 1.25,
+      "avg_coop": 0.33,
+      "avg_match": 34.50,
+      "avg_auto": 13.08,
+      "avg_stage": 5.08,
+      "record": {
+        "wins": 5,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 15
+    },
+    {
+      "rank": 15,
+      "team_number": 428,
+      "ranking_score": 1.25,
+      "avg_coop": 0.33,
+      "avg_match": 31.42,
+      "avg_auto": 13.00,
+      "avg_stage": 3.58,
+      "record": {
+        "wins": 6,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 15
+    },
+    {
+      "rank": 16,
+      "team_number": 193,
+      "ranking_score": 1.17,
+      "avg_coop": 0.50,
+      "avg_match": 31.00,
+      "avg_auto": 10.67,
+      "avg_stage": 3.75,
+      "record": {
+        "wins": 6,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 14
+    },
+    {
+      "rank": 17,
+      "team_number": 1218,
+      "ranking_score": 1.17,
+      "avg_coop": 0.33,
+      "avg_match": 39.33,
+      "avg_auto": 15.50,
+      "avg_stage": 5.67,
+      "record": {
+        "wins": 6,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 14
+    },
+    {
+      "rank": 18,
+      "team_number": 8771,
+      "ranking_score": 1.08,
+      "avg_coop": 0.08,
+      "avg_match": 30.75,
+      "avg_auto": 7.00,
+      "avg_stage": 3.33,
+      "record": {
+        "wins": 6,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 13
+    },
+    {
+      "rank": 19,
+      "team_number": 8075,
+      "ranking_score": 1.00,
+      "avg_coop": 0.33,
+      "avg_match": 25.17,
+      "avg_auto": 9.25,
+      "avg_stage": 3.08,
+      "record": {
+        "wins": 5,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 12
+    },
+    {
+      "rank": 20,
+      "team_number": 5732,
+      "ranking_score": 1.00,
+      "avg_coop": 0.25,
+      "avg_match": 31.00,
+      "avg_auto": 8.33,
+      "avg_stage": 3.83,
+      "record": {
+        "wins": 5,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 12
+    },
+    {
+      "rank": 21,
+      "team_number": 3340,
+      "ranking_score": 1.00,
+      "avg_coop": 0.08,
+      "avg_match": 25.33,
+      "avg_auto": 8.50,
+      "avg_stage": 4.92,
+      "record": {
+        "wins": 5,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 12
+    },
+    {
+      "rank": 22,
+      "team_number": 5624,
+      "ranking_score": 0.92,
+      "avg_coop": 0.17,
+      "avg_match": 28.92,
+      "avg_auto": 8.17,
+      "avg_stage": 3.50,
+      "record": {
+        "wins": 5,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 11
+    },
+    {
+      "rank": 23,
+      "team_number": 5310,
+      "ranking_score": 0.92,
+      "avg_coop": 0.08,
+      "avg_match": 26.92,
+      "avg_auto": 9.33,
+      "avg_stage": 4.25,
+      "record": {
+        "wins": 5,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 11
+    },
+    {
+      "rank": 24,
+      "team_number": 752,
+      "ranking_score": 0.83,
+      "avg_coop": 0.42,
+      "avg_match": 28.33,
+      "avg_auto": 9.67,
+      "avg_stage": 3.33,
+      "record": {
+        "wins": 4,
+        "losses": 8,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 10
+    },
+    {
+      "rank": 25,
+      "team_number": 41,
+      "ranking_score": 0.83,
+      "avg_coop": 0.25,
+      "avg_match": 31.58,
+      "avg_auto": 11.75,
+      "avg_stage": 3.17,
+      "record": {
+        "wins": 5,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 10
+    },
+    {
+      "rank": 26,
+      "team_number": 8704,
+      "ranking_score": 0.83,
+      "avg_coop": 0.25,
+      "avg_match": 24.00,
+      "avg_auto": 8.67,
+      "avg_stage": 2.83,
+      "record": {
+        "wins": 4,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 2,
+      "matches_played": 12,
+      "total_ranking_points": 10
+    },
+    {
+      "rank": 27,
+      "team_number": 6016,
+      "ranking_score": 0.75,
+      "avg_coop": 0.42,
+      "avg_match": 33.08,
+      "avg_auto": 11.42,
+      "avg_stage": 4.42,
+      "record": {
+        "wins": 4,
+        "losses": 8,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 9
+    },
+    {
+      "rank": 28,
+      "team_number": 5438,
+      "ranking_score": 0.75,
+      "avg_coop": 0.08,
+      "avg_match": 27.25,
+      "avg_auto": 9.33,
+      "avg_stage": 4.33,
+      "record": {
+        "wins": 4,
+        "losses": 8,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 9
+    },
+    {
+      "rank": 29,
+      "team_number": 6945,
+      "ranking_score": 0.75,
+      "avg_coop": 0.08,
+      "avg_match": 26.25,
+      "avg_auto": 7.00,
+      "avg_stage": 3.25,
+      "record": {
+        "wins": 4,
+        "losses": 8,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 9
+    },
+    {
+      "rank": 30,
+      "team_number": 9116,
+      "ranking_score": 0.75,
+      "avg_coop": 0.00,
+      "avg_match": 29.42,
+      "avg_auto": 8.83,
+      "avg_stage": 4.83,
+      "record": {
+        "wins": 4,
+        "losses": 8,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 9
+    },
+    {
+      "rank": 31,
+      "team_number": 8588,
+      "ranking_score": 0.75,
+      "avg_coop": 0.00,
+      "avg_match": 20.00,
+      "avg_auto": 6.33,
+      "avg_stage": 3.75,
+      "record": {
+        "wins": 4,
+        "losses": 6,
+        "ties": 0
+      },
+      "dq": 2,
+      "matches_played": 12,
+      "total_ranking_points": 9
+    },
+    {
+      "rank": 32,
+      "team_number": 9424,
+      "ranking_score": 0.58,
+      "avg_coop": 0.00,
+      "avg_match": 23.17,
+      "avg_auto": 6.92,
+      "avg_stage": 4.17,
+      "record": {
+        "wins": 3,
+        "losses": 9,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 7
+    },
+    {
+      "rank": 33,
+      "team_number": 9439,
+      "ranking_score": 0.58,
+      "avg_coop": 0.00,
+      "avg_match": 21.67,
+      "avg_auto": 7.25,
+      "avg_stage": 2.75,
+      "record": {
+        "wins": 3,
+        "losses": 7,
+        "ties": 0
+      },
+      "dq": 2,
+      "matches_played": 12,
+      "total_ranking_points": 7
+    },
+    {
+      "rank": 34,
+      "team_number": 2577,
+      "ranking_score": 0.33,
+      "avg_coop": 0.17,
+      "avg_match": 27.08,
+      "avg_auto": 8.92,
+      "avg_stage": 2.50,
+      "record": {
+        "wins": 2,
+        "losses": 10,
+        "ties": 0
+      },
+      "dq": 0,
+      "matches_played": 12,
+      "total_ranking_points": 4
+    }
+  ]
+}  

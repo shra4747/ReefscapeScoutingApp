@@ -242,6 +242,14 @@ const StartPage = () => {
           </View>
         </TouchableOpacity>
 
+        {/* Admin Console Button */}
+        <TouchableOpacity
+          style={[styles.adminButton, { left: '50%', transform: [{ translateX: -100 }, { translateY: 20 }] }]}
+          onPress={() => navigation.navigate('AdminConsole')}
+        >
+          <Text style={styles.adminButtonText}>Admin Console</Text>
+        </TouchableOpacity>
+
         {/* Right Profile Button */}
         <TouchableOpacity
           style={[styles.profileButton, { right: 20 }]}
@@ -460,6 +468,21 @@ const styles = StyleSheet.create({
     width: 200,
     height: 100,
     resizeMode: 'contain',
+  },
+  adminButton: {
+    position: 'absolute',
+    top: 40,
+    backgroundColor: 'red',
+    padding: 8,
+    borderRadius: 15,
+    width: 200,
+    height: 35,
+    alignItems: 'center',
+  },
+  adminButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

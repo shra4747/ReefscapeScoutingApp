@@ -18,7 +18,8 @@
         "NSPhotoLibraryUsageDescription": "The app accesses your photos to let you share them with your team.",
         "NSCameraUsageDescription": "The app accesses your camera to let you take photos of robots.",
         "NSMicrophoneUsageDescription": "The app accesses your microphone to let you record videos of robots."
-      }
+      },
+      "bundleIdentifier": "com.anonymous.ScoutingApp2025"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,8 +29,10 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
-      ]
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.anonymous.ScoutingApp2025"
     },
     "web": {
       "favicon": "./assets/favicon.png"

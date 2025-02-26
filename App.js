@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import RegisterPage from './screens/RegisterPage';
 import LoginPage from './screens/LoginPage';
 import StartPage from './screens/StartPage';
+import AdminConsole from './screens/AdminConsole';
+import AlliancePicklistScreen from './screens/AlliancePicklistScreen';
 import Auto from './screens/Auto';
 import AutoP1 from './screens/AutoP1';
 import AutoP2 from './screens/AutoP2';
@@ -156,6 +158,16 @@ const App = () => {
           <Stack.Screen 
             name="RegisterPage" 
             component={RegisterPage} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="AlliancePicklistScreen" 
+            component={AlliancePicklistScreen} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="AdminConsole" 
+            component={AdminConsole} 
             options={{ headerShown: false }}
           />
           <Stack.Screen 
