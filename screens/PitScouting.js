@@ -198,7 +198,7 @@ const PitScouting = () => {
        can_L3: L3, 
        can_L4: L4,
        auto_notes: auto_notes,
-       other_notes: notes
+       vision_notes: notes
      };
 
      const formData = new FormData();
@@ -445,10 +445,10 @@ const PitScouting = () => {
      </View>
 
      <View style={styles.sectionContainer}>
-       <Text style={styles.sectionTitle}>Other Notes</Text>
+       <Text style={styles.sectionTitle}>Vision Notes</Text>
        <TextInput
          style={[styles.inputField, { height: 100 }]}
-         placeholder="Enter other notes here"
+         placeholder="Enter vision notes here"
          placeholderTextColor="#888"
          value={notes}
          onChangeText={setnotes}

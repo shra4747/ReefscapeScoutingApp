@@ -20,7 +20,7 @@ const StartPage = () => {
       label: `Match ${i + 1}`,
       value: `${i + 1}`,
     }))
-  );
+  );    
 
   const [openTeam, setOpenTeam] = useState(false);
   const [valueTeam, setValueTeam] = useState(null);
