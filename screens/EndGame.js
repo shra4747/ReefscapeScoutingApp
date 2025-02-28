@@ -1,11 +1,12 @@
 // screens/EndGame.js
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Easing } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { 
   useAnimatedStyle,
   useSharedValue,
-  withSpring
+  withSpring,
+  useAnimatedReaction
 } from 'react-native-reanimated';
 import CheckBox from 'expo-checkbox';
 import Slider from '@react-native-community/slider';  // Make sure to install this package
@@ -16,16 +17,19 @@ const EndGame = () => {
   const navigation = useNavigation();
   const [shallowHang, setShallowHang] = React.useState(false);
   const [deepHang, setDeepHang] = React.useState(false);
-  const [park, setPark] = React.useState(true); // Start in park position
+  const [park, setPark] = React.useState(false); // Start with park off
+  const [nonePhase, setNonePhase] = React.useState(true); // None phase is default
   const [failedClimb, setFailedClimb] = React.useState(false);
   const [hangTime, setHangTime] = React.useState(0);
   const [isDeep, setIsDeep] = React.useState(false);
   const [endGameData, setEndGameData] = React.useState([]); // List to store end game data
   const [allianceColor, setAllianceColor] = React.useState('#ff3030'); // Default to red
+  const [showTapText, setShowTapText] = React.useState(true); // New state for tap text visibility
+  const blinkAnim = useSharedValue(0); // Changed to useSharedValue
 
   // Animation values
   const translateY = useSharedValue(0);
-  const rotateZ = useSharedValue(90); // Start horizontal (park position)
+  const rotateZ = useSharedValue(90); // Start horizontal (none phase)
   const chainHeight = useSharedValue(0); // Start with no chain
 
   // Get alliance color from AsyncStorage
@@ -37,26 +41,45 @@ const EndGame = () => {
     getColor();
   }, []);
 
+  // Blinking animation
+  React.useEffect(() => {
+    if (nonePhase && showTapText) {
+      blinkAnim.value = withSpring(1, { duration: 500 }); // Faster initial spring
+      const interval = setInterval(() => {
+        blinkAnim.value = blinkAnim.value === 0 ? 1 : 0;
+      }, 500); // Changed from 1000ms to 500ms
+      return () => clearInterval(interval);
+    }
+  }, [nonePhase, showTapText]);
+
   const handleTap = () => {
-    if (park) {
+    if (nonePhase) {
+      setShowTapText(false); // Hide the tap text
+      // Move to park position from none
+      translateY.value = withSpring(0); // Stay at bottom
+      rotateZ.value = withSpring(90); // Rotate to horizontal
+      chainHeight.value = withSpring(0); // Hide chain
+      setPark(true);
+      setNonePhase(false);
+    } else if (park) {
       // Move to shallow hang position from park
-      translateY.value = withSpring(40); // Move up
-      rotateZ.value = withSpring(0); // Rotate to vertical
-      chainHeight.value = withSpring(40); // Show chain
+      translateY.value = withSpring(40);
+      rotateZ.value = withSpring(0);
+      chainHeight.value = withSpring(40);
       setShallowHang(true);
       setPark(false);
     } else if (shallowHang) {
       // Move to deep hang position from shallow
-      translateY.value = withSpring(130); // Move up further
-      chainHeight.value = withSpring(130); // Extend chain
+      translateY.value = withSpring(130);
+      chainHeight.value = withSpring(130);
       setDeepHang(true);
       setShallowHang(false);
     } else {
-      // Move back to park position from deep
-      translateY.value = withSpring(0); // Move down
-      rotateZ.value = withSpring(90); // Rotate to horizontal
-      chainHeight.value = withSpring(0); // Hide chain
-      setPark(true);
+      // Move back to none position from deep
+      translateY.value = withSpring(0);
+      rotateZ.value = withSpring(90);
+      chainHeight.value = withSpring(0);
+      setNonePhase(true);
       setDeepHang(false);
     }
   };
@@ -67,7 +90,9 @@ const EndGame = () => {
         { translateY: translateY.value },
         { rotateZ: `${rotateZ.value}deg` }
       ],
-      backgroundColor: allianceColor, // Use alliance color
+      backgroundColor: nonePhase ? 'transparent' : allianceColor, // Transparent in none phase
+      borderWidth: nonePhase ? 2 : 0, // Add border in none phase
+      borderColor: allianceColor, // Use alliance color for border
     };
   });
 
@@ -94,14 +119,26 @@ const EndGame = () => {
   };
 
   const handleSubmit = async () => {
+    // Check if hang is selected and hang time is 0
+    if (!nonePhase && !park && hangTime === 0) {
+      alert('Hang Time: Invalid Input');
+      return;
+    }
+
     // Determine the hang status based on animation values
-    const hangStatus = park ? 'Park' : 
-                      deepHang ? 'Deep Hang' : 
-                      'Shallow Hang';
+    let hangStatus = nonePhase ? 'None' : 
+                    park ? 'Park' : 
+                    deepHang ? 'Deep Hang' : 
+                    'Shallow Hang';
+    
+    // Append "Failed" if failedClimb is checked and not in None or Park phase
+    if (failedClimb && !nonePhase && !park) {
+      hangStatus += ' Failed';
+    }
     
     const hangData = {
       hang: hangStatus,
-      hangTime: (hangStatus !== 'Park' && !failedClimb) ? hangTime : undefined, // Only include hangTime if not in park and not failed
+      hangTime: (hangStatus !== 'None' && hangStatus !== 'Park') ? hangTime : undefined,
     };
 
     // Add the hang data to the endGameData list
@@ -114,6 +151,12 @@ const EndGame = () => {
     // Navigate to PostGame screen
     navigation.navigate('PostGame');
   };
+
+  const blinkStyle = useAnimatedStyle(() => {
+    return {
+      opacity: blinkAnim.value,
+    };
+  });
 
   return (
     <View style={styles.container}>
@@ -128,43 +171,51 @@ const EndGame = () => {
           </View>
         </GestureHandlerRootView>
 
-        {/* Keep hang status text unchanged */}
+        {nonePhase && showTapText && (
+          <Animated.Text style={[styles.tapText, blinkStyle]}>
+            TAP TO CHANGE
+          </Animated.Text>
+        )}
+
         <Text style={styles.hangStatusText}>
-          {park ? 'Park' : (deepHang ? 'Deep Hang' : 'Shallow Hang')}
+          {nonePhase ? 'None' : 
+           park ? 'Park' : 
+           (deepHang ? 'Deep Hang' : 'Shallow Hang')}
         </Text>
 
         {/* Conditionally render failed climb checkbox */}
-        {!park && (
+        {!nonePhase && !park && (
           <View style={styles.parkOptionsContainer}>
             <View style={styles.checkboxRow}>
               <CheckBox
                 value={failedClimb}
                 onValueChange={() => setFailedClimb(prev => !prev)}
                 style={styles.checkbox}
+                color={allianceColor}
               />
               <Text style={styles.checkboxText}>Failed Climb/Park</Text>
             </View>
           </View>
         )}
-      </View>
 
-      {/* Conditionally render hang time slider */}
-      {!park && (
-        <View style={styles.sliderContainer}>
-          <Text style={styles.sliderLabel}>Hang Time: {hangTime.toFixed(1)} seconds</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={15}
-            step={0.1}
-            value={hangTime}
-            onValueChange={setHangTime}
-            minimumTrackTintColor="#007AFF"
-            maximumTrackTintColor="#000000"
-            thumbTintColor="#007AFF"
-          />
-        </View>
-      )}
+        {/* Conditionally render hang time slider */}
+        {!nonePhase && !park && (
+          <View style={styles.sliderContainer}>
+            <Text style={styles.sliderLabel}>Hang Time: {hangTime.toFixed(1)} seconds</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={15}
+              step={0.1}
+              value={hangTime}
+              onValueChange={setHangTime}
+              minimumTrackTintColor={allianceColor}
+              maximumTrackTintColor="#000000"
+              thumbTintColor={allianceColor}
+            />
+          </View>
+        )}
+      </View>
       
       <TouchableOpacity 
         style={[styles.button, styles.submitButton]}
@@ -218,10 +269,10 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   parkOptionsContainer: {
-    marginTop: 40,
-    flexDirection: 'column',
-    gap: 20,
-    justifyContent: 'center',
+    position: 'absolute',
+    bottom: -40,
+    width: '80%',
+    alignItems: 'center',
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -253,7 +304,7 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     position: 'absolute',
-    bottom: 100,
+    bottom: -150,
     width: '80%',
     alignItems: 'center',
   },
@@ -280,6 +331,13 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     marginBottom: 20,
+  },
+  tapText: {
+    position: 'absolute',
+    bottom: 250, // Position above the visual
+    fontSize: 20,
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 });
 
