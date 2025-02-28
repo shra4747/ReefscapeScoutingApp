@@ -53,6 +53,15 @@ const Confirmation = () => {
             hang: (endgameData.hang == "Park" || endgameData.hang == "Failed Park") ? null : endgameData.hang,
             hang_time: (endgameData.hang == "Park" || endgameData.hang == "Failed Park") ? null : endgameData.hangTime,
             fail_park: endgameData.hang == "Failed Park",
+
+            was_coral: postgameData.robotType.includes("coral"),
+            was_algae: postgameData.robotType.includes("algae"),
+            was_shooter: postgameData.robotType.includes("shooter"),
+            was_chassis: postgameData.robotType.includes("chassis"),
+            was_defense: postgameData.robotType.includes("defense"),
+
+            defense_notes: postgameData.defenseNotes,
+
             match_start_time: matchInfo.match_start_time.split('.')[0]
           },
 
@@ -86,7 +95,7 @@ const Confirmation = () => {
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request
-        const response = await fetch('http://10.75.226.156:5002/match', {
+        const response = await fetch('http://10.0.0.215:5002/match', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

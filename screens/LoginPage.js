@@ -22,7 +22,7 @@ const LoginPage = () => {
       password,
     };
 
-    const loginResponse = await fetch('http://10.75.226.156:5002/login', {
+    const loginResponse = await fetch('http://10.0.0.215:5002/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

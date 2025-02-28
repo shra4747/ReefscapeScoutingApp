@@ -7,10 +7,10 @@ import {
  StyleSheet,
  Dimensions
 } from 'react-native';
-import allTeams from '../data/teamsData'; // Update this line
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import PickList from './PickList';
 
 // Minimal UI Components
 const Card = ({ children, style, ...props }) => (
@@ -88,25 +88,76 @@ const Alert = ({ children, variant = 'default', style, ...props }) => {
 };
 
 
-const AllianceSelection = () => {
- const [teams] = useState(allTeams);
-
-
- const [alliances, setAlliances] = useState(
-   Array.from({ length: 8 }, (_, i) => ({
-     id: i + 1,
-     captain: teams[i],
-     members: [],
-     hasPicked: false,
-   }))
- );
-
-
- const [remainingTeams, setRemainingTeams] = useState(teams.slice(1));
- const [currentAllianceIndex, setCurrentAllianceIndex] = useState(0);
- const [isReverse, setIsReverse] = useState(false);
+const AllianceSelection = ({ competitionCode = 'isde2' }) => {
+ const [teams, setTeams] = useState([]);
+ const [loading, setLoading] = useState(true);
  const [error, setError] = useState('');
  const [pickListTeams, setPickListTeams] = useState([]);
+
+ // Load pick list teams from local storage
+ useEffect(() => {
+   const loadPickListTeams = async () => {
+     try {
+       const savedTeams = await AsyncStorage.getItem('pickListTeams');
+       if (savedTeams) {
+         setPickListTeams(JSON.parse(savedTeams));
+       }
+     } catch (error) {
+       console.error('Failed to load pick list teams', error);
+     }
+   };
+   loadPickListTeams();
+ }, []);
+
+ // Fetch teams from API
+ useEffect(() => {
+   const fetchTeams = async () => {
+     try {
+       const response = await fetch(
+         `https://frc-api.firstinspires.org/v3.0/2025/rankings/${competitionCode}`,
+         {
+           headers: {
+             'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
+           }
+         }
+       );
+       
+       if (!response.ok) throw new Error('Failed to fetch teams');
+       
+       const data = await response.json();
+       const formattedTeams = data.Rankings.map(team => ({
+         id: team.teamNumber,
+         name: `Team ${team.teamNumber}`,
+         rank: team.rank,
+       })).sort((a, b) => a.rank - b.rank);
+       console.log(formattedTeams.length)
+       setTeams(formattedTeams);
+       
+       // Reinitialize alliances with new teams
+       const initialAlliances = Array.from({ length: 8 }, (_, i) => ({
+         id: i + 1,
+         captain: formattedTeams[i],
+         members: [],
+         hasPicked: false,
+       }));
+       setAlliances(initialAlliances);
+       setRemainingTeams(formattedTeams);
+     } catch (error) {
+       setError('Failed to load team data');
+       console.error(error);
+     } finally {
+       setLoading(false);
+     }
+   };
+
+   fetchTeams();
+ }, [competitionCode]);
+
+ // Initialize states after teams are loaded
+ const [alliances, setAlliances] = useState([]);
+ const [remainingTeams, setRemainingTeams] = useState([]);
+ const [currentAllianceIndex, setCurrentAllianceIndex] = useState(0);
+ const [isReverse, setIsReverse] = useState(false);
  const [history, setHistory] = useState([]);
 
 
@@ -114,32 +165,23 @@ const AllianceSelection = () => {
    React.useCallback(() => {
      const loadPickListTeams = async () => {
        try {
-         // Get teams from local storage
-         const savedTeams = Platform.OS === 'web'
-           ? JSON.parse(localStorage.getItem('teams')) || []
-           : JSON.parse(await AsyncStorage.getItem('teams')) || [];
-         
-         // Map saved teams to full team data from allTeams
-         const pickListWithFullData = savedTeams.map(pickTeam => {
-           const fullTeamData = teams.find(team => 
-             team.name === `Team ${pickTeam.number}`
-           );
-           return fullTeamData; // Use only the data from teams (which includes correct rank)
-         }).filter(Boolean); // Remove any undefined entries
-         
-         // Filter out teams that have already been selected
-         const availablePickListTeams = pickListWithFullData.filter(pickTeam => 
-           remainingTeams.some(team => team.id === pickTeam.id)
-         );
-         
-         setPickListTeams(availablePickListTeams.slice(0, 2)); // Show only top 2 teams
+         const savedTeams = await AsyncStorage.getItem('pickListTeams');
+         if (savedTeams) {
+           const parsedTeams = JSON.parse(savedTeams);
+           // Map to match the team structure used in AllianceSelection
+           const formattedTeams = parsedTeams.map(team => ({
+             id: team.number,
+             name: `Team ${team.number}`,
+             rank: team.rank
+           }));
+           setPickListTeams(formattedTeams);
+         }
        } catch (error) {
          console.error('Failed to load pick list teams', error);
        }
      };
-
      loadPickListTeams();
-   }, [remainingTeams, teams])
+   }, [])
  );
 
 
@@ -183,6 +225,18 @@ const AllianceSelection = () => {
 
 
  const handleSelection = (teamId) => {
+   const selectedTeam = remainingTeams.find(team => team.id === teamId);
+   if (!selectedTeam) return;
+
+   const currentAlliance = alliances[currentAllianceIndex];
+
+   // Handle self-selection
+   if (currentAlliance.captain.id === teamId) {
+     alert('Teams Cannot Select Themselves');
+     return;
+   }
+
+   // Continue with normal selection process
    saveToHistory({
      alliances,
      remainingTeams,
@@ -191,41 +245,25 @@ const AllianceSelection = () => {
    });
 
    setError('');
-   const selectedTeam = remainingTeams.find(team => team.id === teamId);
-   if (!selectedTeam) return;
-
-
-   const currentAlliance = alliances[currentAllianceIndex];
-
-
-   if (currentAlliance.captain.id === teamId) {
-     setError('Team cannot select themselves');
-     return;
-   }
-
 
    if (selectedTeam.rank < currentAlliance.id) {
      setError('Alliance cannot select a higher-ranked team');
      return;
    }
 
-
    let updatedAlliances = [...alliances];
   
    updatedAlliances[currentAllianceIndex].hasPicked = true;
 
-
    const selectedCaptainIndex = alliances.findIndex(
      alliance => alliance.captain.id === selectedTeam.id
    );
-
 
    if (selectedCaptainIndex !== -1) {
      for (let i = selectedCaptainIndex; i < alliances.length - 1; i++) {
        updatedAlliances[i].captain = updatedAlliances[i + 1].captain;
        updatedAlliances[i].hasPicked = updatedAlliances[i + 1].hasPicked;
      }
-
 
      const highestRankingTeam = remainingTeams
        .filter(team =>
@@ -237,19 +275,15 @@ const AllianceSelection = () => {
        )
        .sort((a, b) => a.rank - b.rank)[0];
 
-
      if (highestRankingTeam) {
        updatedAlliances[alliances.length - 1].captain = highestRankingTeam;
        updatedAlliances[alliances.length - 1].hasPicked = false;
      }
    }
 
-
    updatedAlliances[currentAllianceIndex].members.push(selectedTeam);
 
-
    setAlliances(updatedAlliances);
-
 
    const availableTeams = teams.filter(team => {
      if (team.id === selectedTeam.id) return false;
@@ -266,22 +300,17 @@ const AllianceSelection = () => {
      return true;
    }).sort((a, b) => a.rank - b.rank);
 
-
    setRemainingTeams(availableTeams);
-
 
    const allFull = updatedAlliances.every(alliance => alliance.members.length === 2);
    if (allFull) return;
 
-
    let nextIndex = currentAllianceIndex + (isReverse ? -1 : 1);
-
 
    if (nextIndex === alliances.length || nextIndex === -1) {
      setIsReverse(prev => !prev);
      nextIndex = isReverse ? 0 : alliances.length - 1;
    }
-
 
    setCurrentAllianceIndex(nextIndex);
  };
@@ -289,6 +318,58 @@ const AllianceSelection = () => {
 
  const totalSelected = alliances.reduce((sum, alliance) => sum + alliance.members.length, 8);
 
+
+ // Add reload function
+ const handleReload = async () => {
+   setLoading(true);
+   setError('');
+   try {
+     const response = await fetch(
+       `https://frc-api.firstinspires.org/v3.0/2025/rankings/${competitionCode}`,
+       {
+         headers: {
+           'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
+         }
+       }
+     );
+     
+     if (!response.ok) throw new Error('Failed to fetch teams');
+     
+     const data = await response.json();
+     const formattedTeams = data.Rankings.map(team => ({
+       id: team.teamNumber,
+       name: `Team ${team.teamNumber}`,
+       rank: team.rank,
+     })).sort((a, b) => a.rank - b.rank);
+     
+     setTeams(formattedTeams);
+     setRemainingTeams(formattedTeams);
+   } catch (error) {
+     setError('Failed to reload team data');
+     console.error(error);
+   } finally {
+     setLoading(false);
+   }
+ };
+
+
+ if (loading) {
+   return (
+     <View style={styles.container}>
+       <Text style={styles.cardTitle}>Loading teams...</Text>
+     </View>
+   );
+ }
+
+ if (error) {
+   return (
+     <View style={styles.container}>
+       <Alert variant="destructive">
+         <Text style={styles.errorText}>{error}</Text>
+       </Alert>
+     </View>
+   );
+ }
 
  if (totalSelected >= 24) {
    return (
@@ -338,16 +419,24 @@ const AllianceSelection = () => {
        <Card.Header>
          <View style={styles.headerContainer}>
            <Card.Title>Alliance Selection</Card.Title>
-           <TouchableOpacity 
-             style={styles.undoButton}
-             onPress={handleUndo}
-             disabled={history.length === 0}
-           >
-             <Text style={[
-               styles.undoButtonText,
-               history.length === 0 && styles.undoButtonDisabled
-             ]}>Undo</Text>
-           </TouchableOpacity>
+           <View style={styles.buttonContainer}>
+             <TouchableOpacity 
+               style={styles.reloadButton}
+               onPress={handleReload}
+             >
+               <Text style={styles.reloadButtonText}>Reload</Text>
+             </TouchableOpacity>
+             <TouchableOpacity 
+               style={styles.undoButton}
+               onPress={handleUndo}
+               disabled={history.length === 0}
+             >
+               <Text style={[
+                 styles.undoButtonText,
+                 history.length === 0 && styles.undoButtonDisabled
+               ]}>Undo</Text>
+             </TouchableOpacity>
+           </View>
          </View>
        </Card.Header>
        <Card.Content>
@@ -379,8 +468,8 @@ const AllianceSelection = () => {
                        )}
                      </Text>
                      {alliance.members.map(member => (
-                       <Text key={member.id}>
-                         {member.name}
+                       <Text key={member.id} style={styles.captainText}>
+                         Member: {member.name}
                          <Text style={styles.rankText}>(Rank {member.rank})</Text>
                        </Text>
                      ))}
@@ -394,8 +483,8 @@ const AllianceSelection = () => {
            <View style={styles.halfWidth}>
              <Card style={styles.pickListBox}>
                <Text style={styles.pickListTitle}>Pick List</Text>
-               {pickListTeams.length > 0 ? (
-                 pickListTeams.map(team => (
+               {pickListTeams.length > 0 && (
+                 pickListTeams.slice(0, 3).map(team => (
                    <TouchableOpacity
                      key={team.id}
                      style={styles.pickListItem}
@@ -403,12 +492,10 @@ const AllianceSelection = () => {
                    >
                      <Text style={styles.pickListTeamText}>
                        {team.name}
-                       <Text style={styles.rankText}> (Rank {team.rank})</Text>
+                       <Text style={styles.rankText}> ({teams.find(t => t.id === team.id)?.rank || 'N/A'})</Text>
                      </Text>
                    </TouchableOpacity>
                  ))
-               ) : (
-                 <Text style={styles.noTeamsText}>No teams in pick list</Text>
                )}
              </Card>
 
@@ -418,6 +505,8 @@ const AllianceSelection = () => {
                  const isCaptain = alliances.some(alliance =>
                    alliance.captain.id === team.id && !alliance.hasPicked
                  );
+                 const isAlliance1Captain = alliances[0]?.captain.id === team.id;
+                 
                  return (
                    <Button
                      key={team.id}
@@ -426,7 +515,12 @@ const AllianceSelection = () => {
                      variant={isCaptain ? "secondary" : "outline"}
                    >
                      <View style={styles.buttonContent}>
-                       <Text style={styles.buttonText}>Team {team.id}</Text>
+                       <Text style={[
+                         styles.buttonText,
+                         isCaptain && !isAlliance1Captain && styles.captainHighlight
+                       ]}>
+                         Team {team.id}
+                       </Text>
                        <Text style={styles.rankText}>
                          Rank {team.rank}
                          {isCaptain && " (Captain)"}
@@ -543,6 +637,7 @@ const styles = StyleSheet.create({
    justifyContent: 'space-between',
    width: '100%',
    color: '#ffffff',
+   flexWrap: 'wrap',
  },
  buttonText: {
    color: '#ffffff',
@@ -623,6 +718,19 @@ const styles = StyleSheet.create({
    justifyContent: 'space-between',
    alignItems: 'center',
  },
+ buttonContainer: {
+   flexDirection: 'row',
+   gap: 8,
+ },
+ reloadButton: {
+   padding: 8,
+   borderRadius: 4,
+   backgroundColor: '#e0e0e0',
+ },
+ reloadButtonText: {
+   fontSize: 14,
+   fontWeight: 'bold',
+ },
  undoButton: {
    padding: 8,
    borderRadius: 4,
@@ -634,6 +742,10 @@ const styles = StyleSheet.create({
  },
  undoButtonDisabled: {
    opacity: 0.5,
+ },
+ captainHighlight: {
+   color: '#ff0000',
+   fontWeight: 'bold'
  },
 });
 

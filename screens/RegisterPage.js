@@ -38,7 +38,7 @@ const RegisterPage = () => {
         scouter_id: Math.floor(Math.random() * 100000), // Random number for scouter_id
       };
     // console.log("Hello1")
-    const regiserResponse = await fetch('http://10.75.226.15666:5002/register', {
+    const regiserResponse = await fetch('http://10.0.0.215:5002/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

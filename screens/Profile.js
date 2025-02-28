@@ -88,12 +88,12 @@ const AllianceMeter = ({ redMatches, blueMatches }) => {
 
 
 const getScoutingLevel = (matches) => {
-  if (matches >= 150) return { level: 'Platinum', emoji: '🔥', color: '#E5E4E2' };
+  if (matches >= 150) return { level: 'Locked In', emoji: '🔥', color: '#E5E4E2' };
   if (matches >= 100) return { level: 'Diamond', emoji: '💎', color: '#40BFFF' };
   if (matches >= 70) return { level: 'Gold', emoji: '🏆', color: '#FFD700' };
   if (matches >= 40) return { level: 'Silver', emoji: '🥈', color: '#C0C0C0' };
   if (matches >= 10) return { level: 'Bronze', emoji: '🥉', color: '#CD7F32' };
-  return { level: 'Rookie', emoji: '🚀', color: '#FFFFFF' };
+  return { level: 'Geeked', emoji: '🚀', color: '#FFFFFF' };
 };
 
 
@@ -124,7 +124,7 @@ const Profile = ({ route }) => {
      try {
        const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
        if (accessToken) {
-         const response = await fetch('http://10.75.226.156:5002/user_stats', {
+         const response = await fetch('http://10.0.0.215:5002/user_stats', {
            method: 'GET',
            headers: {
              'Authorization': `Bearer ${accessToken}`
@@ -169,7 +169,7 @@ const Profile = ({ route }) => {
      </View>
      <View style={styles.rankContainer}>
        <Text style={styles.rankText}>
-         You are {isTied ? "tied for " : ""}<Text style={styles.highlightedRank}>Rank {rank}</Text> out of <Text style={{fontWeight: 'bold'}}>{totalScouters}</Text> RoboScouters!
+         You are {isTied ? "tied for " : ""}<Text style={styles.highlightedRank}>Rank {rank ?? totalScouters}</Text> out of <Text style={{fontWeight: 'bold'}}>{totalScouters}</Text> RoboScouters!
        </Text>
      </View>
      <View style={styles.allianceMeterWrapper}>

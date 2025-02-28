@@ -11,7 +11,6 @@ import {
   ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { allTeams } from '../data/teamsData';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -19,83 +18,67 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const PickList = () => {
-  const [teams, setTeams] = useState([]);
   const [teamInput, setTeamInput] = useState('');
+  const [pickListTeams, setPickListTeams] = useState([]);
 
+  // Load teams from local storage on mount
   useEffect(() => {
     const loadTeams = async () => {
       try {
-        const savedTeams = Platform.OS === 'web'
-          ? JSON.parse(localStorage.getItem('teams')) || []
-          : JSON.parse(await AsyncStorage.getItem('teams')) || [];
-        setTeams(savedTeams);
+        const savedTeams = await AsyncStorage.getItem('pickListTeams');
+        if (savedTeams) {
+          setPickListTeams(JSON.parse(savedTeams));
+        }
       } catch (error) {
-        console.error('Failed to load teams', error);
+        console.error('Failed to load pick list teams', error);
       }
     };
-
     loadTeams();
   }, []);
 
+  // Save teams to local storage whenever they change
   useEffect(() => {
     const saveTeams = async () => {
       try {
-        const teamsString = JSON.stringify(teams);
-        if (Platform.OS === 'web') {
-          localStorage.setItem('teams', teamsString);
-        } else {
-          await AsyncStorage.setItem('teams', teamsString);
-        }
+        await AsyncStorage.setItem('pickListTeams', JSON.stringify(pickListTeams));
       } catch (error) {
-        console.error('Failed to save teams', error);
+        console.error('Failed to save pick list teams', error);
       }
     };
-
     saveTeams();
-  }, [teams]);
+  }, [pickListTeams]);
 
   const handleAddTeam = () => {
     if (!teamInput.trim()) return;
 
     const teamNumber = parseInt(teamInput.trim());
-    const existingTeam = allTeams.find(team => team.number === teamNumber);
     
-    if (!existingTeam) {
-      alert('Team not found in the total list');
-      return;
-    }
-
     // Check if team is already in the list
-    if (teams.some(team => team.number === teamNumber)) {
+    if (pickListTeams.some(team => team.number === teamNumber)) {
       alert('Team already in pick list');
       return;
     }
 
     const newTeam = {
-      id: existingTeam.id,
+      id: teamNumber,
       number: teamNumber,
-      rank: teams.length + 1
+      rank: pickListTeams.length + 1
     };
 
     if (Platform.OS !== 'web') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
 
-    setTeams([...teams, newTeam]);
+    setPickListTeams([...pickListTeams, newTeam]);
     setTeamInput('');
   };
 
   const handleResetTeams = () => {
-    setTeams([]);
-    if (Platform.OS === 'web') {
-      localStorage.removeItem('teams');
-    } else {
-      AsyncStorage.removeItem('teams');
-    }
+    setPickListTeams([]);
   };
 
   const moveTeam = (index, direction) => {
-    const newTeams = [...teams];
+    const newTeams = [...pickListTeams];
     const targetIndex = index + direction;
 
     if (targetIndex < 0 || targetIndex >= newTeams.length) return;
@@ -107,14 +90,14 @@ const PickList = () => {
     const [movedTeam] = newTeams.splice(index, 1);
     newTeams.splice(targetIndex, 0, movedTeam);
 
-    setTeams(newTeams.map((team, idx) => ({ ...team, rank: idx + 1 })));
+    setPickListTeams(newTeams.map((team, idx) => ({ ...team, rank: idx + 1 })));
   };
 
   const handleRemoveTeam = (teamNumber) => {
     if (Platform.OS !== 'web') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
-    setTeams(teams.filter(team => team.number !== teamNumber));
+    setPickListTeams(pickListTeams.filter(team => team.number !== teamNumber));
   };
 
   const renderTeamItem = (item, index) => {
@@ -165,7 +148,7 @@ const PickList = () => {
       </View>
 
       <ScrollView>
-        {teams.map((item, index) => renderTeamItem(item, index))}
+        {pickListTeams.map((item, index) => renderTeamItem(item, index))}
       </ScrollView>
     </View>
   );
