@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
 import AllianceSelection from './AllianceSelection';
 import PickList from './PickList';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 
@@ -22,12 +23,22 @@ const AlliancePicklistScreen = () => {
       <Tab.Screen 
         name="AllianceSelection" 
         component={AllianceSelection}
-        options={{ title: 'Alliance' }} 
+        options={{ 
+          title: 'Live Rankings',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="account-group" color={color} size={size} />
+          )
+        }} 
       />
       <Tab.Screen 
         name="PickList" 
         component={PickList}
-        options={{ title: 'Pick List' }} 
+        options={{ 
+          title: 'Pick List',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="notebook" color={color} size={size} />
+          )
+        }} 
       />
     </Tab.Navigator>
   );

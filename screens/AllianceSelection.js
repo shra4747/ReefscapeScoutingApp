@@ -94,64 +94,83 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
  const [error, setError] = useState('');
  const [pickListTeams, setPickListTeams] = useState([]);
 
- // Load pick list teams from local storage
- useEffect(() => {
-   const loadPickListTeams = async () => {
-     try {
-       const savedTeams = await AsyncStorage.getItem('pickListTeams');
-       if (savedTeams) {
-         setPickListTeams(JSON.parse(savedTeams));
-       }
-     } catch (error) {
-       console.error('Failed to load pick list teams', error);
-     }
-   };
-   loadPickListTeams();
- }, []);
-
- // Fetch teams from API
- useEffect(() => {
-   const fetchTeams = async () => {
-     try {
-       const response = await fetch(
-         `https://frc-api.firstinspires.org/v3.0/2025/rankings/${competitionCode}`,
-         {
+ // Load pick list teams from server when screen focuses
+ useFocusEffect(
+   React.useCallback(() => {
+     const loadPickListTeams = async () => {
+       try {
+         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+         const response = await fetch('http://10.0.0.215:5002/picklist/TEST', {
            headers: {
-             'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
+             'Authorization': `Bearer ${authToken}`
            }
+         });
+         
+         if (response.ok) {
+           const serverData = await response.json();
+           const formattedTeams = serverData.map(team => ({
+             id: team.team_number,
+             name: `Team ${team.team_number}`,
+             rank: team.picklist_rank
+           }));
+           setPickListTeams(formattedTeams);
          }
-       );
-       
-       if (!response.ok) throw new Error('Failed to fetch teams');
-       
-       const data = await response.json();
-       const formattedTeams = data.Rankings.map(team => ({
-         id: team.teamNumber,
-         name: `Team ${team.teamNumber}`,
-         rank: team.rank,
-       })).sort((a, b) => a.rank - b.rank);
-       console.log(formattedTeams.length)
-       setTeams(formattedTeams);
-       
-       // Reinitialize alliances with new teams
-       const initialAlliances = Array.from({ length: 8 }, (_, i) => ({
-         id: i + 1,
-         captain: formattedTeams[i],
-         members: [],
-         hasPicked: false,
-       }));
-       setAlliances(initialAlliances);
-       setRemainingTeams(formattedTeams);
-     } catch (error) {
-       setError('Failed to load team data');
-       console.error(error);
-     } finally {
-       setLoading(false);
-     }
-   };
-
-   fetchTeams();
- }, [competitionCode]);
+       } catch (error) {
+         console.error('Failed to load pick list teams', error);
+       }
+     };
+     
+     // Reset alliance selection process
+     setCurrentAllianceIndex(0);
+     setIsReverse(false);
+     setHistory([]);
+     
+     // Reload teams and initialize alliances
+     const fetchTeams = async () => {
+       try {
+         const response = await fetch(
+           `https://frc-api.firstinspires.org/v3.0/2025/rankings/${competitionCode}`,
+           {
+             headers: {
+               'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
+             }
+           }
+         );
+         
+         if (!response.ok) throw new Error('Failed to fetch teams');
+         
+         const data = await response.json();
+         const formattedTeams = data.Rankings.map(team => ({
+           id: team.teamNumber,
+           name: `Team ${team.teamNumber}`,
+           rank: team.rank,
+         })).sort((a, b) => a.rank - b.rank);
+         
+         setTeams(formattedTeams);
+         setRemainingTeams(formattedTeams);
+         
+         // Reinitialize alliances with new teams
+         const initialAlliances = Array.from({ length: 8 }, (_, i) => ({
+           id: i + 1,
+           captain: formattedTeams[i],
+           members: [],
+           hasPicked: false,
+         }));
+         setAlliances(initialAlliances);
+       } catch (error) {
+         setError('Failed to load team data');
+         console.error(error);
+       } finally {
+         setLoading(false);
+       }
+     };
+     
+     setLoading(true);
+     fetchTeams();
+     loadPickListTeams();
+     
+   }, [competitionCode])
+ );
 
  // Initialize states after teams are loaded
  const [alliances, setAlliances] = useState([]);
@@ -160,30 +179,21 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
  const [isReverse, setIsReverse] = useState(false);
  const [history, setHistory] = useState([]);
 
-
- useFocusEffect(
-   React.useCallback(() => {
-     const loadPickListTeams = async () => {
-       try {
-         const savedTeams = await AsyncStorage.getItem('pickListTeams');
-         if (savedTeams) {
-           const parsedTeams = JSON.parse(savedTeams);
-           // Map to match the team structure used in AllianceSelection
-           const formattedTeams = parsedTeams.map(team => ({
-             id: team.number,
-             name: `Team ${team.number}`,
-             rank: team.rank
-           }));
-           setPickListTeams(formattedTeams);
-         }
-       } catch (error) {
-         console.error('Failed to load pick list teams', error);
-       }
-     };
-     loadPickListTeams();
-   }, [])
- );
-
+ // Add this useEffect to share competition teams
+ useEffect(() => {
+   const shareCompetitionTeams = async () => {
+     try {
+       const teamsToShare = teams.map(t => t.id);
+       await AsyncStorage.setItem('competitionTeams', JSON.stringify(teamsToShare));
+     } catch (error) {
+       console.error('Failed to share competition teams', error);
+     }
+   };
+   
+   if (teams.length > 0) {
+     shareCompetitionTeams();
+   }
+ }, [teams]);
 
  const saveToHistory = (currentState) => {
    // Create a deep copy of the current state before saving
@@ -285,6 +295,7 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
 
    setAlliances(updatedAlliances);
 
+   // Update remaining teams
    const availableTeams = teams.filter(team => {
      if (team.id === selectedTeam.id) return false;
     
@@ -301,6 +312,11 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
    }).sort((a, b) => a.rank - b.rank);
 
    setRemainingTeams(availableTeams);
+
+   // Update pickListTeams to remove the selected team
+   setPickListTeams(prevPickListTeams => 
+     prevPickListTeams.filter(team => team.id !== selectedTeam.id)
+   );
 
    const allFull = updatedAlliances.every(alliance => alliance.members.length === 2);
    if (allFull) return;
@@ -324,7 +340,8 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
    setLoading(true);
    setError('');
    try {
-     const response = await fetch(
+     // Reload competition teams
+     const competitionResponse = await fetch(
        `https://frc-api.firstinspires.org/v3.0/2025/rankings/${competitionCode}`,
        {
          headers: {
@@ -333,10 +350,10 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
        }
      );
      
-     if (!response.ok) throw new Error('Failed to fetch teams');
+     if (!competitionResponse.ok) throw new Error('Failed to fetch teams');
      
-     const data = await response.json();
-     const formattedTeams = data.Rankings.map(team => ({
+     const competitionData = await competitionResponse.json();
+     const formattedTeams = competitionData.Rankings.map(team => ({
        id: team.teamNumber,
        name: `Team ${team.teamNumber}`,
        rank: team.rank,
@@ -344,8 +361,27 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
      
      setTeams(formattedTeams);
      setRemainingTeams(formattedTeams);
+
+     // Reload picklist teams
+     const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+     const picklistResponse = await fetch('http://10.0.0.215:5002/picklist/TEST', {
+       headers: {
+         'Authorization': `Bearer ${authToken}`
+       }
+     });
+     
+     if (picklistResponse.ok) {
+       const serverData = await picklistResponse.json();
+       const formattedPicklist = (serverData || []).map(team => ({
+         id: team.team_number || 0,
+         name: `Team ${team.team_number || ''}`,
+         rank: team.picklist_rank || 0
+       }));
+       setPickListTeams(formattedPicklist);
+     }
+
    } catch (error) {
-     setError('Failed to reload team data');
+     setError('Failed to reload data');
      console.error(error);
    } finally {
      setLoading(false);
@@ -424,7 +460,7 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
                style={styles.reloadButton}
                onPress={handleReload}
              >
-               <Text style={styles.reloadButtonText}>Reload</Text>
+               <Text style={styles.reloadButtonText}>🔄</Text>
              </TouchableOpacity>
              <TouchableOpacity 
                style={styles.undoButton}
@@ -492,7 +528,7 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
                    >
                      <Text style={styles.pickListTeamText}>
                        {team.name}
-                       <Text style={styles.rankText}> ({teams.find(t => t.id === team.id)?.rank || 'N/A'})</Text>
+                       <Text style={styles.rankText}> Rank ({teams.find(t => t.id === team.id)?.rank || 'N/A'})</Text>
                      </Text>
                    </TouchableOpacity>
                  ))
@@ -723,13 +759,16 @@ const styles = StyleSheet.create({
    gap: 8,
  },
  reloadButton: {
-   padding: 8,
+   padding: 6,
    borderRadius: 4,
    backgroundColor: '#e0e0e0',
+   width: 35,
+   height: 35,
+   justifyContent: 'center',
+   alignItems: 'center',
  },
  reloadButtonText: {
-   fontSize: 14,
-   fontWeight: 'bold',
+   fontSize: 18,
  },
  undoButton: {
    padding: 8,

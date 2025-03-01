@@ -193,7 +193,7 @@ const EndGame = () => {
                 style={styles.checkbox}
                 color={allianceColor}
               />
-              <Text style={styles.checkboxText}>Failed Climb/Park</Text>
+              <Text style={styles.checkboxText}>  Failed to Climb</Text>
             </View>
           </View>
         )}
