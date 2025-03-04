@@ -51,7 +51,7 @@ const Confirmation = () => {
             teleop_HP_pickups: teleopPickups.stationCount,
             park: endgameData.hang == "Park",
             hang: (endgameData.hang.includes("Shallow Hang") || endgameData.hang.includes("Deep Hang")),
-            hang_time: (endgameData.hang.includes("Shallow Hang") || endgameData.hang.includes("Deep Hang")) ? null : endgameData.hangTime,
+            hang_time: (endgameData.hang.includes("Shallow Hang") || endgameData.hang.includes("Deep Hang")) ? endgameData.hangTime : null,
             fail_park: endgameData.hang.includes("Failed"),
 
             was_coral: postgameData.robotType.includes("coral"),
