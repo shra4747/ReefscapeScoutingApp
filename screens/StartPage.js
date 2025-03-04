@@ -51,7 +51,7 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const response = await fetch(`http://10.0.0.215:5002/schedule`, {
+        const response = await fetch(`http://97.107.134.214:5002/schedule`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -135,8 +135,6 @@ const StartPage = () => {
 
   const toggleDriverStation = () => {
     const newValue = driverStation === 'Left' ? 'Right' : 'Left';
-    console.log(newValue)
-    console.log(allianceColor)
     setDriverStation(newValue);
     AsyncStorage.setItem('START_DRIVER_STATION', newValue);
     
@@ -150,13 +148,13 @@ const StartPage = () => {
   const handleSubmit = async () => {
 
     if (driverStation == "Left" && allianceColor == "red") {
-      await AsyncStorage.setItem('DRIVER_STATION', "Right");
+      await AsyncStorage.setItem('DRIVER_STATION', "Left");
     }
     else if (driverStation == "Right" && allianceColor == "blue") {
-      await AsyncStorage.setItem('DRIVER_STATION', "Right");
+      await AsyncStorage.setItem('DRIVER_STATION', "Left");
     }
     else {
-      await AsyncStorage.setItem('DRIVER_STATION', "Left");
+      await AsyncStorage.setItem('DRIVER_STATION', "Right");
     }
 
     const newData = {

@@ -30,7 +30,8 @@ const PickList = () => {
     const loadPickListTeams = async () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const response = await fetch('http://10.0.0.215:5002/picklist/TEST', {
+        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+        const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -58,7 +59,8 @@ const PickList = () => {
     const loadTeams = async () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const response = await fetch('http://10.0.0.215:5002/picklist/TEST', {
+        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+        const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -102,14 +104,15 @@ const PickList = () => {
       if (initialLoad || pickListTeams.length === 0) return;
       
       try {
+        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST'
         const picklistData = pickListTeams.map(team => ({
           team_number: team.number,
           picklist_rank: team.rank,
-          picklist_name: "TEST"
+          picklist_name: eventCode
         }));
 
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const response = await fetch('http://10.0.0.215:5002/picklist', {
+        const response = await fetch('http://97.107.134.214:5002/picklist', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -200,7 +203,8 @@ const PickList = () => {
   const handleReload = async () => {
     try {
       const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-      const response = await fetch('http://10.0.0.215:5002/picklist/TEST', {
+      const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+      const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }

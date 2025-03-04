@@ -180,7 +180,7 @@ const PitScouting = () => {
    try {
      const pitData = {
        team_number: parseInt(teamNumber, 10),
-       event_code: "TEST",
+       event_code: await AsyncStorage.getItem('EVENT_CODE') || 'TEST',
        robot_height: parseInt(height, 10),
        robot_dimensions: `${length}x${width}`,
        cycle_time: cycleTime,
@@ -215,7 +215,7 @@ const PitScouting = () => {
      await console.log(formData)
 
     // console.log(JSON.stringify(formData))
-     const response = await fetch('http://10.0.0.215:5002/pit_scout', {
+     const response = await fetch('http://97.107.134.214:5002/pit_scout', {
        method: 'POST',
        body: formData,
         headers: {

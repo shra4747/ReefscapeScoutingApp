@@ -88,11 +88,23 @@ const Alert = ({ children, variant = 'default', style, ...props }) => {
 };
 
 
-const AllianceSelection = ({ competitionCode = 'isde2' }) => {
+const AllianceSelection = () => {
  const [teams, setTeams] = useState([]);
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState('');
  const [pickListTeams, setPickListTeams] = useState([]);
+ const [competitionCode, setCompetitionCode] = useState('');
+
+ // Move the async storage call into useEffect
+ useEffect(() => {
+   const loadCompetitionCode = async () => {
+     const code = await AsyncStorage.getItem('EVENT_CODE');
+     if (code) {
+       setCompetitionCode(code.toLowerCase());
+     }
+   };
+   loadCompetitionCode();
+ }, []);
 
  // Load pick list teams from server when screen focuses
  useFocusEffect(
@@ -100,7 +112,8 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
      const loadPickListTeams = async () => {
        try {
          const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-         const response = await fetch('http://10.0.0.215:5002/picklist/TEST', {
+         const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+         const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
            headers: {
              'Authorization': `Bearer ${authToken}`
            }
@@ -128,8 +141,14 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
      // Reload teams and initialize alliances
      const fetchTeams = async () => {
        try {
+         const eventCode = await AsyncStorage.getItem('EVENT_CODE');
+         if (!eventCode) {
+           alert('Event code not found. Please set it in Admin Console.');
+           return;
+         }
+
          const response = await fetch(
-           `https://frc-api.firstinspires.org/v3.0/2025/rankings/${competitionCode}`,
+           `https://frc-api.firstinspires.org/v3.0/2025/rankings/${eventCode}`,
            {
              headers: {
                'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
@@ -341,8 +360,14 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
    setError('');
    try {
      // Reload competition teams
-     const competitionResponse = await fetch(
-       `https://frc-api.firstinspires.org/v3.0/2025/rankings/${competitionCode}`,
+     const eventCode = await AsyncStorage.getItem('EVENT_CODE');
+     if (!eventCode) {
+       alert('Event code not found. Please set it in Admin Console.');
+       return;
+     }
+
+     const response = await fetch(
+       `https://frc-api.firstinspires.org/v3.0/2025/rankings/${eventCode}`,
        {
          headers: {
            'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
@@ -350,9 +375,9 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
        }
      );
      
-     if (!competitionResponse.ok) throw new Error('Failed to fetch teams');
+     if (!response.ok) throw new Error('Failed to fetch teams');
      
-     const competitionData = await competitionResponse.json();
+     const competitionData = await response.json();
      const formattedTeams = competitionData.Rankings.map(team => ({
        id: team.teamNumber,
        name: `Team ${team.teamNumber}`,
@@ -364,7 +389,7 @@ const AllianceSelection = ({ competitionCode = 'isde2' }) => {
 
      // Reload picklist teams
      const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-     const picklistResponse = await fetch('http://10.0.0.215:5002/picklist/TEST', {
+     const picklistResponse = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
        headers: {
          'Authorization': `Bearer ${authToken}`
        }
