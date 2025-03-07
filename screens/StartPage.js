@@ -34,6 +34,14 @@ const StartPage = () => {
   const [driverStation, setDriverStation] = useState('Left');
   const rotation = useSharedValue(0);
 
+  const [openPosition, setOpenPosition] = useState(false);
+  const [valuePosition, setValuePosition] = useState(null);
+  const [itemsPosition, setItemsPosition] = useState([
+    { label: 'Far Starting Position', value: 'far' },
+    { label: 'Middle Starting Position', value: 'middle' },
+    { label: 'Close Starting Position', value: 'close' }
+  ]);
+
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{
@@ -77,8 +85,17 @@ const StartPage = () => {
       }
     };
 
+    // Add focus listener
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchSchedule();
+    });
+
+    // Initial fetch
     fetchSchedule();
-  }, []);
+
+    // Cleanup
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     if (valueMatch) {
@@ -143,9 +160,39 @@ const StartPage = () => {
       stiffness: 90,
       mass: 1
     });
+
+    console.log(driverStation)
   };
 
   const handleSubmit = async () => {
+    if (valueMatch === null || valueTeam === null || valuePosition === null || allianceColor === null) {
+      Alert.alert('Error', 'Please fill in all fields before submitting');
+      return;
+    }
+
+    // Flip starting position based on driver station and alliance color
+    let finalPosition = valuePosition;
+    // console.log(finalPosition, driverStation, allianceColor)
+    if (driverStation == "Right") {
+      if (allianceColor == "blue") {
+
+      }
+      else if (allianceColor == "red") {
+        finalPosition = (finalPosition === "close") ? "far" : "close"
+      }
+
+    }
+
+    if (driverStation == "Left") {
+      if (allianceColor == "red") {
+
+      }
+      else if (allianceColor == "blue") {
+        finalPosition = (finalPosition === "close") ? "far" : "close"
+      }
+
+    }
+    
 
     if (driverStation == "Left" && allianceColor == "red") {
       await AsyncStorage.setItem('DRIVER_STATION', "Left");
@@ -162,6 +209,7 @@ const StartPage = () => {
       team_number: valueTeam,
       match_start_time: new Date().toISOString(),
       alliance_color: allianceColor == "red" ? "Red" : "Blue",
+      start_position: finalPosition || 'none' // Use the flipped position
     };
 
     setStartPageData([newData]);
@@ -174,6 +222,7 @@ const StartPage = () => {
     await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify([]));
     await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify([]));
     await AsyncStorage.setItem('MATCH_INFO', JSON.stringify(newData));
+    // await AsyncStorage.setItem('STARTING_POSITION', finalPosition || 'none');
 
     console.log('Start Page Data:', newData);
 
@@ -184,6 +233,7 @@ const StartPage = () => {
     setOpenTeam(false);
     setValueTeam(null);
     setStartPageData([]);
+    // setItemsPosition()
 
     navigation.navigate('Auto');
   };
@@ -243,7 +293,29 @@ const StartPage = () => {
         {/* Admin Console Button */}
         <TouchableOpacity
           style={[styles.adminButton, { left: '50%', transform: [{ translateX: -100 }, { translateY: 20 }] }]}
-          onPress={() => navigation.navigate('AdminConsole')}
+          onPress={() => {
+            Alert.prompt(
+              'Admin Access',
+              'Enter password:',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Submit',
+                  onPress: (password) => {
+                    if (password === 'HOUSTON2025') {
+                      navigation.navigate('AdminConsole');
+                    } else {
+                      Alert.alert('Error', 'Incorrect password');
+                    }
+                  },
+                },
+              ],
+              'secure-text'
+            );
+          }}
         >
           <Text style={styles.adminButtonText}>Admin Console</Text>
         </TouchableOpacity>
@@ -322,6 +394,22 @@ const StartPage = () => {
         <Text style={styles.resultText}>
           Alliance Color: {allianceColor ? allianceColor.charAt(0).toUpperCase() + allianceColor.slice(1) : 'None'}
         </Text>
+
+        {/* Starting Position Dropdown */}
+        <Text style={styles.title}>Starting Position</Text>
+        <DropDownPicker
+          open={openPosition}
+          value={valuePosition}
+          items={itemsPosition}
+          setOpen={setOpenPosition}
+          setValue={setValuePosition}
+          setItems={setItemsPosition}
+          containerStyle={styles.dropdownContainer}
+          style={styles.dropdown}
+          dropDownContainerStyle={styles.dropdownBox}
+          zIndex={1000}
+          zIndexInverse={3000}
+        />
 
         {/* Submit Button */}
         <TouchableOpacity

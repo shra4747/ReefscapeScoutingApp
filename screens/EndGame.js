@@ -210,7 +210,7 @@ const EndGame = () => {
               value={hangTime}
               onValueChange={setHangTime}
               minimumTrackTintColor={allianceColor}
-              maximumTrackTintColor="#000000"
+              maximumTrackTintColor="#ffffff"
               thumbTintColor={allianceColor}
             />
           </View>

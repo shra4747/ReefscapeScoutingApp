@@ -19,6 +19,7 @@ const Teleop = () => {
   const [reef, setReef] = useState([]);
   const [currentAction, setCurrentAction] = useState({});
   const [showProcessorModal, setShowProcessorModal] = useState(false);
+  const [teamNumber, setTeamNumber] = useState(null);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
   const [driverStation, setDriverStation] = useState(null); // New state for driver station
@@ -316,6 +317,22 @@ const Teleop = () => {
     }
   };
 
+  // Add useEffect to fetch team number
+  useEffect(() => {
+    const fetchTeamNumber = async () => {
+      try {
+        const matchInfo = await AsyncStorage.getItem('MATCH_INFO');
+        if (matchInfo) {
+          const parsedInfo = JSON.parse(matchInfo);
+          setTeamNumber(parsedInfo.team_number);
+        }
+      } catch (error) {
+        console.error('Error fetching team number:', error);
+      }
+    };
+    fetchTeamNumber();
+  }, []);
+
   // Define styles after determining global_color
   const styles = StyleSheet.create({
     container: {
@@ -551,6 +568,11 @@ const Teleop = () => {
       fontSize: 16,
       fontWeight: 'bold',
     },
+    teamNumberText: {
+      fontSize: 18,
+      color: 'white',
+      marginBottom: 10,
+    },
   });
 
   return (
@@ -565,6 +587,9 @@ const Teleop = () => {
       </Animated.View>
 
       <Text style={styles.title}>Teleop</Text>
+      {teamNumber && (
+        <Text style={styles.teamNumberText}>Scouting Team: {teamNumber}</Text>
+      )}
       <View style={styles.topButtonsContainer}>
         <TouchableOpacity 
           style={styles.undoButton} 

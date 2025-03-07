@@ -1,6 +1,6 @@
 // screens/BlankScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, FlatList, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker'; // Import Picker from the correct package
 import DropDownPicker from 'react-native-dropdown-picker';
 import Slider from '@react-native-community/slider';
@@ -50,6 +50,52 @@ const PitScouting = () => {
  const [notes, setnotes] = useState('');
  const [image, setImage] = useState(null); // Changed from images array to single image
 
+ // Add state for teams dropdown
+ const [openTeamPicker, setOpenTeamPicker] = useState(false);
+ const [teams, setTeams] = useState([]);
+
+ // Add loading state
+ const [isSubmitting, setIsSubmitting] = useState(false);
+
+ // Fetch teams on component mount
+ useEffect(() => {
+   const fetchTeams = async () => {
+       
+     try {
+      const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'NJTAB';
+      const access_token = await AsyncStorage.getItem('ACCESS_TOKEN')
+      // Fetch all teams from FIRST API
+      const teamsResponse = await fetch("https://frc-api.firstinspires.org/v3.0/2025/teams?eventCode=NJTAB", {
+        headers: {
+          'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
+        }
+      });
+       const teamsData = await teamsResponse.json();
+       // Fetch already scouted teams from your API
+       const scoutedResponse = await fetch('http://97.107.134.214:5002/pit_scout', {
+         headers: {
+           'Authorization': `Bearer ${access_token}`
+         }
+       });
+       const scoutedData = await scoutedResponse.json();
+       const scoutedTeamNumbers = scoutedData.map(scout => scout.team_number.toString());
+
+       // Filter out already scouted teams
+       const teamItems = teamsData.teams
+         .filter(team => !scoutedTeamNumbers.includes(team.teamNumber.toString()))
+         .map(team => ({
+           label: team.teamNumber.toString(),
+           value: team.teamNumber.toString()
+         }));
+
+       setTeams([{ label: 'Select Team...', value: null }, ...teamItems]);
+     } catch (error) {
+       console.error('Error fetching teams:', error);
+     }
+   };
+
+   fetchTeams();
+ }, []);
 
  const handleTeamNumberChange = (text) => {
    const cleanedText = text.replace(/[^0-9]/g, '');
@@ -169,6 +215,8 @@ const PitScouting = () => {
  };
 
  const handleSubmit = async () => {
+   if (isSubmitting) return; // Prevent multiple submissions
+   
    // Validate all fields
    if (!teamNumber || !height || !length || !width ||
        cycleTime === null || cycleTime === 0 || driverExperience === null ||
@@ -177,10 +225,12 @@ const PitScouting = () => {
      return;
    }
 
+   setIsSubmitting(true); // Start loading
+
    try {
      const pitData = {
        team_number: parseInt(teamNumber, 10),
-       event_code: await AsyncStorage.getItem('EVENT_CODE') || 'TEST',
+       event_code: "NJTAB",
        robot_height: parseInt(height, 10),
        robot_dimensions: `${length}x${width}`,
        cycle_time: cycleTime,
@@ -231,6 +281,8 @@ const PitScouting = () => {
    } catch (error) {
      console.error('Error saving pit scouting data:', error);
      alert('Error saving data. Please try again.');
+   } finally {
+     setIsSubmitting(false); // Stop loading whether success or error
    }
  };
 
@@ -265,14 +317,23 @@ const PitScouting = () => {
        <Text style={styles.backButtonText}>← Back</Text>
      </TouchableOpacity>
      <View style={styles.sectionContainer}>
-       <Text style={styles.sectionTitle}>Team Info</Text>
-       <TextInput
-         style={styles.inputField}
-         placeholder="Team Number"
-         placeholderTextColor="#888"
+       <Text style={styles.sectionTitle}>Team Number</Text>
+       <DropDownPicker
+         open={openTeamPicker}
          value={teamNumber}
-         onChangeText={handleTeamNumberChange}
-         maxLength={5}
+         items={teams}
+         setOpen={setOpenTeamPicker}
+         setValue={setTeamNumber}
+         setItems={setTeams}
+         placeholder="Select Team"
+         style={styles.dropdown}
+         containerStyle={[styles.dropdownContainer, { zIndex: 5000 }]}
+         listMode="SCROLLVIEW"
+         scrollViewProps={{
+           nestedScrollEnabled: true,
+         }}
+         zIndex={5000}
+         zIndexInverse={6000}
        />
      </View>
      <View style={styles.sectionContainer}>
@@ -436,7 +497,7 @@ const PitScouting = () => {
        <Text style={styles.sectionTitle}>Autonomous Paths</Text>
        <TextInput
          style={[styles.inputField, { height: 100 }]}
-         placeholder="Enter auto paths"
+         placeholder="Paths: Level, starting position, number of pieces"
          placeholderTextColor="#888"
          value={auto_notes}
          onChangeText={setauto_notes}
@@ -448,7 +509,7 @@ const PitScouting = () => {
        <Text style={styles.sectionTitle}>Vision Notes</Text>
        <TextInput
          style={[styles.inputField, { height: 100 }]}
-         placeholder="Enter vision notes here"
+         placeholder="Do they have vision? How do they use vision? April Tags or Branch detection? Auto Align?"
          placeholderTextColor="#888"
          value={notes}
          onChangeText={setnotes}
@@ -472,34 +533,46 @@ const PitScouting = () => {
        </View>
      )}
      <TouchableOpacity
-       style={styles.submitButton}
+       style={[styles.submitButton, isSubmitting && styles.disabledButton]}
        onPress={handleSubmit}
+       disabled={isSubmitting}
      >
-       <Text style={styles.submitButtonText}>Submit</Text>
+       {isSubmitting ? (
+         <ActivityIndicator color="#FFF" />
+       ) : (
+         <Text style={styles.submitButtonText}>Submit</Text>
+       )}
      </TouchableOpacity>
    </ScrollView>
  );
 
 
  return (
-   <KeyboardAvoidingView
-     style={styles.container}
-     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-   >
-     <ScrollView
-       contentContainerStyle={styles.scrollContainer}
-       keyboardShouldPersistTaps="handled"
-       showsVerticalScrollIndicator={true}
-       scrollEnabled={true}
-       nestedScrollEnabled={true}
+   <>
+     {isSubmitting && (
+       <View style={styles.loadingOverlay}>
+         <ActivityIndicator size="large" color="#FF4444" />
+       </View>
+     )}
+     <KeyboardAvoidingView
+       style={styles.container}
+       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
      >
-       <TouchableWithoutFeedback onPress={dismissKeyboard}>
-         <View style={{ flex: 1 }}>
-           {renderContent()}
-         </View>
-       </TouchableWithoutFeedback>
-     </ScrollView>
-   </KeyboardAvoidingView>
+       <ScrollView
+         contentContainerStyle={styles.scrollContainer}
+         keyboardShouldPersistTaps="handled"
+         showsVerticalScrollIndicator={true}
+         scrollEnabled={true}
+         nestedScrollEnabled={true}
+       >
+         <TouchableWithoutFeedback onPress={dismissKeyboard}>
+           <View style={{ flex: 1 }}>
+             {renderContent()}
+           </View>
+         </TouchableWithoutFeedback>
+       </ScrollView>
+     </KeyboardAvoidingView>
+   </>
  );
 };
 
@@ -676,6 +749,20 @@ const styles = StyleSheet.create({
    flex: 1,
    justifyContent: 'space-between',
    height: 150, // Match branchImage height
+ },
+ disabledButton: {
+   backgroundColor: '#888',
+ },
+ loadingOverlay: {
+   position: 'absolute',
+   top: 0,
+   left: 0,
+   right: 0,
+   bottom: 0,
+   justifyContent: 'center',
+   alignItems: 'center',
+   backgroundColor: 'rgba(0,0,0,0.5)',
+   zIndex: 1000,
  },
 });
 

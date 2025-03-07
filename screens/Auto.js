@@ -28,6 +28,7 @@ const Auto = () => {
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
   const [driverStation, setDriverStation] = useState(null); // New state for driver station
   const [driverStationOrder, setDriverStationOrder] = useState('normal');
+  const [teamNumber, setTeamNumber] = useState(null);
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -292,7 +293,15 @@ const Auto = () => {
   };
 
   const handleGroundIncrement = () => {
-    setShowDriveStationModal(true);
+    const newGroundPickup = {
+      type: 'ground',
+      stationType: "",
+      timestamp: new Date().toISOString()
+    };
+    const newGroundData = [...groundData, newGroundPickup];
+    setGroundData(newGroundData);
+    setGroundCount(groundCount + 1);
+    storeGroundData(newGroundData);
   };
 
   const handleDriveStationSelect = (station) => {
@@ -319,20 +328,14 @@ const Auto = () => {
   };
 
   const handleStationIncrement = () => {
-    setShowStationTypeModal(true);
-  };
-
-  const handleStationTypeSelect = (stationType) => {
-    setStationCount(stationCount + 1);
-    setShowStationTypeModal(false);
-    // Store the station type information with the pickup
     const newStationPickup = {
       type: 'station',
-      stationType: stationType,
+      stationType: "",
       timestamp: new Date().toISOString()
     };
     const newStationData = [...stationData, newStationPickup];
     setStationData(newStationData);
+    setStationCount(stationCount + 1);
     storeStationData(newStationData);
   };
 
@@ -391,6 +394,22 @@ const Auto = () => {
       }
     };
     fetchDriverStationOrder();
+  }, []);
+
+  // Add useEffect to fetch team number
+  useEffect(() => {
+    const fetchTeamNumber = async () => {
+      try {
+        const matchInfo = await AsyncStorage.getItem('MATCH_INFO');
+        if (matchInfo) {
+          const parsedInfo = JSON.parse(matchInfo);
+          setTeamNumber(parsedInfo.team_number);
+        }
+      } catch (error) {
+        console.error('Error fetching team number:', error);
+      }
+    };
+    fetchTeamNumber();
   }, []);
 
   // Define styles after determining global_color
@@ -628,42 +647,12 @@ const Auto = () => {
       fontSize: 16,
       fontWeight: 'bold',
     },
+    teamNumberText: {
+      fontSize: 18,
+      color: 'white',
+      marginBottom: 10,
+    },
   });
-
-  // Render the drive station modal
-  const renderDriveStationModal = () => {
-    const stations = driverStationOrder === 'reversed' ? [3, 2, 1] : [1, 2, 3];
-
-    return (
-      <Modal
-        visible={showDriveStationModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowDriveStationModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Drive Station</Text>
-            {stations.map((station) => (
-              <TouchableOpacity
-                key={station}
-                style={styles.driveStationButton}
-                onPress={() => handleDriveStationSelect(station)}
-              >
-                <Text style={styles.driveStationButtonText}>Drive Station {station}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowDriveStationModal(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -677,6 +666,9 @@ const Auto = () => {
       </Animated.View>
 
       <Text style={styles.title}>Autonomous</Text>
+      {teamNumber && (
+        <Text style={styles.teamNumberText}>Scouting Team: {teamNumber}</Text>
+      )}
       <View style={styles.topButtonsContainer}>
         <TouchableOpacity 
           style={styles.undoButton} 
@@ -753,37 +745,6 @@ const Auto = () => {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Station Type Selection Modal */}
-      <Modal
-        visible={showStationTypeModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowStationTypeModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Station Type</Text>
-            {['HP Station Closer to Processor', 'HP Station Further from Processor'].map((stationType) => (
-              <TouchableOpacity
-                key={stationType}
-                style={styles.driveStationButton}
-                onPress={() => handleStationTypeSelect(stationType)}
-              >
-                <Text style={styles.driveStationButtonText}>{stationType}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowStationTypeModal(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {renderDriveStationModal()}
 
       {/* Processor Action Modal */}
       <Modal

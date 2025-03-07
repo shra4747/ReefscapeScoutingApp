@@ -20,28 +20,40 @@ const Confirmation = () => {
         const endgameData = JSON.parse(await AsyncStorage.getItem('ENDGAME_DATA'));
         const postgameData = JSON.parse(await AsyncStorage.getItem('POSTGAME_DATA'));
 
-        // console.log(processorData)
-
+        // console.log(processorData
+        
         // console.log(autoPickups)
         // Compile data into SQLAlchemy model format
         const submissionData = {
           AutoPickupLocations: [
-            ...(autoPickups.groundCount || []).map(item => ({
-              team_number: parseInt(matchInfo.team_number),
-              match_number: parseInt(matchInfo.match_number),
-              pickup_ground: true,
-              pickup_station: false,
-              location: `DS${item.driveStation}`,
-              timestamp: item.timestamp.split('.')[0]
-            })),
-            ...(autoPickups.stationCount || []).map(item => ({
-              team_number: parseInt(matchInfo.team_number),
-              match_number: parseInt(matchInfo.match_number),
-              pickup_ground: false,
-              pickup_station: true,
-              location: item.stationType,
-              timestamp: item.timestamp.split('.')[0]
-            }))
+            // ...(autoPickups.groundCount || []).map((item, index) => {
+            //   const baseTimestamp = new Date(item.timestamp.split('.')[0]);
+            //   // Add random offset between -5 and +5 seconds
+            //   const offset = (Math.random() * 10 - 5) * 1000; // Convert to milliseconds
+            //   const adjustedTimestamp = new Date(baseTimestamp.getTime() + offset);
+            //   return {
+            //     team_number: parseInt(matchInfo.team_number),
+            //     match_number: parseInt(matchInfo.match_number),
+            //     pickup_ground: true,
+            //     pickup_station: false,
+            //     location: "NONE",
+            //     timestamp: adjustedTimestamp.toISOString().split('.')[0]
+            //   };
+            // }),
+            // ...(autoPickups.stationCount || []).map((item, index) => {
+            //   const baseTimestamp = new Date(item.timestamp.split('.')[0]);
+            //   // Add random offset between -5 and +5 seconds
+            //   const offset = (Math.random() * 10 - 5) * 1000; // Convert to milliseconds
+            //   const adjustedTimestamp = new Date(baseTimestamp.getTime() + offset);
+            //   return {
+            //     team_number: parseInt(matchInfo.team_number),
+            //     match_number: parseInt(matchInfo.match_number),
+            //     pickup_ground: false,
+            //     pickup_station: true,
+            //     location: "NONE",
+            //     timestamp: adjustedTimestamp.toISOString().split('.')[0]
+            //   };
+            // })
           ],
 
           RobotsInMatch: {
@@ -50,7 +62,7 @@ const Confirmation = () => {
             teleop_ground_pickups: teleopPickups.groundCount,
             teleop_HP_pickups: teleopPickups.stationCount,
             park: endgameData.hang == "Park",
-            hang: (endgameData.hang.includes("Shallow Hang") || endgameData.hang.includes("Deep Hang")),
+            hang: (endgameData.hang.includes("Shallow Hang") ? "Shallow Hang" : (endgameData.hang.includes("Deep Hang")) ? "Deep Hang" : ""),
             hang_time: (endgameData.hang.includes("Shallow Hang") || endgameData.hang.includes("Deep Hang")) ? endgameData.hangTime : null,
             fail_park: endgameData.hang.includes("Failed"),
 
@@ -62,7 +74,25 @@ const Confirmation = () => {
 
             defense_notes: postgameData.defenseNotes,
 
-            match_start_time: matchInfo.match_start_time.split('.')[0]
+            match_start_time: matchInfo.match_start_time.split('.')[0],
+
+            start_position: matchInfo.start_position,
+
+            
+
+            cycles: (reefData || []).filter(item => item.phase === "teleop").length,
+            avg_cycle_time: (() => {
+              const teleopCycles = (reefData || []).filter(item => item.phase === "teleop");
+              if (teleopCycles.length < 2) return 5000;
+              
+              const timestamps = teleopCycles.map(item => new Date(item.timestamp).getTime());
+              const diffs = [];
+              for (let i = 1; i < timestamps.length; i++) {
+                diffs.push(timestamps[i] - timestamps[i - 1]);
+              }
+              const total = diffs.reduce((sum, diff) => sum + diff, 0);
+              return (total / (diffs.length))/1000;
+            })(),
           },
 
           Reef: [
@@ -91,7 +121,7 @@ const Confirmation = () => {
 
         console.log(submissionData)
 
-        // Get access token
+        // // Get access token
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request

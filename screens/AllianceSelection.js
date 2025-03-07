@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import PickList from './PickList';
 
 // Minimal UI Components
@@ -89,6 +89,7 @@ const Alert = ({ children, variant = 'default', style, ...props }) => {
 
 
 const AllianceSelection = () => {
+ const navigation = useNavigation();
  const [teams, setTeams] = useState([]);
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState('');
@@ -159,6 +160,14 @@ const AllianceSelection = () => {
          if (!response.ok) throw new Error('Failed to fetch teams');
          
          const data = await response.json();
+         
+         // Add check for undefined rankings
+         if (!data.Rankings) {
+           setError('Rankings not yet released');
+           setLoading(false);
+           return;
+         }
+
          const formattedTeams = data.Rankings.map(team => ({
            id: team.teamNumber,
            name: `Team ${team.teamNumber}`,
@@ -449,10 +458,14 @@ const AllianceSelection = () => {
                <Card key={alliance.id} style={styles.allianceCard}>
                  <Text style={styles.finalizedAllianceTitle}>Alliance {alliance.id}</Text>
                  <View style={styles.allianceDetails}>
-                   <Text style={styles.finalizedCaptainText}>
-                     Captain: {alliance.captain.name}
-                     <Text style={styles.finalizedRankText}>(Rank {alliance.captain.rank})</Text>
-                   </Text>
+                   {alliance.captain ? (
+                     <Text style={styles.finalizedCaptainText}>
+                       Captain: {alliance.captain.name}
+                       <Text style={styles.finalizedRankText}>(Rank {alliance.captain.rank})</Text>
+                     </Text>
+                   ) : (
+                     <Text style={styles.finalizedCaptainText}>No Captain Selected</Text>
+                   )}
                    {alliance.members.map(member => (
                      <Text key={member.id} style={styles.finalizedMemberText}>
                        {member.name}
@@ -479,7 +492,12 @@ const AllianceSelection = () => {
      <Card style={styles.container}>
        <Card.Header>
          <View style={styles.headerContainer}>
-           <Card.Title>Alliance Selection</Card.Title>
+           <TouchableOpacity 
+             style={styles.backButton}
+             onPress={() => navigation.popToTop()}
+           >
+             <Text style={styles.backButtonText}>← Back</Text>
+           </TouchableOpacity>
            <View style={styles.buttonContainer}>
              <TouchableOpacity 
                style={styles.reloadButton}
@@ -521,13 +539,17 @@ const AllianceSelection = () => {
                  >
                    <Text style={styles.allianceTitle}>Alliance {alliance.id}</Text>
                    <View style={styles.allianceDetails}>
-                     <Text style={styles.captainText}>
-                       Captain: {alliance.captain.name}
-                       <Text style={styles.rankText}>(Rank {alliance.captain.rank})</Text>
-                       {alliance.hasPicked && (
-                         <Text style={styles.pickedText}> (Has Picked)</Text>
-                       )}
-                     </Text>
+                     {alliance.captain ? (
+                       <Text style={styles.captainText}>
+                         Captain: {alliance.captain.name}
+                         <Text style={styles.rankText}>(Rank {alliance.captain.rank})</Text>
+                         {alliance.hasPicked && (
+                           <Text style={styles.pickedText}> (Has Picked)</Text>
+                         )}
+                       </Text>
+                     ) : (
+                       <Text style={styles.captainText}>No Captain Selected</Text>
+                     )}
                      {alliance.members.map(member => (
                        <Text key={member.id} style={styles.captainText}>
                          Member: {member.name}
@@ -810,6 +832,18 @@ const styles = StyleSheet.create({
  captainHighlight: {
    color: '#ff0000',
    fontWeight: 'bold'
+ },
+ backButton: {
+   padding: 6,
+   borderRadius: 4,
+   backgroundColor: '#e0e0e0',
+   width: 35,
+   height: 35,
+   justifyContent: 'center',
+   alignItems: 'center',
+ },
+ backButtonText: {
+   fontSize: 18,
  },
 });
 
