@@ -78,7 +78,6 @@ const AutoP2 = ({ navigation, route }) => {
       const existingData = await AsyncStorage.getItem('REEF_DATA');
       if (existingData) {
         const parsedData = JSON.parse(existingData);
-        console.log('Accumulated REEF Data:', parsedData);
       }
     } catch (error) {
       console.error('Error retrieving data:', error);

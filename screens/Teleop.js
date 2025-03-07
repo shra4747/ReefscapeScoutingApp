@@ -112,7 +112,6 @@ const Teleop = () => {
     };
     try {
       await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify(TeleopData));
-      console.log(TeleopData);
     } catch (error) {
       console.error('Error storing Teleop data:', error);
     }
@@ -309,7 +308,6 @@ const Teleop = () => {
       
       updatedData.push(processorData);
       await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
-      console.log('Processor Data:', updatedData);
       setShowProcessorModal(false);
       
     } catch (error) {

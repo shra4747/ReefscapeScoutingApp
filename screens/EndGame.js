@@ -145,7 +145,6 @@ const EndGame = () => {
     setEndGameData(hangData);
 
     // Log the endGameData to the console
-    console.log('End Game Data:', hangData);
     await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify(hangData));
 
     // Navigate to PostGame screen

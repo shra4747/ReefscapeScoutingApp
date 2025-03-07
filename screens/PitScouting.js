@@ -262,9 +262,7 @@ const PitScouting = () => {
        });
      }
 
-     await console.log(formData)
 
-    // console.log(JSON.stringify(formData))
      const response = await fetch('http://97.107.134.214:5002/pit_scout', {
        method: 'POST',
        body: formData,

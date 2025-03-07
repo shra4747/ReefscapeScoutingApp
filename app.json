@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "ScoutingApp2025",
-    "slug": "ScoutingApp2025",
-    "version": "1.0.0",
+    "slug": "scouting-app-2025",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -30,6 +30,10 @@
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.anonymous.ScoutingApp2025"
@@ -46,6 +50,16 @@
         }
       ],
       "expo-video"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c9351c03-aaf2-4337-9d21-72d4791bb867"
+      }
+    },
+    "owner": "shravanp",
+    "runtimeVersion": "1.0.1",
+    "updates": {
+      "url": "https://u.expo.dev/c9351c03-aaf2-4337-9d21-72d4791bb867"
+    }
   }
 }

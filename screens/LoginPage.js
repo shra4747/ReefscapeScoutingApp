@@ -13,9 +13,6 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     // Log the username and password on login attempt
-    console.log('Login attempt with:');
-    console.log('Username:', username);
-    console.log('Password:', password);
 
     const loginData = {
       username, // Assuming scouterID is used as the username
@@ -31,7 +28,6 @@ const LoginPage = () => {
       });
     const res = await loginResponse.json();
 
-    // console.log(await loginResponse.json())
     if (!loginResponse.ok) {
       alert(res.message);
       return;
@@ -48,7 +44,6 @@ const LoginPage = () => {
       // Store the access token in AsyncStorage
       const access_token = res['access_token'];
       await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
-      console.log('Access token stored successfully');
       navigation.replace('StartPage');
     } catch (error) {
       console.error('Error storing access token:', error);

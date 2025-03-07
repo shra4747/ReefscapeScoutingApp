@@ -31,7 +31,6 @@ const PostGame = () => {
       defenseNotes: robotTypeValue.includes('defense') ? defenseNotes : null
     }
 
-    console.log("Post Game Data: ", postGameData);
     await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify(postGameData));
 
     navigation.navigate('Confirmation');

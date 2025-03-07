@@ -161,7 +161,6 @@ const StartPage = () => {
       mass: 1
     });
 
-    console.log(driverStation)
   };
 
   const handleSubmit = async () => {
@@ -172,7 +171,6 @@ const StartPage = () => {
 
     // Flip starting position based on driver station and alliance color
     let finalPosition = valuePosition;
-    // console.log(finalPosition, driverStation, allianceColor)
     if (driverStation == "Right") {
       if (allianceColor == "blue") {
 
@@ -224,7 +222,6 @@ const StartPage = () => {
     await AsyncStorage.setItem('MATCH_INFO', JSON.stringify(newData));
     // await AsyncStorage.setItem('STARTING_POSITION', finalPosition || 'none');
 
-    console.log('Start Page Data:', newData);
 
     setScouterId('');
     setOpenMatch(false);
@@ -248,7 +245,6 @@ const StartPage = () => {
         {
           text: 'Right Driver Station',
           onPress: async () => {
-            console.log('Right Driver Station selected');
             await AsyncStorage.setItem('DRIVER_STATION', 'Right');
             await AsyncStorage.setItem('DRIVER_STATION_ORDER', 'reversed');
           },
@@ -257,7 +253,6 @@ const StartPage = () => {
         {
           text: 'Left Driver Station',
           onPress: async () => {
-            console.log('Left Driver Station selected');
             await AsyncStorage.setItem('DRIVER_STATION', 'Left');
             await AsyncStorage.setItem('DRIVER_STATION_ORDER', 'normal');
           },

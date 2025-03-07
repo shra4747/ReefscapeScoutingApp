@@ -109,7 +109,6 @@ const Auto = () => {
     };
     try {
       await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify(autoData));
-      console.log(autoData);
     } catch (error) {
       console.error('Error storing auto data:', error);
     }
@@ -196,9 +195,6 @@ const Auto = () => {
         
         let reefData = reefValue ? JSON.parse(reefValue) : [];
         let processorData = processorValue ? JSON.parse(processorValue) : [];
-
-        console.log(JSON.stringify(reefData))
-        console.log(JSON.stringify(processorData))
         // Find the most recent action across both lists
         let mostRecentAction = null;
         let actionType = null;
@@ -211,8 +207,6 @@ const Auto = () => {
                 actionType = 'REEF';
             }
         }
-
-        console.log("reef" + JSON.stringify(mostRecentAction))
         
         // Check last processor action
         if (processorData.length > 0) {
@@ -222,8 +216,6 @@ const Auto = () => {
                 actionType = 'PROCESSOR';
             }
         }
-
-        console.log("prces" + JSON.stringify(mostRecentAction))
         
         if (mostRecentAction) {
             if (actionType === 'REEF') {
@@ -364,7 +356,6 @@ const Auto = () => {
       
       updatedData.push(processorData);
       await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
-      console.log('Processor Data:', updatedData);
       setShowProcessorModal(false);
       
     } catch (error) {

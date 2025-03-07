@@ -61,8 +61,8 @@ const AdminCons = () => {
       const maxRobotsMatch = robotsData.length > 0 ? 
         Math.max(...robotsData.map(match => match.match_number)) : 0;
 
-      // Return the higher of the two
-      return Math.max(maxScheduleMatch, maxRobotsMatch);
+      // Return both values individually
+      return { maxScheduleMatch, maxRobotsMatch };
     } catch (error) {
       console.error('Error getting max match number:', error);
       throw error;
@@ -203,6 +203,18 @@ const AdminCons = () => {
     }
   };
 
+  const checkMaxMatchNumbers = async () => {
+    try {
+      const { maxScheduleMatch, maxRobotsMatch } = await getMaxMatchNumber();
+      Alert.alert(
+        "Max Match Numbers",
+        `Max match in schedule: ${maxScheduleMatch}\nMax match in robots_in_match: ${maxRobotsMatch}`
+      );
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -220,6 +232,7 @@ const AdminCons = () => {
           <TextInput
             style={styles.inputField}
             placeholder="Enter event code"
+            placeholderTextColor="#999999"
             value={eventCode}
             onChangeText={setEventCode}
             autoCapitalize="characters"
@@ -235,6 +248,12 @@ const AdminCons = () => {
 
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Admin Actions</Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={checkMaxMatchNumbers}
+          >
+            <Text style={styles.actionButtonText}>Check Max Match Numbers</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
             onPress={clearTables}

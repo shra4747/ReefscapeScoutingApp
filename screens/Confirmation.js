@@ -20,9 +20,6 @@ const Confirmation = () => {
         const endgameData = JSON.parse(await AsyncStorage.getItem('ENDGAME_DATA'));
         const postgameData = JSON.parse(await AsyncStorage.getItem('POSTGAME_DATA'));
 
-        // console.log(processorData
-        
-        // console.log(autoPickups)
         // Compile data into SQLAlchemy model format
         const submissionData = {
           AutoPickupLocations: [
@@ -119,7 +116,6 @@ const Confirmation = () => {
           ],
         };
 
-        console.log(submissionData)
 
         // // Get access token
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
@@ -139,7 +135,6 @@ const Confirmation = () => {
         }
 
         const result = await response.json();
-        console.log('Submission successful:', result);
 
         // Clear storage after successful submission
         await AsyncStorage.multiRemove([

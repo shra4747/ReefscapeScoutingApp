@@ -34,7 +34,6 @@ const AutoP1 = ({ route }) => {
       }
       
       updatedData.push(actionData);
-      console.log('Accumulated PROCESSOR Data:', updatedData);
       await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
       navigation.goBack();
       

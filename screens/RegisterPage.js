@@ -24,11 +24,6 @@ const RegisterPage = () => {
       alert('Passwords do not match!');
       return;
     }
-    
-    console.log('Register attempt with:');
-    console.log("First name: " + firstName);
-    console.log('Username:', username);
-    console.log('Password:', password);
 
 
     const regsterData = {
@@ -37,7 +32,6 @@ const RegisterPage = () => {
         first_name: firstName,
         scouter_id: Math.floor(Math.random() * 100000), // Random number for scouter_id
       };
-    // console.log("Hello1")
     const regiserResponse = await fetch('http://97.107.134.214:5002/register', {
         method: 'POST',
         headers: {
@@ -54,7 +48,6 @@ const RegisterPage = () => {
     }
     const res = await regiserResponse.json();
     const access_token = res['access_token']
-    console.log(access_token)
     // Store the first name in AsyncStorage
     await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
     navigation.replace('StartPage');

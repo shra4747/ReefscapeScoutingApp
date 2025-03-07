@@ -48,14 +48,11 @@ const App = () => {
 
           if (response.ok) {
             setInitialRoute('StartPage');
-            console.log("Startpage")
           } else {
             setInitialRoute('LoginPage');
-            console.log("LoginPage")
           }
         } else {
           setInitialRoute('RegisterPage');
-          console.log("Startpage")
         }
       } catch (error) {
         console.error('Auth check error:', error);
