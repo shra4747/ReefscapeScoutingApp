@@ -68,10 +68,14 @@ const StartPage = () => {
         if (!response.ok) throw new Error('Failed to fetch schedule');
         
         const data = await response.json();
-        setScheduleData(data);
         
-        // Update matches dropdown
-        const uniqueMatches = [...new Set(data.map(item => item.match_number))];
+        // Filter matches for NJFLA event
+        const njflaMatches = data.filter(item => item.event_code === 'NJFLA');
+        setScheduleData(njflaMatches);
+        console.log(njflaMatches.length)
+        
+        // Update matches dropdown with filtered matches
+        const uniqueMatches = [...new Set(njflaMatches.map(item => item.match_number))];
         setItemsMatch(uniqueMatches.map(match => ({
           label: `Match ${match}`,
           value: match.toString()
