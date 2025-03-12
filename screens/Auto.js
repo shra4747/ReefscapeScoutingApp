@@ -338,7 +338,7 @@ const Auto = () => {
       console.error('Error storing station data:', error);
     }
   };
-
+  
   const handleProcessorAction = async (action) => {
     const processorData = {
       action: action,

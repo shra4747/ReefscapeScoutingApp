@@ -18,11 +18,13 @@ const Teleop = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [reef, setReef] = useState([]);
   const [currentAction, setCurrentAction] = useState({});
-  const [showProcessorModal, setShowProcessorModal] = useState(false);
+  const [showAlgaeTypeModal, setShowAlgaeTypeModal] = useState(false);
+  const [showAlgaeActionModal, setShowAlgaeActionModal] = useState(false);
   const [teamNumber, setTeamNumber] = useState(null);
 
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
   const [driverStation, setDriverStation] = useState(null); // New state for driver station
+  const [currentAlgaeType, setCurrentAlgaeType] = useState(null);
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -119,6 +121,7 @@ const Teleop = () => {
 
   const handleSubmit = async () => {
     storeTeleopData()
+    await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify([]));
     navigation.navigate("EndGame");
   }
 
@@ -195,12 +198,12 @@ const Teleop = () => {
 
   const handleUndo = async () => {
     try {
-        // Get both REEF and PROCESSOR data
+        // Get both REEF and Algae data
         const reefValue = await AsyncStorage.getItem('REEF_DATA');
-        const processorValue = await AsyncStorage.getItem('PROCESSOR_DATA');
+        const algaeValue = await AsyncStorage.getItem('ALGAE_DATA');
         
         let reefData = reefValue ? JSON.parse(reefValue) : [];
-        let processorData = processorValue ? JSON.parse(processorValue) : [];
+        let algaeData = algaeValue ? JSON.parse(algaeValue) : [];
         
         // Find the most recent action across both lists
         let mostRecentAction = null;
@@ -215,12 +218,12 @@ const Teleop = () => {
             }
         }
         
-        // Check last processor action
-        if (processorData.length > 0) {
-            const lastProcessor = processorData[processorData.length - 1];
-            if (!mostRecentAction || new Date(lastProcessor.timestamp) > new Date(mostRecentAction.timestamp)) {
-                mostRecentAction = lastProcessor;
-                actionType = 'PROCESSOR';
+        // Check last algae action
+        if (algaeData.length > 0) {
+            const lastAlgae = algaeData[algaeData.length - 1];
+            if (!mostRecentAction || new Date(lastAlgae.timestamp) > new Date(mostRecentAction.timestamp)) {
+                mostRecentAction = lastAlgae;
+                actionType = 'ALGAE';
             }
         }
         
@@ -232,10 +235,10 @@ const Teleop = () => {
                 setReef(reefData);
                 setShowNotification(`REEF action undone: ${mostRecentAction.slice} ${mostRecentAction.level}`);
             } else {
-                // Remove last processor action
-                processorData = processorData.slice(0, -1);
-                await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(processorData));
-                setShowNotification(`PROCESSOR action undone: ${mostRecentAction.action}`);
+                // Remove last algae action
+                algaeData = algaeData.slice(0, -1);
+                await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(algaeData));
+                setShowNotification(`ALGAE action undone: ${mostRecentAction.action}`);
             }
         } else {
             setShowNotification('No actions to undo');
@@ -291,27 +294,41 @@ const Teleop = () => {
     return `M ${centerX} ${centerY} L ${x1} ${y1} L ${x2} ${y2} Z`;
   };
 
-  const handleProcessorAction = async (action) => {
-    const processorData = {
+  const handleAlgaeButtonPress = () => {
+    setShowAlgaeTypeModal(true);
+  };
+
+  const handleAlgaeTypeSelect = (type) => {
+    if (type === 'Cancel') {
+      setShowAlgaeTypeModal(false);
+    } else {
+      setShowAlgaeTypeModal(false);
+      setShowAlgaeActionModal(true);
+      setCurrentAlgaeType(type);
+    }
+  };
+
+  const handleAlgaeAction = async (action) => {
+    const algaeData = {
+      type: currentAlgaeType,
       action: action,
       phase: "teleop",
       timestamp: new Date().toISOString()
     };
 
     try {
-      const existingData = await AsyncStorage.getItem('PROCESSOR_DATA');
+      const existingData = await AsyncStorage.getItem('ALGAE_DATA');
       let updatedData = [];
       
       if (existingData) {
         updatedData = JSON.parse(existingData);
       }
       
-      updatedData.push(processorData);
-      await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
-      setShowProcessorModal(false);
-      
+      updatedData.push(algaeData);
+      await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(updatedData));
+      setShowAlgaeActionModal(false);
     } catch (error) {
-      console.error('Error storing processor data:', error);
+      console.error('Error storing algae data:', error);
     }
   };
 
@@ -387,7 +404,7 @@ const Teleop = () => {
       width: '100%',
       height: '100%',
     },
-    processorButton: {
+    algaeButton: {
       position: 'absolute',
       bottom: 20,
       left: 20,
@@ -403,7 +420,7 @@ const Teleop = () => {
       shadowOpacity: 0.25,
       shadowRadius: 3.84,
     },
-    processorButtonText: {
+    algaeButtonText: {
       color: 'white',
       fontWeight: 'bold',
       textAlign: 'center',
@@ -539,6 +556,7 @@ const Teleop = () => {
       fontWeight: 'bold',
       marginBottom: 20,
       textAlign: 'center',
+      color: '#000',
     },
     driveStationButton: {
       backgroundColor: global_color,
@@ -559,7 +577,6 @@ const Teleop = () => {
       borderRadius: 5,
       marginTop: 10,
       alignItems: 'center',
-      width: '100%', // Fill the modal width
     },
     cancelButtonText: {
       color: '#000',
@@ -570,6 +587,18 @@ const Teleop = () => {
       fontSize: 18,
       color: 'white',
       marginBottom: 10,
+    },
+    modalOption: {
+      backgroundColor: global_color,
+      padding: 15,
+      borderRadius: 5,
+      marginVertical: 5,
+      alignItems: 'center',
+    },
+    modalOptionText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
     },
   });
 
@@ -627,10 +656,10 @@ const Teleop = () => {
       </View>
       <View style={{ height: 100 }} />
       <TouchableOpacity 
-        style={styles.processorButton}
-        onPress={() => setShowProcessorModal(true)}
+        style={styles.algaeButton}
+        onPress={handleAlgaeButtonPress}
       >
-        <Text style={styles.processorButtonText}>Processor</Text>
+        <Text style={styles.algaeButtonText}>Algae</Text>
       </TouchableOpacity>
       
       <View style={styles.countersContainer}>
@@ -659,31 +688,61 @@ const Teleop = () => {
         </View>
       </View>
 
-            {/* Processor Action Modal */}
-            <Modal
-        visible={showProcessorModal}
+      <Modal
+        visible={showAlgaeTypeModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowProcessorModal(false)}
+        onRequestClose={() => setShowAlgaeTypeModal(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Processor Action</Text>
+            <Text style={styles.modalTitle}>Algae Location</Text>
             <TouchableOpacity
-              style={styles.driveStationButton}
-              onPress={() => handleProcessorAction('make')}
+              style={styles.modalOption}
+              onPress={() => handleAlgaeTypeSelect('Processor')}
             >
-              <Text style={styles.driveStationButtonText}>Make</Text>
+              <Text style={styles.modalOptionText}>Processor</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.driveStationButton}
-              onPress={() => handleProcessorAction('miss')}
+              style={styles.modalOption}
+              onPress={() => handleAlgaeTypeSelect('Barge Net')}
             >
-              <Text style={styles.driveStationButtonText}>Miss</Text>
+              <Text style={styles.modalOptionText}>Barge Net</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => setShowProcessorModal(false)}
+              onPress={() => handleAlgaeTypeSelect('Cancel')}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showAlgaeActionModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAlgaeActionModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Algae Action</Text>
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => handleAlgaeAction('make')}
+            >
+              <Text style={styles.modalOptionText}>Make</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => handleAlgaeAction('miss')}
+            >
+              <Text style={styles.modalOptionText}>Miss</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowAlgaeActionModal(false)}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
