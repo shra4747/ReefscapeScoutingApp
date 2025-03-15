@@ -7,7 +7,6 @@ import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CheckBox from 'expo-checkbox';
-import * as ImagePicker from 'expo-image-picker';
 
 
 const PitScouting = () => {
@@ -17,7 +16,6 @@ const PitScouting = () => {
  const [height, setHeight] = useState('42'); // State for Height
  const [length, setLength] = useState('30'); // State for Length
  const [width, setWidth] = useState('30'); // State for Width
- const [cycleTime, setCycleTime] = useState(10); // State for Cycle Time (now a slider)
  const [driverExperience, setDriverExperience] = useState(1); // State for Driver Experience
  const [shallowHang, setShallowHang] = useState(false);
  const [deepHang, setDeepHang] = useState(false);
@@ -48,7 +46,6 @@ const PitScouting = () => {
  // Remove the Autonomous Start dropdown state and add auto_notes state
  const [auto_notes, setauto_notes] = useState('');
  const [notes, setnotes] = useState('');
- const [image, setImage] = useState(null); // Changed from images array to single image
 
  // Add state for teams dropdown
  const [openTeamPicker, setOpenTeamPicker] = useState(false);
@@ -56,6 +53,9 @@ const PitScouting = () => {
 
  // Add loading state
  const [isSubmitting, setIsSubmitting] = useState(false);
+
+ // Add new state for robot weight
+ const [robotWeight, setRobotWeight] = useState('');
 
  // Fetch teams on component mount
  useEffect(() => {
@@ -109,12 +109,6 @@ const PitScouting = () => {
  };
 
 
- const handleCycleTimeChange = (text) => {
-   const cleanedText = text.replace(/[^0-9]/g, ''); // Allow only integers
-   setCycleTime(cleanedText);
- };
-
-
  const handleDriverExperienceChange = (text) => {
    setDriverExperience(text); // Allow any text input
  };
@@ -142,85 +136,12 @@ const PitScouting = () => {
  };
 
 
- const handleImageUpload = async (source) => {
-   try {
-     let result;
-     if (source === 'camera') {
-       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-       if (!cameraPermission.granted) {
-         alert('Camera permission is required to take photos');
-         return;
-       }
-       result = await ImagePicker.launchCameraAsync({
-         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-         allowsEditing: true,
-         aspect: [4, 3],
-         quality: 1,
-       });
-     } else if (source === 'gallery') {
-       const galleryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-       if (!galleryPermission.granted) {
-         alert('Gallery permission is required to select photos');
-         return;
-       }
-       result = await ImagePicker.launchImageLibraryAsync({
-         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-         allowsEditing: true,
-         aspect: [4, 3],
-         quality: 1,
-       });
-     } else if (source === 'remove') {
-       setImage(null);
-       return;
-     }
-
-     if (!result.canceled) {
-       const newImage = {
-         uri: result.assets[0].uri,
-         name: result.assets[0].uri.split('/').pop(),
-         type: 'image/jpeg'
-       };
-       setImage(newImage);
-     }
-   } catch (error) {
-     console.error('Error uploading image:', error);
-     alert('Error uploading image. Please try again.');
-   }
- };
-
- const showImageOptions = () => {
-   Alert.alert(
-     'Upload Image',
-     'Choose an option',
-     [
-       {
-         text: 'Use Camera',
-         onPress: () => handleImageUpload('camera'),
-       },
-       {
-         text: 'Choose from Gallery',
-         onPress: () => handleImageUpload('gallery'),
-       },
-       {
-         text: 'Remove Image',
-         onPress: () => handleImageUpload('remove'),
-         style: 'destructive',
-       },
-       {
-         text: 'Cancel',
-         style: 'cancel',
-       },
-     ]
-   );
- };
-
  const handleSubmit = async () => {
    if (isSubmitting) return; // Prevent multiple submissions
    
    // Validate all fields
-   if (!teamNumber || !height || !length || !width ||
-       cycleTime === null || cycleTime === 0 || driverExperience === null ||
-       !driveTrainValue) {
+   if (!teamNumber || !height || !length || !width || !robotWeight ||
+       !driverExperience || !driveTrainValue) {
      alert('Please fill out all fields before submitting.');
      return;
    }
@@ -233,7 +154,7 @@ const PitScouting = () => {
        event_code: "NJTAB",
        robot_height: parseInt(height, 10),
        robot_dimensions: `${length}x${width}`,
-       cycle_time: cycleTime,
+       robot_weight: parseFloat(robotWeight),
        driver_experience: driverExperience,
        drive_train: driveTrainValue,
        can_shallow_hang: shallowHang,
@@ -253,15 +174,6 @@ const PitScouting = () => {
 
      const formData = new FormData();
      formData.append('data', JSON.stringify(pitData));
-     
-     if (image) {
-       formData.append('file', {
-         uri: image.uri,
-         name: image.name,
-         type: image.type
-       });
-     }
-
 
      const response = await fetch('http://97.107.134.214:5002/pit_scout', {
        method: 'POST',
@@ -283,24 +195,6 @@ const PitScouting = () => {
      setIsSubmitting(false); // Stop loading whether success or error
    }
  };
-
- // When loading the component, retrieve images from AsyncStorage
- useEffect(() => {
-   const loadImages = async () => {
-     try {
-       const storedData = await AsyncStorage.getItem('PIT_DATA');
-       if (storedData) {
-         const parsedData = JSON.parse(storedData);
-         if (parsedData.image) {
-           setImage(parsedData.image);
-         }
-       }
-     } catch (error) {
-       console.error('Error loading images:', error);
-     }
-   };
-   loadImages();
- }, []);
 
  const renderContent = () => (
    <ScrollView 
@@ -378,6 +272,16 @@ const PitScouting = () => {
            </Picker>
          </View>
        </View>
+       {/* Add Robot Weight textbox */}
+       <Text style={styles.inputLabel}>Robot Weight(lbs)</Text>
+       <TextInput
+         style={styles.inputField}
+         placeholder="Enter robot weight"
+         placeholderTextColor="#888"
+         value={robotWeight}
+         onChangeText={setRobotWeight}
+         keyboardType="numeric"
+       />
      </View>
      <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Drive Train</Text>
@@ -459,22 +363,6 @@ const PitScouting = () => {
      </View>
      
      <View style={styles.sectionContainer}>
-       <Text style={styles.sectionTitle}>Cycle Time: {cycleTime} seconds</Text>
-       <View style={styles.sliderContainer}>
-         <Slider
-           style={styles.slider}
-           minimumValue={0}
-           maximumValue={25}
-           step={1}
-           value={cycleTime}
-           onValueChange={(value) => setCycleTime(value)}
-           minimumTrackTintColor="#ff0000"
-           maximumTrackTintColor="#CCCCCC"
-           thumbTintColor="#ff0000"
-         />
-       </View>
-     </View>
-     <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Driver Experience: {driverExperience} year(s)</Text>
        <View style={styles.sliderContainer}>
          <Slider
@@ -514,22 +402,18 @@ const PitScouting = () => {
          multiline={true}
        />
      </View>
-     <TouchableOpacity
-       style={styles.imageUploadButton}
-       onPress={showImageOptions}
-     >
-       <Text style={styles.imageUploadButtonText}>
-         {image ? 'Change Image' : 'Upload Robot Photo'}
-       </Text>
-     </TouchableOpacity>
-     {image && (
-       <View style={styles.imageContainer}>
-         <Image
-           source={{ uri: image.uri }}
-           style={styles.imagePreview}
-         />
-       </View>
-     )}
+
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Defense Notes</Text>
+       <TextInput
+         style={[styles.inputField, { height: 100 }]}
+         placeholder="Can they play defense? Defensive strategy? Can they take hits? When being defended against?"
+         placeholderTextColor="#888"
+         value={notes}
+         onChangeText={setnotes}
+         multiline={true}
+       />
+     </View>
      <TouchableOpacity
        style={[styles.submitButton, isSubmitting && styles.disabledButton]}
        onPress={handleSubmit}
@@ -678,30 +562,6 @@ const styles = StyleSheet.create({
    color: '#FFF',
    fontSize: 14,
  },
- imageUploadButton: {
-   backgroundColor: '#444444',
-   padding: 15,
-   borderRadius: 10,
-   width: '90%',
-   alignSelf: 'center',
-   marginVertical: 20,
- },
- imageUploadButtonText: {
-   color: '#FFF',
-   fontSize: 16,
-   fontWeight: '600',
-   textAlign: 'center',
- },
- imageContainer: {
-   position: 'relative',
-   margin: 5,
- },
- imagePreview: {
-   width: 200,
-   height: 200,
-   borderRadius: 15,
-   alignSelf: 'center',
- },
  submitButton: {
    backgroundColor: '#FF4444',
    padding: 20,
@@ -761,6 +621,12 @@ const styles = StyleSheet.create({
    alignItems: 'center',
    backgroundColor: 'rgba(0,0,0,0.5)',
    zIndex: 1000,
+ },
+ inputLabel: {
+   color: '#FFF',
+   fontSize: 16,
+   marginTop: 15,
+   marginBottom: 5,
  },
 });
 

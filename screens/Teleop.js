@@ -6,6 +6,7 @@ import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 import 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 const Teleop = () => {  
 
@@ -600,6 +601,21 @@ const Teleop = () => {
       fontSize: 16,
       fontWeight: 'bold',
     },
+    defenseButton: {
+      backgroundColor: global_color,
+      padding: 10,
+      borderRadius: 5,
+      marginHorizontal: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    defenseButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: 14,
+      marginLeft: 5,
+    },
   });
 
   return (
@@ -624,6 +640,15 @@ const Teleop = () => {
         >
           <Text style={styles.undoButtonText}>Undo</Text>
         </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.defenseButton, { zIndex: 100 }]}
+          onPress={() => navigation.navigate('Defense')}
+        >
+          <Ionicons name="shield" size={18} color="white" />
+          <Text style={styles.defenseButtonText}>Defense</Text>
+        </TouchableOpacity>
+        
         <TouchableOpacity 
           style={styles.proceedButton} 
           onPress={handleSubmit}

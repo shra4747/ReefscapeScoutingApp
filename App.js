@@ -16,6 +16,7 @@ import EndGame from './screens/EndGame';
 import PostGame from './screens/PostGame';
 import Confirmation from './screens/Confirmation';
 import Profile from './screens/Profile';
+import Defense from './screens/Defense';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
@@ -219,6 +220,11 @@ const App = () => {
           <Stack.Screen 
             name="AutoP2" 
             component={AutoP2} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="Defense" 
+            component={Defense} 
             options={{ headerShown: false }}
           />
         </Stack.Navigator>
