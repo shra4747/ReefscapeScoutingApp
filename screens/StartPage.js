@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,26 +13,16 @@ import Animated, {
 const StartPage = () => {
   const navigation = useNavigation();
   const [scouterId, setScouterId] = useState('');
-  const [openMatch, setOpenMatch] = useState(false);
-  const [valueMatch, setValueMatch] = useState(null);
-  const [itemsMatch, setItemsMatch] = useState(
-    Array.from({ length: 14 }, (_, i) => ({
-      label: `Match ${i + 1}`,
-      value: `${i + 1}`,
-    }))
-  );    
-
-  const [openTeam, setOpenTeam] = useState(false);
-  const [valueTeam, setValueTeam] = useState(null);
-  const [itemsTeam, setItemsTeam] = useState([]);
-
+  const [matchNumber, setMatchNumber] = useState('');
+  const [teamNumber, setTeamNumber] = useState('');
+  const [eventCode, setEventCode] = useState('');
   const [startPageData, setStartPageData] = useState([]);
-
-  const [scheduleData, setScheduleData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [allianceColor, setAllianceColor] = useState(null);
   const [driverStation, setDriverStation] = useState('Left');
   const rotation = useSharedValue(0);
+
+  const [scheduleData, setScheduleData] = useState([]);
 
   const [openPosition, setOpenPosition] = useState(false);
   const [valuePosition, setValuePosition] = useState(null);
@@ -41,6 +31,7 @@ const StartPage = () => {
     { label: 'Middle Starting Position', value: 'middle' },
     { label: 'Close Starting Position', value: 'close' }
   ]);
+  const [teamPositions, setTeamPositions] = useState([]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -59,7 +50,7 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const response = await fetch(`http://97.107.134.214:5002/schedule`, {
+        const response = await fetch(`http://10.0.0.213:5002/schedule`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -72,14 +63,14 @@ const StartPage = () => {
         // Filter matches for NJFLA event
         const njflaMatches = data.filter(item => item.event_code === 'NJFLA');
         setScheduleData(njflaMatches);
-        console.log(njflaMatches.length)
         
         // Update matches dropdown with filtered matches
         const uniqueMatches = [...new Set(njflaMatches.map(item => item.match_number))];
-        setItemsMatch(uniqueMatches.map(match => ({
-          label: `Match ${match}`,
-          value: match.toString()
-        })));
+        setItemsPosition([
+          { label: 'Far Starting Position', value: 'far' },
+          { label: 'Middle Starting Position', value: 'middle' },
+          { label: 'Close Starting Position', value: 'close' }
+        ]);
 
       } catch (error) {
         Alert.alert('Error', 'Failed to load schedule');
@@ -102,39 +93,27 @@ const StartPage = () => {
   }, [navigation]);
 
   useEffect(() => {
-    if (valueMatch) {
+    if (valuePosition) {
       const teamsForMatch = scheduleData
-        .filter(item => item.match_number.toString() === valueMatch)
+        .filter(item => item.match_number.toString() === valuePosition.value)
         .map(item => ({
           label: `Team ${item.team_number}`,
           value: item.team_number.toString(),
           alliance: item.alliance_color
         }));
       
-      setItemsTeam(teamsForMatch);
+      setTeamPositions(teamsForMatch);
     }
-  }, [valueMatch, scheduleData]);
+  }, [valuePosition, scheduleData]);
 
   useEffect(() => {
-    if (valueTeam && itemsTeam.length > 0) {
-      const selectedTeam = itemsTeam.find(team => team.value === valueTeam);
+    if (valuePosition && teamPositions.length > 0) {
+      const selectedTeam = teamPositions.find(team => team.value === valuePosition.value);
       if (selectedTeam) {
         setAllianceColor(selectedTeam.alliance.toLowerCase());
       }
     }
-  }, [valueTeam, itemsTeam]);
-
-  useEffect(() => {
-    if (openMatch) {
-      setOpenTeam(false);
-    }
-  }, [openMatch]);
-
-  useEffect(() => {
-    if (valueMatch !== null) {
-      setValueTeam(null);
-    }
-  }, [valueMatch]);
+  }, [valuePosition, teamPositions]);
 
   useEffect(() => {
     const loadDriverStation = async () => {
@@ -157,23 +136,92 @@ const StartPage = () => {
   const toggleDriverStation = () => {
     const newValue = driverStation === 'Left' ? 'Right' : 'Left';
     setDriverStation(newValue);
-    AsyncStorage.setItem('START_DRIVER_STATION', newValue);
+    
+    // Save both driver station and order based on alliance color
+    const stationOrder = allianceColor === 'red' ? 
+      (newValue === 'Right' ? 'reversed' : 'normal') :
+      (newValue === 'Right' ? 'normal' : 'reversed');
+    
+    AsyncStorage.multiSet([
+      ['START_DRIVER_STATION', newValue],
+      ['DRIVER_STATION', newValue],
+      ['DRIVER_STATION_ORDER', stationOrder]
+    ]);
     
     rotation.value = withSpring(newValue === 'Right' ? 1 : 0, {
       damping: 12,
       stiffness: 90,
       mass: 1
     });
+  };
 
+  const handleAllianceColorSelect = (color) => {
+    setAllianceColor(color);
+    
+    // Update driver station order based on selected color
+    const stationOrder = color === 'red' ? 
+      (driverStation === 'Right' ? 'reversed' : 'normal') :
+      (driverStation === 'Right' ? 'normal' : 'reversed');
+    
+    Alert.alert(
+      'Select Driver Station',
+      'Please choose your driver station:',
+      [
+        {
+          text: 'Right Driver Station',
+          onPress: async () => {
+            await AsyncStorage.multiSet([
+              ['DRIVER_STATION', 'Right'],
+              ['DRIVER_STATION_ORDER', stationOrder]
+            ]);
+            setDriverStation('Right');
+            rotation.value = withSpring(1, {
+              damping: 12,
+              stiffness: 90,
+              mass: 1
+            });
+          },
+          style: 'default',
+        },
+        {
+          text: 'Left Driver Station',
+          onPress: async () => {
+            await AsyncStorage.multiSet([
+              ['DRIVER_STATION', 'Left'],
+              ['DRIVER_STATION_ORDER', stationOrder]
+            ]);
+            setDriverStation('Left');
+            rotation.value = withSpring(0, {
+              damping: 12,
+              stiffness: 90,
+              mass: 1
+            });
+          },
+          style: 'default',
+        },
+      ],
+      { 
+        cancelable: true,
+        userInterfaceStyle: 'dark',
+      }
+    );
   };
 
   const handleSubmit = async () => {
-    if (valueMatch === null || valueTeam === null || valuePosition === null || allianceColor === null) {
+    if (!matchNumber || !teamNumber || !eventCode || !valuePosition || !allianceColor) {
       Alert.alert('Error', 'Please fill in all fields before submitting');
       return;
     }
 
-    // Flip starting position based on driver station and alliance color
+    const newData = {
+      match_number: matchNumber,
+      team_number: teamNumber,
+      event_code: eventCode,
+      match_start_time: new Date().toISOString(),
+      alliance_color: allianceColor == "red" ? "Red" : "Blue",
+      start_position: valuePosition || 'none'
+    };
+
     let finalPosition = valuePosition;
     if (driverStation == "Right") {
       if (allianceColor == "blue") {
@@ -194,7 +242,6 @@ const StartPage = () => {
       }
 
     }
-    
 
     if (driverStation == "Left" && allianceColor == "red") {
       await AsyncStorage.setItem('DRIVER_STATION', "Left");
@@ -206,13 +253,13 @@ const StartPage = () => {
       await AsyncStorage.setItem('DRIVER_STATION', "Right");
     }
 
-    const newData = {
-      match_number: valueMatch,
-      team_number: valueTeam,
-      match_start_time: new Date().toISOString(),
-      alliance_color: allianceColor == "red" ? "Red" : "Blue",
-      start_position: finalPosition || 'none' // Use the flipped position
-    };
+    // Print out the submitted data
+    console.log('Submitted Data:', newData);
+    console.log('Match Number:', matchNumber);
+    console.log('Team Number:', teamNumber);
+    console.log('Event Code:', eventCode);
+    console.log('Alliance Color:', allianceColor);
+    console.log('Starting Position:', valuePosition);
 
     setStartPageData([newData]);
 
@@ -224,50 +271,19 @@ const StartPage = () => {
     await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify([]));
     await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify([]));
     await AsyncStorage.setItem('MATCH_INFO', JSON.stringify(newData));
-    // await AsyncStorage.setItem('STARTING_POSITION', finalPosition || 'none');
-
 
     setScouterId('');
-    setOpenMatch(false);
-    setValueMatch(null);
-    setItemsTeam([]);
-    setOpenTeam(false);
-    setValueTeam(null);
-    setStartPageData([]);
-    // setItemsPosition()
+    setValuePosition(null);
+    setItemsPosition([
+      { label: 'Far Starting Position', value: 'far' },
+      { label: 'Middle Starting Position', value: 'middle' },
+      { label: 'Close Starting Position', value: 'close' }
+    ]);
+
+    setMatchNumber('');
+    setTeamNumber('');
 
     navigation.navigate('Auto');
-  };
-
-  const handleAllianceColorSelect = (color) => {
-    setAllianceColor(color);
-    
-    Alert.alert(
-      'Select Driver Station',
-      'Please choose your driver station:',
-      [
-        {
-          text: 'Right Driver Station',
-          onPress: async () => {
-            await AsyncStorage.setItem('DRIVER_STATION', 'Right');
-            await AsyncStorage.setItem('DRIVER_STATION_ORDER', 'reversed');
-          },
-          style: 'default',
-        },
-        {
-          text: 'Left Driver Station',
-          onPress: async () => {
-            await AsyncStorage.setItem('DRIVER_STATION', 'Left');
-            await AsyncStorage.setItem('DRIVER_STATION_ORDER', 'normal');
-          },
-          style: 'default',
-        },
-      ],
-      { 
-        cancelable: true,
-        userInterfaceStyle: 'dark',
-      }
-    );
   };
 
   return (
@@ -275,148 +291,173 @@ const StartPage = () => {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        {/* Left Profile Button */}
-        <TouchableOpacity
-          style={[styles.profileButton, { left: 20 }]}
-          onPress={() => navigation.navigate('PitScouting')}
-        >
-          <View style={styles.profileIcon}>
-            <Image
-              source={require('../assets/th.jpeg')}
-              style={styles.profileImage}
-            />
-          </View>
-        </TouchableOpacity>
+        <View style={styles.scrollContainer}>
+          {/* Left Profile Button */}
+          <TouchableOpacity
+            style={[styles.profileButton, { left: 20 }]}
+            onPress={() => navigation.navigate('PitScouting')}
+          >
+            <View style={styles.profileIcon}>
+              <Image
+                source={require('../assets/th.jpeg')}
+                style={styles.profileImage}
+              />
+            </View>
+          </TouchableOpacity>
 
-        {/* Admin Console Button */}
-        <TouchableOpacity
-          style={[styles.adminButton, { left: '50%', transform: [{ translateX: -100 }, { translateY: 20 }] }]}
-          onPress={() => {
-            Alert.prompt(
-              'Admin Access',
-              'Enter password:',
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Submit',
-                  onPress: (password) => {
-                    if (password === 'HOUSTON2025') {
-                      navigation.navigate('AdminConsole');
-                    } else {
-                      Alert.alert('Error', 'Incorrect password');
-                    }
+          {/* Admin Console Button */}
+          <TouchableOpacity
+            style={[styles.adminButton, { left: '50%', transform: [{ translateX: -100 }, { translateY: 20 }] }]}
+            onPress={() => {
+              Alert.prompt(
+                'Admin Access',
+                'Enter password:',
+                [
+                  {
+                    text: 'Cancel',
+                    style: 'cancel',
                   },
-                },
-              ],
-              'secure-text'
-            );
-          }}
-        >
-          <Text style={styles.adminButtonText}>Admin Console</Text>
-        </TouchableOpacity>
+                  {
+                    text: 'Submit',
+                    onPress: (password) => {
+                      if (password === 'HOUSTON2025') {
+                        navigation.navigate('AdminConsole');
+                      } else {
+                        Alert.alert('Error', 'Incorrect password');
+                      }
+                    },
+                  },
+                ],
+                'secure-text'
+              );
+            }}
+          >
+            <Text style={styles.adminButtonText}>Admin Console</Text>
+          </TouchableOpacity>
 
-        {/* Right Profile Button */}
-        <TouchableOpacity
-          style={[styles.profileButton, { right: 20 }]}
-          onPress={() => navigation.navigate('Profile')}
-        >
-          <View style={styles.profileIcon}>
-            <Image
-              source={require('../assets/converted_image.jpeg')}
-              style={styles.profileImage}
-            />
+          {/* Right Profile Button */}
+          <TouchableOpacity
+            style={[styles.profileButton, { right: 20 }]}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <View style={styles.profileIcon}>
+              <Image
+                source={require('../assets/converted_image.jpeg')}
+                style={styles.profileImage}
+              />
+            </View>
+          </TouchableOpacity>
+
+          {/* Rest of the StartPage UI */}
+          <View style={[styles.titleContainer, { position: 'absolute', top: 100 }]}>
+            <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
+            <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
           </View>
-        </TouchableOpacity>
 
-        {/* Rest of the StartPage UI */}
-        <View style={[styles.titleContainer, { position: 'absolute', top: 100 }]}>
-          <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
-          <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
-        </View>
-
-        <Image
-          source={require('../assets/logo.jpg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-
-        <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
-          <Animated.Image
-            source={require('../assets/field.png')}
-            style={[styles.fieldImage, animatedStyle]}
+          <Image
+            source={require('../assets/logo.jpg')}
+            style={styles.logo}
+            resizeMode="contain"
           />
-        </TouchableOpacity>
 
-        {/* Match Number Dropdown */}
-        <Text style={styles.title}>Match Number</Text>
-        <DropDownPicker
-          open={openMatch}
-          value={valueMatch}
-          items={itemsMatch}
-          setOpen={setOpenMatch}
-          setValue={setValueMatch}
-          setItems={setItemsMatch}
-          containerStyle={styles.dropdownContainer}
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownBox}
-          zIndex={3000}
-          zIndexInverse={1000}
-        />
-
-        {/* Team Number Dropdown */}
-        {valueMatch && (
-          <>
-            <Text style={styles.title}>Team Number</Text>
-            <DropDownPicker
-              open={openTeam}
-              value={valueTeam}
-              items={itemsTeam}
-              setOpen={setOpenTeam}
-              setValue={setValueTeam}
-              setItems={setItemsTeam}
-              containerStyle={styles.dropdownContainer}
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownBox}
-              zIndex={2000}
-              zIndexInverse={1000}
+          <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
+            <Animated.Image
+              source={require('../assets/field.png')}
+              style={[styles.fieldImage, animatedStyle]}
             />
-          </>
-        )}
+          </TouchableOpacity>
 
-        {/* Display Selected Match, Team, and Alliance */}
-        <Text style={styles.resultText}>Selected Match: {valueMatch || 'None'}</Text>
-        {valueTeam && <Text style={styles.resultText}>Selected Team: {valueTeam}</Text>}
-        <Text style={styles.resultText}>
-          Alliance Color: {allianceColor ? allianceColor.charAt(0).toUpperCase() + allianceColor.slice(1) : 'None'}
-        </Text>
+          {/* Match Number Input */}
+          <Text style={styles.title}>Match Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Match Number"
+            value={matchNumber}
+            onChangeText={setMatchNumber}
+            keyboardType="number-pad"
+          />
 
-        {/* Starting Position Dropdown */}
-        <Text style={styles.title}>Starting Position</Text>
-        <DropDownPicker
-          open={openPosition}
-          value={valuePosition}
-          items={itemsPosition}
-          setOpen={setOpenPosition}
-          setValue={setValuePosition}
-          setItems={setItemsPosition}
-          containerStyle={styles.dropdownContainer}
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownBox}
-          zIndex={1000}
-          zIndexInverse={3000}
-        />
+          {/* Team Number Input */}
+          <Text style={styles.title}>Team Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Team Number"
+            value={teamNumber}
+            onChangeText={setTeamNumber}
+            keyboardType="number-pad"
+          />
 
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmit}
-        >
-          <Text style={styles.submitButtonText}>Submit</Text>
-        </TouchableOpacity>
+          {/* Event Code Input */}
+          <Text style={styles.title}>Event Code</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Event Code"
+            value={eventCode}
+            onChangeText={setEventCode}
+            autoCapitalize="characters"
+          />
+
+          {/* Display Selected Match, Team, and Alliance */}
+          <Text style={styles.resultText}>Selected Match: {matchNumber || 'None'}</Text>
+          <Text style={styles.resultText}>Selected Team: {teamNumber}</Text>
+          <Text style={styles.resultText}>
+            Alliance Color: {allianceColor ? allianceColor.charAt(0).toUpperCase() + allianceColor.slice(1) : 'None'}
+          </Text>
+          <Text style={styles.resultText}>
+            Starting Position: {valuePosition ? itemsPosition.find(item => item.value === valuePosition)?.label : 'None'}
+          </Text>
+
+          {/* Alliance Color Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.colorButton,
+                allianceColor === 'red' ? styles.selectedButtonRed : styles.defaultButton
+              ]}
+              onPress={() => setAllianceColor('red')}
+            >
+              <Text style={styles.buttonText}>Red Alliance</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.colorButton,
+                allianceColor === 'blue' ? styles.selectedButtonBlue : styles.defaultButton
+              ]}
+              onPress={() => setAllianceColor('blue')}
+            >
+              <Text style={styles.buttonText}>Blue Alliance</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Starting Position Dropdown */}
+          <Text style={styles.title}>Starting Position</Text>
+          <DropDownPicker
+            open={openPosition}
+            value={valuePosition}
+            items={itemsPosition}
+            setOpen={setOpenPosition}
+            setValue={setValuePosition}
+            setItems={setItemsPosition}
+            containerStyle={styles.dropdownContainer}
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownBox}
+            zIndex={1000}
+            zIndexInverse={3000}
+            ListHeaderComponent={<View />}
+            ListFooterComponent={<View />}
+          />
+
+          {/* Submit Button */}
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+          >
+            <Text style={styles.submitButtonText}>Submit</Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -425,9 +466,13 @@ const StartPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#000000',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
   profileButton: {
     position: 'absolute',
@@ -504,8 +549,7 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
     marginTop: 20,
-    position: 'absolute',
-    bottom: 40,
+    marginBottom: 20,
   },
   submitButtonText: {
     color: 'white',
@@ -518,13 +562,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     // marginVertical: 20,
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '80%',
+    marginBottom: 20,
+  },
   colorButton: {
-    width: '49%',
-    padding: 10,
+    width: '48%',
+    padding: 15,
     borderRadius: 10,
     alignItems: 'center',
-    marginBottom: 10,
-    justifyContent: 'center',
   },
   selectedButtonRed: {
     backgroundColor: '#ff3030',
@@ -539,11 +587,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
   },
   fieldContainer: {
     marginTop: 20,

@@ -36,7 +36,7 @@ const AdminCons = () => {
       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN');
       
       // Get max match from schedule
-      const scheduleResponse = await fetch(`http://97.107.134.214:5002/schedule`, {
+      const scheduleResponse = await fetch(`http://10.0.0.213:5002/schedule`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -49,7 +49,7 @@ const AdminCons = () => {
         Math.max(...scheduleData.map(match => match.match_number)) : 0;
 
       // Get max match from robots_in_match
-      const robotsResponse = await fetch(`http://97.107.134.214:5002/robots_in_match`, {
+      const robotsResponse = await fetch(`http://10.0.0.213:5002/robots_in_match`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -115,7 +115,7 @@ const AdminCons = () => {
       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN');
 
       // Post schedule data
-      const postResponse = await fetch(`http://97.107.134.214:5002/schedule`, {
+      const postResponse = await fetch(`http://10.0.0.213:5002/schedule`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -165,7 +165,7 @@ const AdminCons = () => {
                 throw new Error('No access token found');
               }
 
-              const response = await fetch("http://97.107.134.214:5002/clear_tables", {
+              const response = await fetch("http://10.0.0.213:5002/clear_tables", {
                 method: 'GET',
                 headers: {
                   'Authorization': `Bearer ${access_token}`,

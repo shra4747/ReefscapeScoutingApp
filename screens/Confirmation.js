@@ -75,6 +75,7 @@ const Confirmation = () => {
 
             start_position: matchInfo.start_position,
 
+            event_code: matchInfo.event_code,
             
 
             cycles: (reefData || []).filter(item => item.phase === "teleop").length,
@@ -101,6 +102,7 @@ const Confirmation = () => {
               is_dealgify: item.dealgaefy,
               level: item.level,
               reef_face: item.slice,
+              event_code: matchInfo.event_code,
               score_occurence_time: item.timestamp.split('.')[0]
             })),
           ],
@@ -111,6 +113,7 @@ const Confirmation = () => {
               match_number: parseInt(matchInfo.match_number),
               game_phase: item.phase,
               make_miss: item.action == "make",
+              event_code: matchInfo.event_code,
               score_occurence_time: item.timestamp.split('.')[0]
             })),
           ],
@@ -121,7 +124,7 @@ const Confirmation = () => {
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request
-        const response = await fetch('http://97.107.134.214:5002/match', {
+        const response = await fetch('http://10.0.0.213:5002/match', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
