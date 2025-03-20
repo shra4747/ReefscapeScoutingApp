@@ -26,6 +26,7 @@ const Teleop = () => {
   const [allianceColor, setAllianceColor] = useState("Blue"); // Default value
   const [driverStation, setDriverStation] = useState(null); // New state for driver station
   const [currentAlgaeType, setCurrentAlgaeType] = useState(null);
+  const [algaeModalText, setAlgaeModalText] = useState('Algae Location');
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -303,8 +304,7 @@ const Teleop = () => {
     if (type === 'Cancel') {
       setShowAlgaeTypeModal(false);
     } else {
-      setShowAlgaeTypeModal(false);
-      setShowAlgaeActionModal(true);
+      setAlgaeModalText('Algae Action');
       setCurrentAlgaeType(type);
     }
   };
@@ -327,7 +327,8 @@ const Teleop = () => {
       
       updatedData.push(algaeData);
       await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(updatedData));
-      setShowAlgaeActionModal(false);
+      setShowAlgaeTypeModal(false);
+      setAlgaeModalText('Algae Location'); // Reset text after action
     } catch (error) {
       console.error('Error storing algae data:', error);
     }
@@ -682,7 +683,7 @@ const Teleop = () => {
       <View style={{ height: 100 }} />
       <TouchableOpacity 
         style={styles.algaeButton}
-        onPress={handleAlgaeButtonPress}
+        onPress={() => setShowAlgaeTypeModal(true)}
       >
         <Text style={styles.algaeButtonText}>Algae</Text>
       </TouchableOpacity>
@@ -717,57 +718,51 @@ const Teleop = () => {
         visible={showAlgaeTypeModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowAlgaeTypeModal(false)}
+        onRequestClose={() => {
+          setShowAlgaeTypeModal(false);
+          setAlgaeModalText('Algae Location');
+        }}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Algae Location</Text>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => handleAlgaeTypeSelect('Processor')}
-            >
-              <Text style={styles.modalOptionText}>Processor</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => handleAlgaeTypeSelect('Barge Net')}
-            >
-              <Text style={styles.modalOptionText}>Barge Net</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => handleAlgaeTypeSelect('Cancel')}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        visible={showAlgaeActionModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowAlgaeActionModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Algae Action</Text>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => handleAlgaeAction('make')}
-            >
-              <Text style={styles.modalOptionText}>Make</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => handleAlgaeAction('miss')}
-            >
-              <Text style={styles.modalOptionText}>Miss</Text>
-            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{algaeModalText}</Text>
+            {algaeModalText === 'Algae Location' ? (
+              <>
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => handleAlgaeTypeSelect('Processor')}
+                >
+                  <Text style={styles.modalOptionText}>Processor</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => handleAlgaeTypeSelect('Barge Net')}
+                >
+                  <Text style={styles.modalOptionText}>Barge Net</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => handleAlgaeAction('make')}
+                >
+                  <Text style={styles.modalOptionText}>Make</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => handleAlgaeAction('miss')}
+                >
+                  <Text style={styles.modalOptionText}>Miss</Text>
+                </TouchableOpacity>
+              </>
+            )}
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => setShowAlgaeActionModal(false)}
+              onPress={() => {
+                setShowAlgaeTypeModal(false);
+                setAlgaeModalText('Algae Location');
+              }}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>

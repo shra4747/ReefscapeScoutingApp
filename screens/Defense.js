@@ -117,21 +117,62 @@ const Defense = ({ navigation }) => {
     }
   };
 
-  // Load defense data from AsyncStorage
+  // Add function to clear defense data
+  const clearDefenseData = async () => {
+    try {
+      await AsyncStorage.removeItem('DEFENSE_DATA');
+      setStationDelay('');
+      setStationReroute(0);
+      setIntakeDelay(0);
+      setProcessorBlock(0);
+      console.log('Defense data cleared successfully');
+    } catch (error) {
+      console.error('Error clearing defense data:', error);
+    }
+  };
+
+  // Modify loadDefenseData to only load data if it exists
   const loadDefenseData = async () => {
     try {
       const data = await AsyncStorage.getItem('DEFENSE_DATA');
       if (data !== null) {
         const parsedData = JSON.parse(data);
-        setStationDelay(parsedData.station_delay_time || 0);
+        setStationDelay(parsedData.station_delay_time || '');
         setStationReroute(parsedData.station_re_routes || 0);
         setIntakeDelay(parsedData.intake_block || 0);
         setProcessorBlock(parsedData.processor_block || 0);
         console.log('Defense data loaded successfully:', parsedData);
+      } else {
+        // If no data exists, initialize with empty values
+        setStationDelay('');
+        setStationReroute(0);
+        setIntakeDelay(0);
+        setProcessorBlock(0);
       }
     } catch (error) {
       console.error('Error loading defense data:', error);
     }
+  };
+
+  // Add useEffect to clear data on component mount
+  useEffect(() => {
+    const initialize = async () => {
+      await clearDefenseData();
+      await loadDefenseData();
+    };
+    initialize();
+  }, []);
+
+  // Add function to handle data submission
+  const handleDataSubmission = async () => {
+    // Save current data
+    await saveDefenseData();
+    
+    // Clear defense data after submission
+    await clearDefenseData();
+    
+    // Navigate or perform other submission actions
+    // ... existing submission code ...
   };
 
   // Add penalty to defense data
@@ -142,7 +183,7 @@ const Defense = ({ navigation }) => {
         penalties: [],
         station_delay_time: '',
         station_re_routes: 0,
-        intake_block: 0,
+        intake_fail: 0,
         processor_block: 0
       };
 
@@ -165,16 +206,6 @@ const Defense = ({ navigation }) => {
     setShowPenaltyModal(false);
     await addPenalty(type);
   };
-
-  // Load data on component mount
-  useEffect(() => {
-    loadDefenseData();
-  }, []);
-
-  // Save data when any value changes
-  useEffect(() => {
-    saveDefenseData();
-  }, [stationDelay, stationReroute, intakeDelay, processorBlock]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -256,7 +287,7 @@ const Defense = ({ navigation }) => {
             <Text style={styles.controlButtonText}>+</Text>
           </TouchableOpacity>
           <View style={styles.intakeButton}>
-            <Text style={styles.intakeButtonText}>Intake Block: {intakeDelay}</Text>
+            <Text style={styles.intakeButtonText}>Intake Fail: {intakeDelay}</Text>
           </View>
           <TouchableOpacity 
             style={[
