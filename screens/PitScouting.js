@@ -72,7 +72,7 @@ const PitScouting = () => {
       });
        const teamsData = await teamsResponse.json();
        // Fetch already scouted teams from your API
-       const scoutedResponse = await fetch('http://97.107.134.214:5002/pit_scout', {
+       const scoutedResponse = await fetch('http://10.75.65.142:5002/pit_scout', {
          headers: {
            'Authorization': `Bearer ${access_token}`
          }
@@ -175,7 +175,7 @@ const PitScouting = () => {
      const formData = new FormData();
      formData.append('data', JSON.stringify(pitData));
 
-     const response = await fetch('http://97.107.134.214:5002/pit_scout', {
+     const response = await fetch('http://10.75.65.142:5002/pit_scout', {
        method: 'POST',
        body: formData,
         headers: {

@@ -1,19 +1,26 @@
-// screens/BlankScreen.js
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, TouchableOpacity, Text, Modal, StyleSheet, Alert, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Defense = ({ navigation }) => {
-  const [intakeDelay, setIntakeDelay] = useState(0);
-  const [stationDelay, setStationDelay] = useState(0);
-  const [stationReroute, setStationReroute] = useState(0);
-  const [allianceColor, setAllianceColor] = useState("Blue");
-  const [showTimer, setShowTimer] = useState(false);
-  const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [time, setTime] = useState(0);
+  const [intakeDelay, setIntakeDelay] = useState(0);
+  const [stationReroute, setStationReroute] = useState(0);
   const [processorBlock, setProcessorBlock] = useState(0);
+  const [showTimer, setShowTimer] = useState(false);
   const [showPenaltyModal, setShowPenaltyModal] = useState(false);
+  const [isPinning, setIsPinning] = useState(false);
+  const [pinningTime, setPinningTime] = useState([]);
+  const [stationBlock, setStationBlock] = useState(0);
+  const [allianceColor, setAllianceColor] = useState("Blue");
+  const [pinningStartTime, setPinningStartTime] = useState(0);
+  const [displayPinningTime, setDisplayPinningTime] = useState(0);
+  const [foulsReef, setFoulsReef] = useState(0);
+  const [foulsBarge, setFoulsBarge] = useState(0);
+  const [bounceAnim] = useState(new Animated.Value(1));
+  const [pinFouls, setPinFouls] = useState(0);
 
   useEffect(() => {
     let interval;
@@ -24,6 +31,22 @@ const Defense = ({ navigation }) => {
     }
     return () => clearInterval(interval);
   }, [isRunning]);
+
+  // Add useEffect to get alliance color
+  useEffect(() => {
+    const retrieveAllianceColor = async () => {
+      try {
+        const color = await AsyncStorage.getItem('ALLIANCE_COLOR');
+        if (color !== null) {
+          setAllianceColor(color);
+        }
+    } catch (error) {
+        console.error('Error retrieving alliance color:', error);
+      }
+    };
+
+    retrieveAllianceColor();
+  }, []);
 
   // Add handlers for increment/decrement
   const handleIntakeIncrement = () => {
@@ -36,22 +59,9 @@ const Defense = ({ navigation }) => {
     }
   };
 
-  const handleStationPress = () => {
-    setShowTimer(true);
-    setTime(0);
-    setIsRunning(true);
-  };
-
   const handleTimerClose = () => {
     setIsRunning(false);
     setShowTimer(false);
-    
-    // Update station delay time to accumulate values
-    setStationDelay(prev => {
-      const newValue = prev ? `${prev},${time}` : `${time}`;
-      saveDefenseData(newValue);
-      return newValue;
-    });
   };
 
   const handleRerouteIncrement = () => {
@@ -74,138 +84,117 @@ const Defense = ({ navigation }) => {
     }
   };
 
-  const handlePenaltyPress = () => {
-    setShowPenaltyModal(true);
+  const handlePinningStart = () => {
+    setIsPinning(true);
+    setPinningStartTime(performance.now());
+    setDisplayPinningTime(0);
   };
 
-  const calculateDPR = (defenseData) => {
-    // Calculate station delay total
-    const stationDelayTotal = defenseData.station_delay_time
-      .split(',')
-      .reduce((sum, time) => sum + Number(time), 0);
-
-    // Calculate penalties total with updated weightages
-    const penaltiesTotal = defenseData.penalties.reduce((sum, penalty) => {
-      return sum + (penalty.type === 'Minor Foul' ? -3 : -6);
-    }, 0);
-
-    // Calculate DPR
-    return (stationDelayTotal * 1) + 
-           (defenseData.station_re_routes * 2) + 
-           (defenseData.intake_block * 3) + 
-           (defenseData.processor_block * 2) + 
-           penaltiesTotal;
+  const handlePinningEnd = () => {
+    const endTime = performance.now();
+    const duration = (endTime - pinningStartTime) / 1000; // Convert to seconds
+    setIsPinning(false);
+    
+    // Save pinning time as an array with the new duration as a float
+    setPinningTime(prev => [...prev, parseFloat(duration.toFixed(5))]);
   };
+
+  // Update useEffect to update display time
+  useEffect(() => {
+    let interval;
+    if (isPinning) {
+      interval = setInterval(() => {
+        setDisplayPinningTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPinning]);
+
+  // Add useEffect for bounce animation
+  useEffect(() => {
+    const bounce = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 1.2,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    if (isPinning) {
+      bounce.start();
+    } else {
+      bounce.stop();
+      bounceAnim.setValue(1);
+    }
+
+    return () => bounce.stop();
+  }, [isPinning]);
 
   const saveDefenseData = async (newStationDelay = null) => {
     const defenseData = {
-      penalties: [], // Will store penalty objects
-      station_delay_time: newStationDelay || stationDelay,
       station_re_routes: stationReroute,
       intake_block: intakeDelay,
-      processor_block: processorBlock
+      processor_block: processorBlock,
+      station_block: stationBlock,
+      pin_fouls: pinFouls,
+      fouls_reef: foulsReef,
+      fouls_barge: foulsBarge
     };
 
-    // Calculate and add DPR
-    defenseData.DPR = calculateDPR(defenseData);
+    console.log('Saving data:', defenseData);
 
     try {
       await AsyncStorage.setItem('DEFENSE_DATA', JSON.stringify(defenseData));
-      console.log('Defense data saved successfully:', defenseData);
     } catch (error) {
       console.error('Error saving defense data:', error);
     }
   };
-
-  // Add function to clear defense data
-  const clearDefenseData = async () => {
-    try {
-      await AsyncStorage.removeItem('DEFENSE_DATA');
-      setStationDelay('');
-      setStationReroute(0);
-      setIntakeDelay(0);
-      setProcessorBlock(0);
-      console.log('Defense data cleared successfully');
-    } catch (error) {
-      console.error('Error clearing defense data:', error);
-    }
-  };
-
   // Modify loadDefenseData to only load data if it exists
   const loadDefenseData = async () => {
     try {
       const data = await AsyncStorage.getItem('DEFENSE_DATA');
       if (data !== null) {
         const parsedData = JSON.parse(data);
-        setStationDelay(parsedData.station_delay_time || '');
+        
+        // Update all state values
         setStationReroute(parsedData.station_re_routes || 0);
         setIntakeDelay(parsedData.intake_block || 0);
         setProcessorBlock(parsedData.processor_block || 0);
-        console.log('Defense data loaded successfully:', parsedData);
+        setStationBlock(parsedData.station_block || 0);
+        setPinFouls(parsedData.pin_fouls || 0);
+        setFoulsReef(parsedData.fouls_reef || 0);
+        setFoulsBarge(parsedData.fouls_barge || 0);
+        
+        console.log('Loaded data:', parsedData);
       } else {
         // If no data exists, initialize with empty values
-        setStationDelay('');
         setStationReroute(0);
         setIntakeDelay(0);
         setProcessorBlock(0);
+        setStationBlock(0);
+        setPinFouls(0);
+        setFoulsReef(0);
+        setFoulsBarge(0);
       }
     } catch (error) {
       console.error('Error loading defense data:', error);
     }
   };
 
-  // Add useEffect to clear data on component mount
+  // Update the useEffect for component mount
   useEffect(() => {
     const initialize = async () => {
-      await clearDefenseData();
       await loadDefenseData();
     };
     initialize();
   }, []);
-
-  // Add function to handle data submission
-  const handleDataSubmission = async () => {
-    // Save current data
-    await saveDefenseData();
-    
-    // Clear defense data after submission
-    await clearDefenseData();
-    
-    // Navigate or perform other submission actions
-    // ... existing submission code ...
-  };
-
-  // Add penalty to defense data
-  const addPenalty = async (type) => {
-    try {
-      const data = await AsyncStorage.getItem('DEFENSE_DATA');
-      const defenseData = data ? JSON.parse(data) : {
-        penalties: [],
-        station_delay_time: '',
-        station_re_routes: 0,
-        intake_fail: 0,
-        processor_block: 0
-      };
-
-      defenseData.penalties.push({
-        type: type
-      });
-
-      // Recalculate DPR
-      defenseData.DPR = calculateDPR(defenseData);
-
-      await AsyncStorage.setItem('DEFENSE_DATA', JSON.stringify(defenseData));
-      console.log('Penalty added successfully:', defenseData);
-    } catch (error) {
-      console.error('Error adding penalty:', error);
-    }
-  };
-
-  // Update handlePenaltySelect to save penalties
-  const handlePenaltySelect = async (type) => {
-    setShowPenaltyModal(false);
-    await addPenalty(type);
-  };
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -214,115 +203,174 @@ const Defense = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={getStyles(allianceColor).container}>
       {/* Back Button with Text */}
       <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
+        style={[getStyles(allianceColor).backButton, { top: 30 }]}
+        onPress={async () => {
+          await saveDefenseData();
+          navigation.goBack();
+        }}
       >
         <Ionicons name="arrow-back" size={20} color="#FFF" />
-        <Text style={styles.backButtonText}>Back</Text>
+        <Text style={getStyles(allianceColor).backButtonText}>Back</Text>
+      </TouchableOpacity>
+
+      {/* Proceed to Endgame Button */}
+      <TouchableOpacity 
+        style={[getStyles(allianceColor).endgameButton, { top: 30 }]}
+        onPress={async () => {
+          await saveDefenseData();
+          navigation.navigate('EndGame');
+        }}
+      >
+        <Text style={getStyles(allianceColor).endgameButtonText}>Endgame</Text>
+        <Ionicons name="arrow-forward" size={20} color="#FFF" />
       </TouchableOpacity>
 
       {/* Defense Title */}
-      <Text style={styles.title}>Defense</Text>
+      <Text style={[getStyles(allianceColor).title, { marginTop: 40, marginRight: 30 }]}>Defense</Text>
 
-      <View style={styles.contentContainer}>
-        {/* Penalties Button */}
-        <TouchableOpacity 
-          style={[
-            styles.penaltyButton, 
-            { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-          ]}
-          onPress={handlePenaltyPress}
-        >
-          <Text style={styles.penaltyButtonText}>Penalties</Text>
-        </TouchableOpacity>
-
-        {/* Station Delay Button */}
-        <TouchableOpacity 
-          style={[
-            styles.stationButton, 
-            { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-          ]}
-          onPress={handleStationPress}
-        >
-          <Text style={styles.stationButtonText}>Station Delay: {stationDelay}s</Text>
-        </TouchableOpacity>
-
-        {/* Add Station Re-Route Counter */}
-        <View style={styles.counterButtonGroup}>
-          <TouchableOpacity 
-            style={[
-              styles.incrementButton, 
-              { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-            ]} 
-            onPress={handleRerouteIncrement}
-          >
-            <Text style={styles.controlButtonText}>+</Text>
-          </TouchableOpacity>
-          <View style={styles.rerouteButton}>
-            <Text style={styles.rerouteButtonText}>Station Re-Route: {stationReroute}</Text>
+      <View style={getStyles(allianceColor).contentContainer}>
+        {/* Actions Section */}
+        <View style={getStyles(allianceColor).sectionContainer}>
+          {/* Station Counters Group */}
+          <View style={getStyles(allianceColor).counterButtonGroup}>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).stationIncrementButton} 
+              onPress={handleRerouteIncrement}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
+            </TouchableOpacity>
+            <View style={getStyles(allianceColor).counterDisplay}>
+              <Text style={getStyles(allianceColor).counterText}>Station Re-Route: {stationReroute}</Text>
+            </View>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).stationIncrementButton} 
+              onPress={handleRerouteDecrement}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity 
-            style={[
-              styles.decrementButton, 
-              { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-            ]} 
-            onPress={handleRerouteDecrement}
-          >
-            <Text style={styles.controlButtonText}>-</Text>
-          </TouchableOpacity>
+
+          <View style={getStyles(allianceColor).counterButtonGroup}>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).stationIncrementButton} 
+              onPress={() => setStationBlock(prev => prev + 1)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
+            </TouchableOpacity>
+            <View style={getStyles(allianceColor).counterDisplay}>
+              <Text style={getStyles(allianceColor).counterText}>Station Block: {stationBlock}</Text>
+            </View>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).stationIncrementButton} 
+              onPress={() => setStationBlock(prev => prev > 0 ? prev - 1 : prev)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Intake Fail Counter */}
+          <View style={getStyles(allianceColor).counterButtonGroup}>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).intakeIncrementButton} 
+              onPress={handleIntakeIncrement}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
+            </TouchableOpacity>
+            <View style={getStyles(allianceColor).counterDisplay}>
+              <Text style={getStyles(allianceColor).counterText}>Intake Fail: {intakeDelay}</Text>
+            </View>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).intakeIncrementButton} 
+              onPress={handleIntakeDecrement}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Processor Block Counter */}
+          <View style={getStyles(allianceColor).counterButtonGroup}>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).processorIncrementButton} 
+              onPress={handleProcessorIncrement}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
+            </TouchableOpacity>
+            <View style={getStyles(allianceColor).counterDisplay}>
+              <Text style={getStyles(allianceColor).counterText}>Processor Block: {processorBlock}</Text>
+            </View>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).processorIncrementButton} 
+              onPress={handleProcessorDecrement}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Intake Delay Counter */}
-        <View style={styles.counterButtonGroup}>
-          <TouchableOpacity 
-            style={[
-              styles.incrementButton, 
-              { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-            ]} 
-            onPress={handleIntakeIncrement}
-          >
-            <Text style={styles.controlButtonText}>+</Text>
-          </TouchableOpacity>
-          <View style={styles.intakeButton}>
-            <Text style={styles.intakeButtonText}>Intake Fail: {intakeDelay}</Text>
-          </View>
-          <TouchableOpacity 
-            style={[
-              styles.decrementButton, 
-              { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-            ]} 
-            onPress={handleIntakeDecrement}
-          >
-            <Text style={styles.controlButtonText}>-</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Divider */}
+        <View style={getStyles(allianceColor).divider} />
 
-        {/* Add Processor Block Counter */}
-        <View style={styles.counterButtonGroup}>
-          <TouchableOpacity 
-            style={[
-              styles.incrementButton, 
-              { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-            ]} 
-            onPress={handleProcessorIncrement}
-          >
-            <Text style={styles.controlButtonText}>+</Text>
-          </TouchableOpacity>
-          <View style={styles.processorButton}>
-            <Text style={styles.processorButtonText}>Processor Block: {processorBlock}</Text>
+        {/* Fouls Section */}
+        <View style={getStyles(allianceColor).sectionContainer}>
+          {/* Pin Foul Counter */}
+          <View style={getStyles(allianceColor).counterButtonGroup}>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).foulIncrementButton} 
+              onPress={() => setPinFouls(prev => prev + 1)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
+            </TouchableOpacity>
+            <View style={getStyles(allianceColor).counterDisplay}>
+              <Text style={getStyles(allianceColor).counterText}>Pin Foul: {pinFouls}</Text>
+            </View>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).foulIncrementButton} 
+              onPress={() => setPinFouls(prev => prev > 0 ? prev - 1 : prev)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity 
-            style={[
-              styles.decrementButton, 
-              { backgroundColor: allianceColor === "Blue" ? "#308aff" : "#ff3030" }
-            ]} 
-            onPress={handleProcessorDecrement}
-          >
-            <Text style={styles.controlButtonText}>-</Text>
-          </TouchableOpacity>
+
+          {/* Foul in Reef Counter */}
+          <View style={getStyles(allianceColor).counterButtonGroup}>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).foulIncrementButton} 
+              onPress={() => setFoulsReef(prev => prev + 1)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
+            </TouchableOpacity>
+            <View style={getStyles(allianceColor).counterDisplay}>
+              <Text style={getStyles(allianceColor).counterText}>Foul in Reef: {foulsReef}</Text>
+            </View>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).foulIncrementButton} 
+              onPress={() => setFoulsReef(prev => prev > 0 ? prev - 1 : prev)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Foul in Barge Counter */}
+          <View style={getStyles(allianceColor).counterButtonGroup}>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).foulIncrementButton} 
+              onPress={() => setFoulsBarge(prev => prev + 1)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
+            </TouchableOpacity>
+            <View style={getStyles(allianceColor).counterDisplay}>
+              <Text style={getStyles(allianceColor).counterText}>Foul in Barge: {foulsBarge}</Text>
+            </View>
+            <TouchableOpacity 
+              style={getStyles(allianceColor).foulIncrementButton} 
+              onPress={() => setFoulsBarge(prev => prev > 0 ? prev - 1 : prev)}
+            >
+              <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Timer Modal */}
@@ -331,14 +379,14 @@ const Defense = ({ navigation }) => {
           transparent={true}
           animationType="slide"
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.timerText}>{formatTime(time)}</Text>
+          <View style={getStyles(allianceColor).modalContainer}>
+            <View style={getStyles(allianceColor).modalContent}>
+              <Text style={getStyles(allianceColor).timerText}>{formatTime(time)}</Text>
               <TouchableOpacity 
-                style={styles.closeButton}
+                style={getStyles(allianceColor).closeButton}
                 onPress={handleTimerClose}
               >
-                <Text style={styles.closeButtonText}>Stop & Save</Text>
+                <Text style={getStyles(allianceColor).closeButtonText}>Stop & Save</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -350,19 +398,19 @@ const Defense = ({ navigation }) => {
           transparent={true}
           animationType="slide"
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
+          <View style={getStyles(allianceColor).modalContainer}>
+            <View style={getStyles(allianceColor).modalContent}>
               <TouchableOpacity 
-                style={styles.penaltyOption}
+                style={getStyles(allianceColor).penaltyOption}
                 onPress={() => handlePenaltySelect('Minor Foul')}
               >
-                <Text style={styles.penaltyOptionText}>Minor Foul</Text>
+                <Text style={getStyles(allianceColor).penaltyOptionText}>Minor Foul</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={styles.penaltyOption}
+                style={getStyles(allianceColor).penaltyOption}
                 onPress={() => handlePenaltySelect('Major Foul')}
               >
-                <Text style={styles.penaltyOptionText}>Major Foul</Text>
+                <Text style={getStyles(allianceColor).penaltyOptionText}>Major Foul</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -372,157 +420,199 @@ const Defense = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-    marginTop: 0,
-  },
-  counterButtonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  incrementButton: {
-    padding: 10,
-    borderRadius: 5,
-    marginRight: 5,
-  },
-  decrementButton: {
-    padding: 10,
-    borderRadius: 5,
-    marginLeft: 5,
-  },
-  intakeButton: {
-    backgroundColor: '#2A2A2A',
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  intakeButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
-  controlButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  stationButton: {
-    backgroundColor: '#2A2A2A',
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  stationButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
-  rerouteButton: {
-    backgroundColor: '#2A2A2A',
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  rerouteButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#FFF',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    width: '80%',
-  },
-  timerText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    marginVertical: 20,
-  },
-  closeButton: {
-    backgroundColor: '#FF4444',
-    padding: 15,
-    borderRadius: 5,
-    width: '100%',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  processorButton: {
-    backgroundColor: '#2A2A2A',
-    padding: 10,
-    borderRadius: 5,
-    minWidth: 120,
-    alignItems: 'center',
-  },
-  processorButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
-  penaltyButton: {
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 10,
-    alignItems: 'center',
-    minWidth: 200,
-  },
-  penaltyButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  penaltyOption: {
-    padding: 15,
-    width: '100%',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#DDD',
-  },
-  penaltyOptionText: {
-    fontSize: 18,
-    color: '#000',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginTop: 50,
-    marginBottom: 20,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    zIndex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#000',
-    borderRadius: 5,
-  },
-  backButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    marginLeft: 5,
-  },
-});
+// Update styles to be a function that takes allianceColor
+const getStyles = (allianceColor) => {
+  const global_color = allianceColor === "Blue" ? "#308aff" : "#ff3030";
+  const foulColor = "#8A2BE2";
+  
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#1E1E1E',
+    },
+    contentContainer: {
+      flex: 1,
+      paddingHorizontal: 20,
+      marginTop: 50,
+    },
+    counterButtonGroup: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginVertical: 10,
+    },
+    stationIncrementButton: {
+      padding: 15,
+      borderRadius: 8,
+      marginRight: 5,
+      backgroundColor: '#666', // Gray for station buttons
+    },
+    intakeIncrementButton: {
+      padding: 15,
+      borderRadius: 8,
+      marginRight: 5,
+      backgroundColor: '#ff3030', // Red for intake fail
+    },
+    processorIncrementButton: {
+      padding: 15,
+      borderRadius: 8,
+      marginRight: 5,
+      backgroundColor: '#20B2AA', // Teal for processor
+    },
+    foulIncrementButton: {
+      padding: 15,
+      borderRadius: 8,
+      marginRight: 5,
+      backgroundColor: '#000', // Black for fouls
+    },
+    counterDisplay: {
+      backgroundColor: '#333',
+      padding: 15,
+      borderRadius: 10,
+      minWidth: 150,
+      alignItems: 'center',
+      marginHorizontal: 5,
+    },
+    counterText: {
+      color: '#FFF',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    controlButtonText: {
+      color: '#FFF',
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+      backgroundColor: '#2A2A2A',
+      padding: 20,
+      borderRadius: 10,
+      alignItems: 'center',
+      width: '80%',
+    },
+    timerText: {
+      fontSize: 48,
+      fontWeight: 'bold',
+      marginVertical: 20,
+      color: '#FFFFFF',
+    },
+    closeButton: {
+      backgroundColor: global_color,
+      padding: 15,
+      borderRadius: 5,
+      width: '100%',
+      alignItems: 'center',
+    },
+    closeButtonText: {
+      color: '#FFF',
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    title: {
+      top: 25,
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#FFF',
+      textAlign: 'center',
+      
+      marginBottom: 20,
+    },
+    backButton: {
+      position: 'absolute',
+      marginTop: 35,
+      left: 20,
+      zIndex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      backgroundColor: global_color,
+      borderRadius: 5,
+    },
+    backButtonText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      marginLeft: 5,
+    },
+    sectionContainer: {
+      width: '100%',
+      marginTop: 20,
+      padding: 15,
+      backgroundColor: '#2A2A2A',
+      borderRadius: 15,
+      elevation: 3,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: '#444',
+      marginVertical: 20,
+      width: '90%',
+      alignSelf: 'center',
+    },
+    pinningButtonContainer: {
+      alignItems: 'center', // Center horizontally
+      marginVertical: 20,
+    },
+    pinningButton: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: global_color,
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+    },
+    pinningButtonActive: {
+      backgroundColor: '#FF4500', // Zesty orange
+      shadowColor: '#FF4500', // Zesty glow
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.9,
+      shadowRadius: 20,
+      elevation: 15,
+    },
+    pinningButtonText: {
+      color: '#FFF',
+      fontSize: 20, // Adjusted for circular button
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    penaltyOption: {
+      padding: 20,
+      borderRadius: 10,
+      marginVertical: 10,
+      alignItems: 'center',
+      minWidth: '80%',
+      backgroundColor: foulColor,
+      elevation: 3,
+    },
+    penaltyOptionText: {
+      color: '#FFF',
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    endgameButton: {
+      position: 'absolute',
+      marginTop: 35,
+      right: 20,
+      zIndex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      backgroundColor: global_color,
+      borderRadius: 5,
+    },
+    endgameButtonText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      marginRight: 5,
+    },
+  });
+};
 
 export default Defense;

@@ -50,7 +50,7 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const response = await fetch(`http://97.107.134.214:5002/schedule`, {
+        const response = await fetch(`http://10.75.65.142:5002/schedule`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }

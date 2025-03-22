@@ -13,9 +13,20 @@ const Confirmation = () => {
       try {
         // Parse all stored data
         const matchInfo = JSON.parse(await AsyncStorage.getItem('MATCH_INFO'));
-        const autoPickups = JSON.parse(await AsyncStorage.getItem('AUTO_PICKUPS'));
+        // const autoPickups = JSON.parse(await AsyncStorage.getItem('AUTO_PICKUPS'));
         const teleopPickups = JSON.parse(await AsyncStorage.getItem('Teleop_PICKUPS'));
-        const processorData = JSON.parse(await AsyncStorage.getItem('PROCESSOR_DATA'));
+        const algaeData = JSON.parse(await AsyncStorage.getItem('ALGAE_DATA'));
+        console.log("-")
+        console.log(algaeData)
+
+        const processorData = algaeData.filter(item => item.type === "Processor");
+        const bargeNetData = algaeData.filter(item => item.type === "Barge Net");
+
+        console.log(processorData)
+        console.log(bargeNetData)
+        const defenseData = JSON.parse(await AsyncStorage.getItem('DEFENSE_DATA'))
+        // console.log(processorData)
+        // console.log(defenseData)
         const reefData = JSON.parse(await AsyncStorage.getItem('REEF_DATA'));
         const endgameData = JSON.parse(await AsyncStorage.getItem('ENDGAME_DATA'));
         const postgameData = JSON.parse(await AsyncStorage.getItem('POSTGAME_DATA'));
@@ -69,7 +80,8 @@ const Confirmation = () => {
             was_chassis: postgameData.robotType.includes("chassis"),
             was_defense: postgameData.robotType.includes("defense"),
 
-            defense_notes: postgameData.defenseNotes,
+            defense_notes: postgameData.defenseNotes ? postgameData.defenseNotes : null,
+            other_notes: postgameData.otherNotes ? postgameData.otherNotes : null,
 
             match_start_time: matchInfo.match_start_time.split('.')[0],
 
@@ -117,14 +129,41 @@ const Confirmation = () => {
               score_occurence_time: item.timestamp.split('.')[0]
             })),
           ],
+
+          BargeNet: [
+            ...(bargeNetData || []).map(item => ({
+              team_number: parseInt(matchInfo.team_number),
+              match_number: parseInt(matchInfo.match_number),
+              game_phase: item.phase,
+              make_miss: item.action == "make",
+              event_code: matchInfo.event_code,
+              score_occurence_time: item.timestamp.split('.')[0]
+            })),
+          ],
+
+          Defense: defenseData ? [{
+            team_number: parseInt(matchInfo.team_number),
+            match_number: parseInt(matchInfo.match_number),
+            fouls_barge: parseInt(defenseData.fouls_barge),
+            fouls_reef: parseInt(defenseData.fouls_reef),
+            intake_block: parseInt(defenseData.intake_block),
+            pin_fouls: parseInt(defenseData.pin_fouls),
+            processor_block: parseInt(defenseData.processor_block),
+            station_block: parseInt(defenseData.station_block),
+            station_re_routes: parseInt(defenseData.station_re_routes),
+          }] : []
+
+          
         };
 
+        // console.log(submissionData)
 
-        // // Get access token
+
+        // // // // Get access token
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request
-        const response = await fetch('http://97.107.134.214:5002/match', {
+        const response = await fetch('http://10.75.65.142:5002/match', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -147,7 +186,9 @@ const Confirmation = () => {
           'PROCESSOR_DATA',
           'REEF_DATA',
           'ENDGAME_DATA',
-          'POSTGAME_DATA'
+          'POSTGAME_DATA',
+          'DEFENSE_DATA',
+          'ALGAE_DATA',
         ]);
 
         // Navigate to StartPage

@@ -30,6 +30,10 @@ const Auto = () => {
   const [driverStationOrder, setDriverStationOrder] = useState('normal');
   const [teamNumber, setTeamNumber] = useState(null);
 
+  const [showAlgaeTypeModal, setShowAlgaeTypeModal] = useState(false);
+  const [currentAlgaeType, setCurrentAlgaeType] = useState(null);
+  const [algaeModalText, setAlgaeModalText] = useState('Algae Location');
+
   useEffect(() => {
     const retrieveAllianceColor = async () => {
       try {
@@ -403,6 +407,44 @@ const Auto = () => {
     fetchTeamNumber();
   }, []);
 
+  const handleAlgaeButtonPress = () => {
+    setShowAlgaeTypeModal(true);
+  };
+
+  const handleAlgaeTypeSelect = (type) => {
+    if (type === 'Cancel') {
+      setShowAlgaeTypeModal(false);
+    } else {
+      setAlgaeModalText('Algae Action');
+      setCurrentAlgaeType(type);
+    }
+  };
+
+  const handleAlgaeAction = async (action) => {
+    const algaeData = {
+      type: currentAlgaeType,
+      action: action,
+      phase: "auto",  // Changed from "teleop" to "auto"
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const existingData = await AsyncStorage.getItem('ALGAE_DATA');
+      let updatedData = [];
+      
+      if (existingData) {
+        updatedData = JSON.parse(existingData);
+      }
+      
+      updatedData.push(algaeData);
+      await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(updatedData));
+      setShowAlgaeTypeModal(false);
+      setAlgaeModalText('Algae Location');
+    } catch (error) {
+      console.error('Error storing algae data:', error);
+    }
+  };
+
   // Define styles after determining global_color
   const styles = StyleSheet.create({
     container: {
@@ -598,20 +640,20 @@ const Auto = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
       width: '80%',
-      backgroundColor: '#333',
+      backgroundColor: '#fff',
       borderRadius: 10,
       padding: 20,
-      alignItems: 'center',
     },
     modalTitle: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: 'bold',
-      color: '#fff',
-      marginBottom: 15,
+      marginBottom: 20,
+      textAlign: 'center',
+      color: '#000',
     },
     driveStationButton: {
       width: '100%',
@@ -627,14 +669,14 @@ const Auto = () => {
       fontWeight: 'bold',
     },
     cancelButton: {
-      width: '100%',
+      backgroundColor: '#ccc',
       padding: 15,
-      backgroundColor: '#ff4444',
       borderRadius: 5,
+      marginTop: 10,
       alignItems: 'center',
     },
     cancelButtonText: {
-      color: '#fff',
+      color: '#000',
       fontSize: 16,
       fontWeight: 'bold',
     },
@@ -642,6 +684,39 @@ const Auto = () => {
       fontSize: 18,
       color: 'white',
       marginBottom: 10,
+    },
+    algaeButton: {
+      position: 'absolute',
+      bottom: 20,
+      left: 20,
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: global_color,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+    },
+    algaeButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    modalOption: {
+      backgroundColor: global_color,
+      padding: 15,
+      borderRadius: 5,
+      marginVertical: 5,
+      alignItems: 'center',
+    },
+    modalOptionText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
     },
   });
 
@@ -702,7 +777,6 @@ const Auto = () => {
         style={styles.processorButton}
         onPress={() => setShowProcessorModal(true)}
       >
-        <Text style={styles.processorButtonText}>Processor</Text>
       </TouchableOpacity>
       
       <View style={styles.countersContainer}>
@@ -762,6 +836,70 @@ const Auto = () => {
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setShowProcessorModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <TouchableOpacity 
+        style={styles.algaeButton}
+        onPress={() => setShowAlgaeTypeModal(true)}
+      >
+        <Text style={styles.algaeButtonText}>Algae</Text>
+      </TouchableOpacity>
+
+      {/* Algae Action Modal */}
+      <Modal
+        visible={showAlgaeTypeModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowAlgaeTypeModal(false);
+          setAlgaeModalText('Algae Location');
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{algaeModalText}</Text>
+            {algaeModalText === 'Algae Location' ? (
+              <>
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => handleAlgaeTypeSelect('Processor')}
+                >
+                  <Text style={styles.modalOptionText}>Processor</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => handleAlgaeTypeSelect('Barge Net')}
+                >
+                  <Text style={styles.modalOptionText}>Barge Net</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={[styles.modalOption, { backgroundColor: '#006400' }]}
+                  onPress={() => handleAlgaeAction('make')}
+                >
+                  <Text style={styles.modalOptionText}>Make</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalOption, { backgroundColor: '#FF0000' }]}
+                  onPress={() => handleAlgaeAction('miss')}
+                >
+                  <Text style={styles.modalOptionText}>Miss</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => {
+                setShowAlgaeTypeModal(false);
+                setAlgaeModalText('Algae Location');
+              }}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>

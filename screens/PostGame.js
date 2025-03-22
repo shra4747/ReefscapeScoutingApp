@@ -11,6 +11,7 @@ const PostGame = () => {
   const [openRobotType, setOpenRobotType] = useState(false);
   const [robotTypeValue, setRobotTypeValue] = useState([]);
   const [defenseNotes, setDefenseNotes] = useState('');
+  const [otherNotes, setOtherNotes] = useState('');
   
   const [robotTypeItems, setRobotTypeItems] = useState([
     { label: 'Coral', value: 'coral' },
@@ -28,7 +29,8 @@ const PostGame = () => {
     
     const postGameData = {
       robotType: robotTypeValue,
-      defenseNotes: robotTypeValue.includes('defense') ? defenseNotes : null
+      defenseNotes: robotTypeValue.includes('defense') ? defenseNotes : null,
+      otherNotes: otherNotes
     }
 
     await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify(postGameData));
@@ -86,6 +88,16 @@ const PostGame = () => {
           />
         </>
       )}
+
+      <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Other Notes</Text>
+      <TextInput
+        style={styles.notesInput}
+        placeholder="Enter other notes..."
+        placeholderTextColor="#888"
+        value={otherNotes}
+        onChangeText={setOtherNotes}
+        multiline
+      />
 
       <TouchableOpacity 
         style={[styles.submitButton, { marginTop: 20 }]} 

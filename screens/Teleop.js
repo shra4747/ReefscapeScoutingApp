@@ -123,7 +123,6 @@ const Teleop = () => {
 
   const handleSubmit = async () => {
     storeTeleopData()
-    await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify([]));
     navigation.navigate("EndGame");
   }
 
@@ -317,6 +316,8 @@ const Teleop = () => {
       timestamp: new Date().toISOString()
     };
 
+    console.log(algaeData)
+
     try {
       const existingData = await AsyncStorage.getItem('ALGAE_DATA');
       let updatedData = [];
@@ -326,12 +327,15 @@ const Teleop = () => {
       }
       
       updatedData.push(algaeData);
+      console.log(updatedData)
       await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(updatedData));
       setShowAlgaeTypeModal(false);
       setAlgaeModalText('Algae Location'); // Reset text after action
     } catch (error) {
       console.error('Error storing algae data:', error);
     }
+
+    
   };
 
   // Add useEffect to fetch team number
@@ -744,13 +748,13 @@ const Teleop = () => {
             ) : (
               <>
                 <TouchableOpacity
-                  style={styles.modalOption}
+                  style={[styles.modalOption, { backgroundColor: '#006400' }]}
                   onPress={() => handleAlgaeAction('make')}
                 >
                   <Text style={styles.modalOptionText}>Make</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.modalOption}
+                  style={[styles.modalOption, { backgroundColor: '#FF0000' }]}
                   onPress={() => handleAlgaeAction('miss')}
                 >
                   <Text style={styles.modalOptionText}>Miss</Text>
