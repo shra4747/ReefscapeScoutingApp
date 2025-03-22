@@ -31,7 +31,7 @@ const PickList = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-        const response = await fetch(`http://10.75.65.142:5002/picklist/${eventCode}`, {
+        const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -60,7 +60,7 @@ const PickList = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-        const response = await fetch(`http://10.75.65.142:5002/picklist/${eventCode}`, {
+        const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -112,7 +112,7 @@ const PickList = () => {
         }));
 
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const response = await fetch('http://10.75.65.142:5002/picklist', {
+        const response = await fetch('http://97.107.134.214:5002/picklist', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -204,7 +204,7 @@ const PickList = () => {
     try {
       const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
       const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-      const response = await fetch(`http://10.75.65.142:5002/picklist/${eventCode}`, {
+      const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
