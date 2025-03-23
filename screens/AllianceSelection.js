@@ -95,6 +95,7 @@ const AllianceSelection = () => {
  const [error, setError] = useState('');
  const [pickListTeams, setPickListTeams] = useState([]);
  const [competitionCode, setCompetitionCode] = useState('');
+ const [fromPicklist, setFromPicklist] = useState(false);
 
  // Move the async storage call into useEffect
  useEffect(() => {
@@ -107,39 +108,16 @@ const AllianceSelection = () => {
    loadCompetitionCode();
  }, []);
 
- // Load pick list teams from server when screen focuses
+ // Modify useFocusEffect to handle reset logic
  useFocusEffect(
    React.useCallback(() => {
-     const loadPickListTeams = async () => {
-       try {
-         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-         const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-         const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
-           headers: {
-             'Authorization': `Bearer ${authToken}`
-           }
-         });
-         
-         if (response.ok) {
-           const serverData = await response.json();
-           const formattedTeams = serverData.map(team => ({
-             id: team.team_number,
-             name: `Team ${team.team_number}`,
-             rank: team.picklist_rank
-           }));
-           setPickListTeams(formattedTeams);
-         }
-       } catch (error) {
-         console.error('Failed to load pick list teams', error);
-       }
-     };
-     
-     // Reset alliance selection process
-     setCurrentAllianceIndex(0);
-     setIsReverse(false);
-     setHistory([]);
-     
-     // Reload teams and initialize alliances
+     if (!fromPicklist) {
+       // Reset alliance selection process
+       setCurrentAllianceIndex(0);
+       setIsReverse(false);
+       setHistory([]);
+     }
+
      const fetchTeams = async () => {
        try {
          const eventCode = await AsyncStorage.getItem('EVENT_CODE');
@@ -193,12 +171,54 @@ const AllianceSelection = () => {
        }
      };
      
+     const loadPickListTeams = async () => {
+       try {
+         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+         const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+         const response = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
+           headers: {
+             'Authorization': `Bearer ${authToken}`
+           }
+         });
+         
+         if (response.ok) {
+           const serverData = await response.json();
+           const formattedTeams = serverData.map(team => ({
+             id: team.team_number,
+             name: `Team ${team.team_number}`,
+             rank: team.picklist_rank
+           }));
+           setPickListTeams(formattedTeams);
+         }
+       } catch (error) {
+         console.error('Failed to load pick list teams', error);
+       }
+     };
+     
      setLoading(true);
      fetchTeams();
      loadPickListTeams();
-     
-   }, [competitionCode])
+
+     // Reset the fromPicklist flag after handling the focus
+     setFromPicklist(false);
+
+     return () => {
+       // Cleanup function
+     };
+   }, [competitionCode, fromPicklist])
  );
+
+ // Add navigation listener for picklist tab
+ useEffect(() => {
+   const unsubscribe = navigation.addListener('blur', (e) => {
+     // Check if we're navigating to picklist
+     if (e.target?.startsWith('PickList')) {
+       setFromPicklist(true);
+     }
+   });
+
+   return unsubscribe;
+ }, [navigation]);
 
  // Initialize states after teams are loaded
  const [alliances, setAlliances] = useState([]);
@@ -357,6 +377,8 @@ const AllianceSelection = () => {
    }
 
    setCurrentAllianceIndex(nextIndex);
+   saveState();
+   savePickedTeams();
  };
 
 
@@ -398,7 +420,7 @@ const AllianceSelection = () => {
 
      // Reload picklist teams
      const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-     const picklistResponse = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
+     const picklistResponse = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
        headers: {
          'Authorization': `Bearer ${authToken}`
        }
@@ -422,6 +444,125 @@ const AllianceSelection = () => {
    }
  };
 
+ // Add function to save state to AsyncStorage
+ const saveState = async () => {
+   try {
+     const state = {
+       alliances,
+       remainingTeams,
+       currentAllianceIndex,
+       isReverse,
+       history
+     };
+     await AsyncStorage.setItem('allianceSelectionState', JSON.stringify(state));
+   } catch (error) {
+     console.error('Failed to save state', error);
+   }
+ };
+
+ // Add function to load state from AsyncStorage
+ const loadState = async () => {
+   try {
+     const savedState = await AsyncStorage.getItem('allianceSelectionState');
+     if (savedState) {
+       const state = JSON.parse(savedState);
+       setAlliances(state.alliances);
+       setRemainingTeams(state.remainingTeams);
+       setCurrentAllianceIndex(state.currentAllianceIndex);
+       setIsReverse(state.isReverse);
+       setHistory(state.history);
+     }
+   } catch (error) {
+     console.error('Failed to load state', error);
+   }
+ };
+
+ // Add function to reset state
+ const handleReset = async () => {
+   try {
+     await AsyncStorage.removeItem('allianceSelectionState');
+     await AsyncStorage.removeItem('pickedTeams');
+     setCurrentAllianceIndex(0);
+     setIsReverse(false);
+     setHistory([]);
+     
+     // Reinitialize alliances with new teams
+     const initialAlliances = Array.from({ length: 8 }, (_, i) => ({
+       id: i + 1,
+       captain: teams[i],
+       members: [],
+       hasPicked: false,
+     }));
+     setAlliances(initialAlliances);
+     setRemainingTeams(teams);
+   } catch (error) {
+     console.error('Failed to reset state', error);
+   }
+ };
+
+ // Add function to save picked teams to AsyncStorage
+ const savePickedTeams = async () => {
+   try {
+     const pickedTeams = alliances.flatMap(alliance => 
+       [alliance.captain, ...alliance.members]
+     ).filter(Boolean);
+     await AsyncStorage.setItem('pickedTeams', JSON.stringify(pickedTeams));
+   } catch (error) {
+     console.error('Failed to save picked teams', error);
+   }
+ };
+
+ // Add function to load picked teams from AsyncStorage
+ const loadPickedTeams = async () => {
+   try {
+     const savedPickedTeams = await AsyncStorage.getItem('pickedTeams');
+     if (savedPickedTeams) {
+       const pickedTeams = JSON.parse(savedPickedTeams);
+       
+       // Mark teams as picked in the state
+       const updatedTeams = teams.map(team => ({
+         ...team,
+         isPicked: pickedTeams.some(picked => picked.id === team.id)
+       }));
+       
+       setTeams(updatedTeams);
+       
+       // Update alliances with picked teams
+       const updatedAlliances = alliances.map(alliance => {
+         const captain = pickedTeams.find(picked => picked.id === alliance.captain?.id);
+         const members = alliance.members.map(member => 
+           pickedTeams.find(picked => picked.id === member.id) || member
+         );
+         return {
+           ...alliance,
+           captain: captain || alliance.captain,
+           members: members,
+           hasPicked: members.length > 0
+         };
+       });
+       
+       setAlliances(updatedAlliances);
+       
+       // Update remaining teams
+       const remaining = updatedTeams.filter(team => 
+         !pickedTeams.some(picked => picked.id === team.id)
+       );
+       setRemainingTeams(remaining);
+     }
+   } catch (error) {
+     console.error('Failed to load picked teams', error);
+   }
+ };
+
+ // Modify useFocusEffect to load picked teams
+ useFocusEffect(
+   React.useCallback(() => {
+     loadPickedTeams();
+     return () => {
+       savePickedTeams();
+     };
+   }, [teams])
+ );
 
  if (loading) {
    return (
@@ -514,6 +655,12 @@ const AllianceSelection = () => {
                  styles.undoButtonText,
                  history.length === 0 && styles.undoButtonDisabled
                ]}>Undo</Text>
+             </TouchableOpacity>
+             <TouchableOpacity 
+               style={styles.resetButton}
+               onPress={handleReset}
+             >
+               <Text style={styles.resetButtonText}>Reset</Text>
              </TouchableOpacity>
            </View>
          </View>
@@ -844,6 +991,15 @@ const styles = StyleSheet.create({
  },
  backButtonText: {
    fontSize: 18,
+ },
+ resetButton: {
+   padding: 8,
+   borderRadius: 4,
+   backgroundColor: '#e0e0e0',
+ },
+ resetButtonText: {
+   fontSize: 14,
+   fontWeight: 'bold',
  },
 });
 

@@ -21,8 +21,8 @@ const Confirmation = () => {
         console.log("-")
         console.log(algaeData)
 
-        const processorData = algaeData.filter(item => item.type === "Processor");
-        const bargeNetData = algaeData.filter(item => item.type === "Barge Net");
+        const processorData = algaeData ? algaeData.filter(item => item.type === "Processor") : [];
+        const bargeNetData = algaeData ? algaeData.filter(item => item.type === "Barge Net") : [];
 
         console.log(processorData)
         console.log(bargeNetData)
@@ -153,6 +153,7 @@ const Confirmation = () => {
             processor_block: parseInt(defenseData.processor_block),
             station_block: parseInt(defenseData.station_block),
             station_re_routes: parseInt(defenseData.station_re_routes),
+            event_code: matchInfo.event_code,
           }] : []
 
           
@@ -165,7 +166,7 @@ const Confirmation = () => {
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request
-        const response = await fetch('http://97.107.134.214:5002/match', {
+        const response = await fetch('http://10.75.226.156:5002/match', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

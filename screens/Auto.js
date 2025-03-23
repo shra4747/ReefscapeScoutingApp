@@ -204,20 +204,23 @@ const Auto = () => {
   const handleUndo = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
-        // Get both REEF and PROCESSOR data
+        // Get REEF, PROCESSOR, and ALGAE data
         const reefValue = await AsyncStorage.getItem('REEF_DATA');
         const processorValue = await AsyncStorage.getItem('PROCESSOR_DATA');
+        const algaeValue = await AsyncStorage.getItem('ALGAE_DATA');
         
         let reefData = reefValue ? JSON.parse(reefValue) : [];
         let processorData = processorValue ? JSON.parse(processorValue) : [];
-        // Find the most recent action across both lists
+        let algaeData = algaeValue ? JSON.parse(algaeValue) : [];
+        
+        // Find the most recent action across all lists
         let mostRecentAction = null;
         let actionType = null;
         
         // Check last reef action
         if (reefData.length > 0) {
             const lastReef = reefData[reefData.length - 1];
-            if (!mostRecentAction || new Date(lastReef.timestamp).getTime() > new Date(mostRecentAction.timestamp).getTime()) {
+            if (!mostRecentAction || new Date(lastReef.timestamp) > new Date(mostRecentAction.timestamp)) {
                 mostRecentAction = lastReef;
                 actionType = 'REEF';
             }
@@ -226,9 +229,18 @@ const Auto = () => {
         // Check last processor action
         if (processorData.length > 0) {
             const lastProcessor = processorData[processorData.length - 1];
-            if (!mostRecentAction || new Date(lastProcessor.timestamp).getTime() > new Date(mostRecentAction.timestamp).getTime()) {
+            if (!mostRecentAction || new Date(lastProcessor.timestamp) > new Date(mostRecentAction.timestamp)) {
                 mostRecentAction = lastProcessor;
                 actionType = 'PROCESSOR';
+            }
+        }
+        
+        // Check last algae action
+        if (algaeData.length > 0) {
+            const lastAlgae = algaeData[algaeData.length - 1];
+            if (!mostRecentAction || new Date(lastAlgae.timestamp) > new Date(mostRecentAction.timestamp)) {
+                mostRecentAction = lastAlgae;
+                actionType = 'ALGAE';
             }
         }
         
@@ -239,11 +251,16 @@ const Auto = () => {
                 await AsyncStorage.setItem('REEF_DATA', JSON.stringify(reefData));
                 setReef(reefData);
                 setShowNotification(`REEF action undone: ${mostRecentAction.slice} ${mostRecentAction.level}`);
-            } else {
+            } else if (actionType === 'PROCESSOR') {
                 // Remove last processor action
                 processorData = processorData.slice(0, -1);
                 await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(processorData));
                 setShowNotification(`PROCESSOR action undone: ${mostRecentAction.action}`);
+            } else if (actionType === 'ALGAE') {
+                // Remove last algae action
+                algaeData = algaeData.slice(0, -1);
+                await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(algaeData));
+                setShowNotification(`ALGAE action undone: ${mostRecentAction.type} ${mostRecentAction.action}`);
             }
         } else {
             setShowNotification('No actions to undo');

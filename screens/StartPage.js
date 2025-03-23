@@ -51,7 +51,7 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const response = await fetch(`http://97.107.134.214:5002/schedule`, {
+        const response = await fetch(`http://10.75.226.156:5002/schedule`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -370,6 +370,7 @@ const StartPage = () => {
             source={require('../assets/logo.jpg')}
             style={styles.logo}
             resizeMode="contain"
+
           />
 
           <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
@@ -572,6 +573,7 @@ const styles = StyleSheet.create({
     width: '50%',
     height: 100,
     alignSelf: 'center',
+    opacity: 0
     // marginVertical: 20,
   },
   buttonContainer: {
