@@ -9,6 +9,7 @@ import Animated, {
   useSharedValue,
   interpolate
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 const StartPage = () => {
   const navigation = useNavigation();
@@ -208,8 +209,10 @@ const StartPage = () => {
   };
 
   const handleSubmit = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     if (!matchNumber || !teamNumber || !eventCode || !valuePosition || !allianceColor) {
       Alert.alert('Error', 'Please fill in all fields before submitting');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 
@@ -297,7 +300,10 @@ const StartPage = () => {
           {/* Left Profile Button */}
           <TouchableOpacity
             style={[styles.profileButton, { left: 20 }]}
-            onPress={() => navigation.navigate('PitScouting')}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              navigation.navigate('PitScouting');
+            }}
           >
             <View style={styles.profileIcon}>
               <Image
@@ -311,6 +317,7 @@ const StartPage = () => {
           <TouchableOpacity
             style={[styles.adminButton, { left: '50%', transform: [{ translateX: -100 }, { translateY: 20 }] }]}
             onPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
               Alert.prompt(
                 'Admin Access',
                 'Enter password:',
@@ -340,7 +347,10 @@ const StartPage = () => {
           {/* Right Profile Button */}
           <TouchableOpacity
             style={[styles.profileButton, { right: 20 }]}
-            onPress={() => navigation.navigate('Profile')}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              navigation.navigate('Profile');
+            }}
           >
             <View style={styles.profileIcon}>
               <Image
@@ -439,15 +449,17 @@ const StartPage = () => {
             value={valuePosition}
             items={itemsPosition}
             setOpen={setOpenPosition}
-            setValue={setValuePosition}
+            setValue={(value) => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setValuePosition(value);
+            }}
             setItems={setItemsPosition}
-            containerStyle={styles.dropdownContainer}
+            placeholder="Select Starting Position"
             style={styles.dropdown}
+            containerStyle={styles.dropdownContainer}
             dropDownContainerStyle={styles.dropdownBox}
             zIndex={1000}
             zIndexInverse={3000}
-            ListHeaderComponent={<View />}
-            ListFooterComponent={<View />}
           />
 
           {/* Submit Button */}

@@ -4,6 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 
 const CircularProgressBar = ({ total, current, label, color }) => {
@@ -208,7 +209,10 @@ const Profile = ({ route }) => {
      </View>
      <TouchableOpacity 
        style={styles.backButton}
-       onPress={() => navigation.goBack()}
+       onPress={() => {
+         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+         navigation.goBack();
+       }}
      >
        <Text style={styles.backButtonText}>Back</Text>
      </TouchableOpacity>

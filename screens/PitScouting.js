@@ -7,6 +7,7 @@ import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CheckBox from 'expo-checkbox';
+import * as Haptics from 'expo-haptics';
 
 
 const PitScouting = () => {
@@ -33,7 +34,7 @@ const PitScouting = () => {
    { label: 'Select drive train...', value: null },
    { label: 'Swerve', value: 'swerve' },
    { label: 'Tank', value: 'tank' },
-   { label: 'Mechanum', value: 'mechanum' },
+   { label: 'Mecanum', value: 'mecanum' },
    { label: 'Other', value: 'other' },
  ]);
 
@@ -46,6 +47,7 @@ const PitScouting = () => {
  // Remove the Autonomous Start dropdown state and add auto_notes state
  const [auto_notes, setauto_notes] = useState('');
  const [notes, setnotes] = useState('');
+ const [defense_notes, setdefense_notes] = useState('');
 
  // Add state for teams dropdown
  const [openTeamPicker, setOpenTeamPicker] = useState(false);
@@ -56,6 +58,10 @@ const PitScouting = () => {
 
  // Add new state for robot weight
  const [robotWeight, setRobotWeight] = useState('');
+
+ // Add new state variables for algae pickups
+ const [reefPickup, setReefPickup] = useState(false);
+ const [algaeGroundPickup, setAlgaeGroundPickup] = useState(false);
 
  // Fetch teams on component mount
  useEffect(() => {
@@ -137,16 +143,17 @@ const PitScouting = () => {
 
 
  const handleSubmit = async () => {
-   if (isSubmitting) return; // Prevent multiple submissions
-   
+   if (isSubmitting) return;
+
    // Validate all fields
    if (!teamNumber || !height || !length || !width || !robotWeight ||
        !driverExperience || !driveTrainValue) {
+     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
      alert('Please fill out all fields before submitting.');
      return;
    }
 
-   setIsSubmitting(true); // Start loading
+   setIsSubmitting(true);
 
    try {
      const pitData = {
@@ -169,7 +176,10 @@ const PitScouting = () => {
        can_L3: L3, 
        can_L4: L4,
        auto_notes: auto_notes,
-       other_notes: notes
+       other_notes: notes,
+       defense_notes: defense_notes,
+       pickup_reef: reefPickup,
+       pickup_algae_ground: algaeGroundPickup
      };
 
      const formData = new FormData();
@@ -178,21 +188,23 @@ const PitScouting = () => {
      const response = await fetch('http://97.107.134.214:5002/pit_scout', {
        method: 'POST',
        body: formData,
-        headers: {
-          'Authorization': `Bearer ${await AsyncStorage.getItem('ACCESS_TOKEN')}`,
-        },
+       headers: {
+         'Authorization': `Bearer ${await AsyncStorage.getItem('ACCESS_TOKEN')}`,
+       },
      });
 
      if (!response.ok) {
        throw new Error('Network response was not ok');
      }
 
+     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
      navigation.popToTop();
    } catch (error) {
      console.error('Error saving pit scouting data:', error);
+     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
      alert('Error saving data. Please try again.');
    } finally {
-     setIsSubmitting(false); // Stop loading whether success or error
+     setIsSubmitting(false);
    }
  };
 
@@ -204,7 +216,10 @@ const PitScouting = () => {
    >
      <TouchableOpacity 
        style={styles.backButton}
-       onPress={() => navigation.goBack()}
+       onPress={() => {
+         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+         navigation.goBack();
+       }}
      >
        <Text style={styles.backButtonText}>← Back</Text>
      </TouchableOpacity>
@@ -215,7 +230,10 @@ const PitScouting = () => {
          value={teamNumber}
          items={teams}
          setOpen={setOpenTeamPicker}
-         setValue={setTeamNumber}
+         setValue={(value) => {
+           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+           setTeamNumber(value);
+         }}
          setItems={setTeams}
          placeholder="Select Team"
          style={styles.dropdown}
@@ -237,7 +255,10 @@ const PitScouting = () => {
            <Picker
              selectedValue={length}
              style={styles.picker}
-             onValueChange={setLength}
+             onValueChange={(value) => {
+               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+               setLength(value);
+             }}
              itemStyle={styles.pickerItem}
            >
              {lengthNumbers.map((num) => (
@@ -250,7 +271,10 @@ const PitScouting = () => {
            <Picker
              selectedValue={width}
              style={styles.picker}
-             onValueChange={setWidth}
+             onValueChange={(value) => {
+               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+               setWidth(value);
+             }}
              itemStyle={styles.pickerItem}
            >
              {widthNumbers.map((num) => (
@@ -263,7 +287,10 @@ const PitScouting = () => {
            <Picker
              selectedValue={height}
              style={styles.picker}
-             onValueChange={setHeight}
+             onValueChange={(value) => {
+               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+               setHeight(value);
+             }}
              itemStyle={styles.pickerItem}
            >
              {heightNumbers.map((num) => (
@@ -290,7 +317,10 @@ const PitScouting = () => {
          value={driveTrainValue}
          items={driveTrainItems}
          setOpen={setOpenDriveTrain}
-         setValue={setDriveTrainValue}
+         setValue={(value) => {
+           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+           setDriveTrainValue(value);
+         }}
          setItems={setDriveTrainItems}
          placeholder="Select Drive Train"
          style={styles.dropdown}
@@ -332,17 +362,31 @@ const PitScouting = () => {
      </View>
      <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Intake</Text>
-       <View style={styles.checkboxGrid}>
-         
-         <View style={styles.checkboxRow}>
-           <CheckboxItem label="HP Pickup" value={hpPickup} setValue={setHpPickup} />
-           
+       
+       {/* Coral Section */}
+       <View style={styles.subSection}>
+         <Text style={styles.subSectionTitle}>Coral</Text>
+         <View style={styles.checkboxGrid}>
+           <View style={styles.checkboxRow}>
+             <CheckboxItem label="HP Pickup" value={hpPickup} setValue={setHpPickup} />
+           </View>
+           <View style={styles.checkboxRow}>
+             <CheckboxItem label="Ground Pickup" value={groundPickup} setValue={setGroundPickup} />
+           </View>
          </View>
+       </View>
 
-         <View style={styles.checkboxRow}>
-           <CheckboxItem label="Ground Pickup" value={groundPickup} setValue={setGroundPickup} />
+       {/* Algae Section */}
+       <View style={styles.subSection}>
+         <Text style={styles.subSectionTitle}>Algae</Text>
+         <View style={styles.checkboxGrid}>
+           <View style={styles.checkboxRow}>
+             <CheckboxItem label="Reef Pickup" value={reefPickup} setValue={setReefPickup} />
+           </View>
+           <View style={styles.checkboxRow}>
+             <CheckboxItem label="Ground Pickup" value={algaeGroundPickup} setValue={setAlgaeGroundPickup} />
+           </View>
          </View>
-         
        </View>
      </View>
 
@@ -371,7 +415,10 @@ const PitScouting = () => {
            maximumValue={3}
            step={1}
            value={driverExperience}
-           onValueChange={(value) => setDriverExperience(value)}
+           onValueChange={(value) => {
+             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+             setDriverExperience(value);
+           }}
            minimumTrackTintColor="#ff0000"
            maximumTrackTintColor="#CCCCCC"
            thumbTintColor="#ff0000"
@@ -409,8 +456,8 @@ const PitScouting = () => {
          style={[styles.inputField, { height: 100 }]}
          placeholder="Can they play defense? Defensive strategy? Can they take hits? When being defended against?"
          placeholderTextColor="#888"
-         value={notes}
-         onChangeText={setnotes}
+         value={defense_notes}
+         onChangeText={setdefense_notes}
          multiline={true}
        />
      </View>
@@ -628,18 +675,33 @@ const styles = StyleSheet.create({
    marginTop: 15,
    marginBottom: 5,
  },
+ subSection: {
+   marginBottom: 20,
+ },
+ subSectionTitle: {
+   color: '#FFF',
+   fontSize: 16,
+   fontWeight: '600',
+   marginBottom: 10,
+ },
 });
 
 // Helper component for checkboxes
 const CheckboxItem = ({ label, value, setValue }) => (
   <TouchableOpacity 
     style={styles.checkboxContainer}
-    onPress={() => setValue(!value)}
+    onPress={() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setValue(!value);
+    }}
     activeOpacity={0.7}
   >
     <CheckBox
       value={value}
-      onValueChange={setValue}
+      onValueChange={(newValue) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setValue(newValue);
+      }}
       color={value ? '#FF4444' : undefined}
       style={styles.checkbox}
     />

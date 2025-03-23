@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-nativ
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 const PostGame = () => {
   const navigation = useNavigation();
@@ -33,9 +34,18 @@ const PostGame = () => {
       otherNotes: otherNotes
     }
 
-    await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify(postGameData));
-
-    navigation.navigate('Confirmation');
+    try {
+      await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify(postGameData));
+      
+      // Add heavy haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      
+      navigation.navigate('Confirmation');
+    } catch (error) {
+      console.error('Error submitting post game data:', error);
+      // Add error haptic feedback
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   };
 
   if (showConfirmation) {
@@ -64,7 +74,10 @@ const PostGame = () => {
         value={robotTypeValue}
         items={robotTypeItems}
         setOpen={setOpenRobotType}
-        setValue={setRobotTypeValue}
+        setValue={(value) => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setRobotTypeValue(value);
+        }}
         setItems={setRobotTypeItems}
         placeholder="Select Robot Type(s)"
         multiple={true}

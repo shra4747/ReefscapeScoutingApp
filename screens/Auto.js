@@ -1,11 +1,12 @@
 // screens/BlankScreen.js
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableWithoutFeedback, TouchableOpacity, Animated, Modal, Alert, Vibration, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import Svg, { Path } from 'react-native-svg';
 import 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 const Auto = () => {  
 
@@ -31,6 +32,7 @@ const Auto = () => {
   const [teamNumber, setTeamNumber] = useState(null);
 
   const [showAlgaeTypeModal, setShowAlgaeTypeModal] = useState(false);
+  const [showAlgaeActionModal, setShowAlgaeActionModal] = useState(false);
   const [currentAlgaeType, setCurrentAlgaeType] = useState(null);
   const [algaeModalText, setAlgaeModalText] = useState('Algae Location');
 
@@ -119,9 +121,17 @@ const Auto = () => {
   };
 
   const handleSubmit = async () => {
-    storeAutoData()
-    navigation.navigate("Teleop");
-  }
+    try {
+      await storeAutoData();
+      // Add heavy haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      navigation.navigate("Teleop");
+    } catch (error) {
+      console.error('Error submitting auto data:', error);
+      // Add error haptic feedback
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
 
   const sectionMapDSLeft = {
     'ML': 'HL',
@@ -192,6 +202,7 @@ const Auto = () => {
 
 
   const handleUndo = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
         // Get both REEF and PROCESSOR data
         const reefValue = await AsyncStorage.getItem('REEF_DATA');
@@ -289,15 +300,19 @@ const Auto = () => {
   };
 
   const handleGroundIncrement = () => {
-    const newGroundPickup = {
-      type: 'ground',
-      stationType: "",
-      timestamp: new Date().toISOString()
-    };
-    const newGroundData = [...groundData, newGroundPickup];
-    setGroundData(newGroundData);
-    setGroundCount(groundCount + 1);
-    storeGroundData(newGroundData);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setGroundCount(prev => prev + 1);
+    setGroundData(prev => [...prev, { type: 'ground', timestamp: new Date().toISOString() }]);
+  };
+
+  const handleGroundDecrement = () => {
+    if (groundCount > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setGroundCount(prev => prev - 1);
+      setGroundData(prev => prev.slice(0, -1));
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   };
 
   const handleDriveStationSelect = (station) => {
@@ -324,15 +339,9 @@ const Auto = () => {
   };
 
   const handleStationIncrement = () => {
-    const newStationPickup = {
-      type: 'station',
-      stationType: "",
-      timestamp: new Date().toISOString()
-    };
-    const newStationData = [...stationData, newStationPickup];
-    setStationData(newStationData);
-    setStationCount(stationCount + 1);
-    storeStationData(newStationData);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStationCount(prev => prev + 1);
+    setStationData(prev => [...prev, { type: 'station', timestamp: new Date().toISOString() }]);
   };
 
   const storeStationData = async (data) => {
@@ -344,6 +353,8 @@ const Auto = () => {
   };
   
   const handleProcessorAction = async (action) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    
     const processorData = {
       action: action,
       phase: "auto",
@@ -360,10 +371,12 @@ const Auto = () => {
       
       updatedData.push(processorData);
       await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(updatedData));
-      setShowProcessorModal(false);
       
+      setShowProcessorModal(false);
     } catch (error) {
       console.error('Error storing processor data:', error);
+      // Add error haptic feedback
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
@@ -421,12 +434,15 @@ const Auto = () => {
   };
 
   const handleAlgaeAction = async (action) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const algaeData = {
       type: currentAlgaeType,
       action: action,
-      phase: "auto",  // Changed from "teleop" to "auto"
+      phase: "auto",
       timestamp: new Date().toISOString()
     };
+
+    console.log('Algae Data:', algaeData);
 
     try {
       const existingData = await AsyncStorage.getItem('ALGAE_DATA');
@@ -439,9 +455,19 @@ const Auto = () => {
       updatedData.push(algaeData);
       await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(updatedData));
       setShowAlgaeTypeModal(false);
-      setAlgaeModalText('Algae Location');
+      setAlgaeModalText('Algae Location'); // Reset text after action
     } catch (error) {
       console.error('Error storing algae data:', error);
+    }
+  };
+
+  const handleStationDecrement = () => {
+    if (stationCount > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setStationCount(prev => prev - 1);
+      setStationData(prev => prev.slice(0, -1));
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
@@ -790,7 +816,7 @@ const Auto = () => {
           <View style={styles.groundButton}>
             <Text style={styles.groundButtonText}>Ground: {groundCount}</Text>
           </View>
-          <TouchableOpacity style={styles.decrementButton} onPress={() => groundCount > 0 && setGroundCount(groundCount - 1)}>
+          <TouchableOpacity style={styles.decrementButton} onPress={handleGroundDecrement}>
             <Text style={styles.controlButtonText}>-</Text>
           </TouchableOpacity>
         </View>
@@ -805,7 +831,7 @@ const Auto = () => {
           <View style={styles.stationButton}>
             <Text style={styles.stationButtonText}>Station: {stationCount}</Text>
           </View>
-          <TouchableOpacity style={styles.decrementButton} onPress={() => stationCount > 0 && setStationCount(stationCount - 1)}>
+          <TouchableOpacity style={styles.decrementButton} onPress={handleStationDecrement}>
             <Text style={styles.controlButtonText}>-</Text>
           </TouchableOpacity>
         </View>
@@ -845,7 +871,7 @@ const Auto = () => {
 
       <TouchableOpacity 
         style={styles.algaeButton}
-        onPress={() => setShowAlgaeTypeModal(true)}
+        onPress={handleAlgaeButtonPress}
       >
         <Text style={styles.algaeButtonText}>Algae</Text>
       </TouchableOpacity>

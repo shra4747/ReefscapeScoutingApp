@@ -3,11 +3,13 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 const Confirmation = () => {
   const navigation = useNavigation();
 
   const handleSubmit = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     // Perform any confirmation logic here
     const onSubmit = async () => {
       try {
@@ -173,6 +175,8 @@ const Confirmation = () => {
         });
 
         if (!response.ok) {
+          // Add error haptic feedback
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -195,6 +199,8 @@ const Confirmation = () => {
         navigation.popToTop();
       } catch (error) {
         console.error('Error submitting data:', error);
+        // Add error haptic feedback
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     };
 

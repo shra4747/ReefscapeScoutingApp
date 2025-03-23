@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 const Teleop = () => {  
 
@@ -122,9 +123,17 @@ const Teleop = () => {
   };
 
   const handleSubmit = async () => {
-    storeTeleopData()
-    navigation.navigate("EndGame");
-  }
+    try {
+      await storeTeleopData();
+      // Add heavy haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      navigation.navigate("EndGame");
+    } catch (error) {
+      console.error('Error submitting teleop data:', error);
+      // Add error haptic feedback
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
 
   const sectionMapDSLeft = {
     'ML': 'HL',
@@ -198,6 +207,7 @@ const Teleop = () => {
   };
 
   const handleUndo = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
         // Get both REEF and Algae data
         const reefValue = await AsyncStorage.getItem('REEF_DATA');
@@ -309,6 +319,7 @@ const Teleop = () => {
   };
 
   const handleAlgaeAction = async (action) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const algaeData = {
       type: currentAlgaeType,
       action: action,
@@ -623,6 +634,39 @@ const Teleop = () => {
     },
   });
 
+  const handleGroundIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setGroundCount(prev => prev + 1);
+  };
+
+  const handleGroundDecrement = () => {
+    if (groundCount > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setGroundCount(prev => prev - 1);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  const handleStationIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStationCount(prev => prev + 1);
+  };
+
+  const handleStationDecrement = () => {
+    if (stationCount > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setStationCount(prev => prev - 1);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  const handleDefensePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    navigation.navigate('Defense');
+  };
+
   return (
     <View style={styles.container}>
       <Animated.View style={[
@@ -648,7 +692,7 @@ const Teleop = () => {
         
         <TouchableOpacity 
           style={[styles.defenseButton, { zIndex: 100 }]}
-          onPress={() => navigation.navigate('Defense')}
+          onPress={handleDefensePress}
         >
           <Ionicons name="shield" size={18} color="white" />
           <Text style={styles.defenseButtonText}>Defense</Text>
@@ -694,25 +738,25 @@ const Teleop = () => {
       
       <View style={styles.countersContainer}>
         <View style={styles.counterButtonGroup}>
-          <TouchableOpacity style={styles.incrementButton} onPress={() => setGroundCount(groundCount + 1)}>
+          <TouchableOpacity style={styles.incrementButton} onPress={handleGroundIncrement}>
             <Text style={styles.controlButtonText}>+</Text>
           </TouchableOpacity>
           <View style={styles.groundButton}>
             <Text style={styles.groundButtonText}>Ground: {groundCount}</Text>
           </View>
-          <TouchableOpacity style={styles.decrementButton} onPress={() => groundCount > 0 && setGroundCount(groundCount - 1)}>
+          <TouchableOpacity style={styles.decrementButton} onPress={handleGroundDecrement}>
             <Text style={styles.controlButtonText}>-</Text>
           </TouchableOpacity>
         </View>
 
         <View style={[styles.counterButtonGroup, { marginTop: 10 }]}>
-          <TouchableOpacity style={styles.incrementButton} onPress={() => setStationCount(stationCount + 1)}>
+          <TouchableOpacity style={styles.incrementButton} onPress={handleStationIncrement}>
             <Text style={styles.controlButtonText}>+</Text>
           </TouchableOpacity>
           <View style={styles.stationButton}>
             <Text style={styles.stationButtonText}>Station: {stationCount}</Text>
           </View>
-          <TouchableOpacity style={styles.decrementButton} onPress={() => stationCount > 0 && setStationCount(stationCount - 1)}>
+          <TouchableOpacity style={styles.decrementButton} onPress={handleStationDecrement}>
             <Text style={styles.controlButtonText}>-</Text>
           </TouchableOpacity>
         </View>

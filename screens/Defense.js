@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, Text, Modal, StyleSheet, Alert, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
 
 const Defense = ({ navigation }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -50,12 +51,17 @@ const Defense = ({ navigation }) => {
 
   // Add handlers for increment/decrement
   const handleIntakeIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIntakeDelay(prev => prev + 1);
   };
 
   const handleIntakeDecrement = () => {
     if (intakeDelay > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setIntakeDelay(prev => prev - 1);
+    }
+    else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
@@ -65,22 +71,32 @@ const Defense = ({ navigation }) => {
   };
 
   const handleRerouteIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setStationReroute(prev => prev + 1);
   };
 
   const handleRerouteDecrement = () => {
     if (stationReroute > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setStationReroute(prev => prev - 1);
+    }
+    else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
   const handleProcessorIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setProcessorBlock(prev => prev + 1);
   };
 
   const handleProcessorDecrement = () => {
     if (processorBlock > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setProcessorBlock(prev => prev - 1);
+    }
+    else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
@@ -202,6 +218,67 @@ const Defense = ({ navigation }) => {
     return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Modify the station block increment handler
+  const handleStationBlockIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStationBlock(prev => prev + 1);
+  };
+
+  // Modify the station block decrement handler
+  const handleStationBlockDecrement = () => {
+    if (stationBlock > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setStationBlock(prev => prev - 1);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  // Modify the pin foul handlers
+  const handlePinFoulIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setPinFouls(prev => prev + 1);
+  };
+
+  const handlePinFoulDecrement = () => {
+    if (pinFouls > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setPinFouls(prev => prev - 1);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  // Modify the foul in reef handlers
+  const handleFoulReefIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFoulsReef(prev => prev + 1);
+  };
+
+  const handleFoulReefDecrement = () => {
+    if (foulsReef > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setFoulsReef(prev => prev - 1);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  // Modify the foul in barge handlers
+  const handleFoulBargeIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFoulsBarge(prev => prev + 1);
+  };
+
+  const handleFoulBargeDecrement = () => {
+    if (foulsBarge > 0) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setFoulsBarge(prev => prev - 1);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
   return (
     <View style={getStyles(allianceColor).container}>
       {/* Back Button with Text */}
@@ -209,6 +286,7 @@ const Defense = ({ navigation }) => {
         style={[getStyles(allianceColor).backButton, { top: 30 }]}
         onPress={async () => {
           await saveDefenseData();
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           navigation.goBack();
         }}
       >
@@ -221,6 +299,7 @@ const Defense = ({ navigation }) => {
         style={[getStyles(allianceColor).endgameButton, { top: 30 }]}
         onPress={async () => {
           await saveDefenseData();
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           navigation.navigate('EndGame');
         }}
       >
@@ -253,10 +332,11 @@ const Defense = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
+          {/* Station Block Counter */}
           <View style={getStyles(allianceColor).counterButtonGroup}>
             <TouchableOpacity 
               style={getStyles(allianceColor).stationIncrementButton} 
-              onPress={() => setStationBlock(prev => prev + 1)}
+              onPress={handleStationBlockIncrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
             </TouchableOpacity>
@@ -265,7 +345,7 @@ const Defense = ({ navigation }) => {
             </View>
             <TouchableOpacity 
               style={getStyles(allianceColor).stationIncrementButton} 
-              onPress={() => setStationBlock(prev => prev > 0 ? prev - 1 : prev)}
+              onPress={handleStationBlockDecrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
             </TouchableOpacity>
@@ -319,7 +399,7 @@ const Defense = ({ navigation }) => {
           <View style={getStyles(allianceColor).counterButtonGroup}>
             <TouchableOpacity 
               style={getStyles(allianceColor).foulIncrementButton} 
-              onPress={() => setPinFouls(prev => prev + 1)}
+              onPress={handlePinFoulIncrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
             </TouchableOpacity>
@@ -328,7 +408,7 @@ const Defense = ({ navigation }) => {
             </View>
             <TouchableOpacity 
               style={getStyles(allianceColor).foulIncrementButton} 
-              onPress={() => setPinFouls(prev => prev > 0 ? prev - 1 : prev)}
+              onPress={handlePinFoulDecrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
             </TouchableOpacity>
@@ -338,7 +418,7 @@ const Defense = ({ navigation }) => {
           <View style={getStyles(allianceColor).counterButtonGroup}>
             <TouchableOpacity 
               style={getStyles(allianceColor).foulIncrementButton} 
-              onPress={() => setFoulsReef(prev => prev + 1)}
+              onPress={handleFoulReefIncrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
             </TouchableOpacity>
@@ -347,7 +427,7 @@ const Defense = ({ navigation }) => {
             </View>
             <TouchableOpacity 
               style={getStyles(allianceColor).foulIncrementButton} 
-              onPress={() => setFoulsReef(prev => prev > 0 ? prev - 1 : prev)}
+              onPress={handleFoulReefDecrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
             </TouchableOpacity>
@@ -357,7 +437,7 @@ const Defense = ({ navigation }) => {
           <View style={getStyles(allianceColor).counterButtonGroup}>
             <TouchableOpacity 
               style={getStyles(allianceColor).foulIncrementButton} 
-              onPress={() => setFoulsBarge(prev => prev + 1)}
+              onPress={handleFoulBargeIncrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>+</Text>
             </TouchableOpacity>
@@ -366,7 +446,7 @@ const Defense = ({ navigation }) => {
             </View>
             <TouchableOpacity 
               style={getStyles(allianceColor).foulIncrementButton} 
-              onPress={() => setFoulsBarge(prev => prev > 0 ? prev - 1 : prev)}
+              onPress={handleFoulBargeDecrement}
             >
               <Text style={getStyles(allianceColor).controlButtonText}>-</Text>
             </TouchableOpacity>
