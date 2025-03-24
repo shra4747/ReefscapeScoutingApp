@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-const EVENT_CODE = 'NJTAB'; // Manually set your event code here
+const EVENT_CODE = 'NJFLA'; // Manually set your event code here
 
 const StartPage = () => {
   const navigation = useNavigation();

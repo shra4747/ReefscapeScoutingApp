@@ -75,7 +75,50 @@ const AdminCons = () => {
       throw error;
     }
   };
+  const maxMatch = async () => {
+    try {
+      const access_token = await AsyncStorage.getItem('ACCESS_TOKEN');
+      const eventCode = await getEventCode();
+      
+      if (!eventCode) {
+        throw new Error('Event code not found');
+      }
+      // Get max match from schedule for current event
+      const scheduleResponse = await fetch(`http://10.0.0.213:5002/robots_in_match`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const scheduleData = await scheduleResponse.json();
+      // Filter matches by current event code
+      const filteredMatches = scheduleData.filter(match => match.event_code === eventCode);
+      const maxScheduleMatch = filteredMatches.length > 0 ? 
+        Math.max(...filteredMatches.map(match => match.match_number)) : 0;
+      // return maxScheduleMatch;
 
+
+      const res = await fetch(`http://10.0.0.213:5002/schedule/${eventCode}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const r = await res.json();
+      const maxRobotsMatch = r.length > 0 ? 
+        Math.max(...r.map(match => match.match_number)) : 0;
+      // console.log(maxRobotsMatch, maxScheduleMatch)
+      return {maxRobotsMatch, maxScheduleMatch}
+
+    } catch (error) {
+      console.error('Error getting max match number:', error);
+      throw error;
+    }
+  };
   const uploadSchedule = async (tournamentLevel = 'qualification') => {
     const EVENT_CODE = await getEventCode();
     if (!EVENT_CODE) return;
@@ -214,7 +257,7 @@ const AdminCons = () => {
 
   const checkMaxMatchNumbers = async () => {
     try {
-      const { maxScheduleMatch, maxRobotsMatch } = await getMaxMatchNumber();
+      const { maxScheduleMatch, maxRobotsMatch } = await maxMatch();
       Alert.alert(
         "Max Match Numbers",
         `Max match in schedule: ${maxScheduleMatch}\nMax match in robots_in_match: ${maxRobotsMatch}`
