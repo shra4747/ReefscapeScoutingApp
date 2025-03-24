@@ -40,7 +40,7 @@ const App = () => {
         
         if (accessToken) {
           // Try to validate the token with your API
-          const response = await fetch('http://10.75.226.156:5002/who_am_i', {
+          const response = await fetch('http://10.0.0.213:5002/who_am_i', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`

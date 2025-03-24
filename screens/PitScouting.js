@@ -25,6 +25,7 @@ const PitScouting = () => {
  const [coral, setCoral] = useState(false);
  const [algae, setAlgae] = useState(false);
  const [shooting, setShooting] = useState(false);
+ const [processor, setProcessor] = useState(false);
 
 
  // Drive Train Dropdown
@@ -78,7 +79,7 @@ const PitScouting = () => {
       });
        const teamsData = await teamsResponse.json();
        // Fetch already scouted teams from your API
-       const scoutedResponse = await fetch('http://10.75.226.156:5002/pit_scout', {
+       const scoutedResponse = await fetch('http://10.0.0.213:5002/pit_scout', {
          headers: {
            'Authorization': `Bearer ${access_token}`
          }
@@ -131,9 +132,9 @@ const PitScouting = () => {
 
 
  // Generate numbers for height (0 to 42), length (0 to 30), and width (0 to 30)
- const heightNumbers = generateNumbers(0, 42); // Height range: 0 to 42
- const lengthNumbers = generateNumbers(0, 30); // Length range: 0 to 30
- const widthNumbers = generateNumbers(0, 30); // Width range: 0 to 30
+ const heightNumbers = generateNumbers(20, 50); // Height range: 0 to 42
+ const lengthNumbers = generateNumbers(20, 50); // Length range: 0 to 30
+ const widthNumbers = generateNumbers(20, 50); // Width range: 0 to 30
 
 
  // Function to dismiss the keyboard
@@ -185,7 +186,7 @@ const PitScouting = () => {
      const formData = new FormData();
      formData.append('data', JSON.stringify(pitData));
 
-     const response = await fetch('http://10.75.226.156:5002/pit_scout', {
+     const response = await fetch('http://10.0.0.213:5002/pit_scout', {
        method: 'POST',
        body: formData,
        headers: {
@@ -300,10 +301,10 @@ const PitScouting = () => {
          </View>
        </View>
        {/* Add Robot Weight textbox */}
-       <Text style={styles.inputLabel}>Robot Weight(lbs)</Text>
+       <Text style={styles.inputLabel}>Robot Weight (lbs)</Text>
        <TextInput
          style={styles.inputField}
-         placeholder="Enter robot weight"
+         placeholder="Weight w/o Bumpers & Battery"
          placeholderTextColor="#888"
          value={robotWeight}
          onChangeText={setRobotWeight}
@@ -341,9 +342,6 @@ const PitScouting = () => {
       <View style={styles.checkboxRow}>
           <CheckboxItem label="Algae" value={algae} setValue={setAlgae} />
       </View>
-      <View style={styles.checkboxRow}>
-           <CheckboxItem label="Shoot into Net" value={shooting} setValue={setShooting} />
-        </View>
      </View>
      <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Coral Scoring</Text>
@@ -360,6 +358,21 @@ const PitScouting = () => {
        </View>
        <CheckboxItem label="L1" value={L1} setValue={setL1} />
      </View>
+
+     <View style={styles.sectionContainer}>
+       <Text style={styles.sectionTitle}>Algae Scoring</Text>
+       <View style={[styles.branchContainer, { height: 100 }]}>
+         <Image 
+           source={require('../assets/algae.png')}
+           style={[styles.branchImage, { height: 100 }]}
+         />
+         <View style={[styles.verticalCheckboxes, { justifyContent: 'flex-start', gap: 8, height: 100 }]}>
+           <CheckboxItem label="Score Processor" value={processor} setValue={setProcessor} />
+           <CheckboxItem label="Score into Net" value={shooting} setValue={setShooting} />
+         </View>
+       </View>
+     </View>
+
      <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Intake</Text>
        
@@ -381,7 +394,7 @@ const PitScouting = () => {
          <Text style={styles.subSectionTitle}>Algae</Text>
          <View style={styles.checkboxGrid}>
            <View style={styles.checkboxRow}>
-             <CheckboxItem label="Reef Pickup" value={reefPickup} setValue={setReefPickup} />
+             <CheckboxItem label="Reef DeAlgify" value={reefPickup} setValue={setReefPickup} />
            </View>
            <View style={styles.checkboxRow}>
              <CheckboxItem label="Ground Pickup" value={algaeGroundPickup} setValue={setAlgaeGroundPickup} />

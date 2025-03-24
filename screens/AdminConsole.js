@@ -34,9 +34,13 @@ const AdminCons = () => {
   const getMaxMatchNumber = async () => {
     try {
       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN');
+      const eventCode = await getEventCode();
       
-      // Get max match from schedule
-      const scheduleResponse = await fetch(`http://10.75.226.156:5002/schedule`, {
+      if (!eventCode) {
+        throw new Error('Event code not found');
+      }
+      // Get max match from schedule for current event
+      const scheduleResponse = await fetch(`http://10.0.0.213:5002/robots_in_match`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -45,11 +49,14 @@ const AdminCons = () => {
       });
       
       const scheduleData = await scheduleResponse.json();
-      const maxScheduleMatch = scheduleData.length > 0 ? 
-        Math.max(...scheduleData.map(match => match.match_number)) : 0;
+      // Filter matches by current event code
+      const filteredMatches = scheduleData.filter(match => match.event_code === eventCode);
+      const maxScheduleMatch = filteredMatches.length > 0 ? 
+        Math.max(...filteredMatches.map(match => match.match_number)) : 0;
+      // return maxScheduleMatch;
 
-      // Get max match from robots_in_match
-      const robotsResponse = await fetch(`http://10.75.226.156:5002/robots_in_match`, {
+
+      const res = await fetch(`http://10.0.0.213:5002/schedule/${eventCode}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -57,12 +64,12 @@ const AdminCons = () => {
         }
       });
       
-      const robotsData = await robotsResponse.json();
-      const maxRobotsMatch = robotsData.length > 0 ? 
-        Math.max(...robotsData.map(match => match.match_number)) : 0;
+      const r = await res.json();
+      const maxMatch = r.length > 0 ? 
+        Math.max(...r.map(match => match.match_number)) : 0;
+      // console.log(maxMatch, maxScheduleMatch)
+      return Math.max(maxMatch, maxScheduleMatch)
 
-      // Return both values individually
-      return { maxScheduleMatch, maxRobotsMatch };
     } catch (error) {
       console.error('Error getting max match number:', error);
       throw error;
@@ -76,10 +83,9 @@ const AdminCons = () => {
     try {
       // Get max match number
       const maxMatchNumber = await getMaxMatchNumber();
-      
       const url = `https://frc-api.firstinspires.org/v3.0/2025/schedule/${EVENT_CODE}?tournamentLevel=${tournamentLevel}`;
 
-      // Fetch schedule data
+      // // Fetch schedule data
       const response = await fetch(url, {
         headers: {
           'If-Modified-Since': '',
@@ -88,13 +94,16 @@ const AdminCons = () => {
       });
       
       const data = await response.json();
+
+      // console.log(maxMatchNumber)
       
-      // Filter out matches with numbers less than or equal to maxMatchNumber
+      // // Filter out matches with numbers less than or equal to maxMatchNumber
       const newMatches = data.Schedule
         .filter(match => {
           const matchNumber = tournamentLevel === 'playoff' ? parseInt(match.matchNumber) + 1000 : parseInt(match.matchNumber)
           return matchNumber > maxMatchNumber && match.startTime !== null;
         });
+      // console.log(newMatches)
 
       if (newMatches.length === 0) {
         Alert.alert("Info", "No new matches to upload");
@@ -115,7 +124,7 @@ const AdminCons = () => {
       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN');
 
       // Post schedule data
-      const postResponse = await fetch(`http://10.75.226.156:5002/schedule`, {
+      const postResponse = await fetch(`http://10.0.0.213:5002/schedule`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -165,7 +174,7 @@ const AdminCons = () => {
                 throw new Error('No access token found');
               }
 
-              const response = await fetch("http://10.75.226.156:5002/clear_tables", {
+              const response = await fetch("http://10.0.0.213:5002/clear_tables", {
                 method: 'GET',
                 headers: {
                   'Authorization': `Bearer ${access_token}`,

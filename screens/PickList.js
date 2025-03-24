@@ -33,7 +33,7 @@ const PickList = () => {
         try {
           const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
           const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-          const response = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
+          const response = await fetch(`http://10.0.0.213:5002/picklist/${eventCode}`, {
             headers: {
               'Authorization': `Bearer ${authToken}`
             }
@@ -125,7 +125,7 @@ const PickList = () => {
         ];
 
         // Send the complete updated list
-        const response = await fetch('http://10.75.226.156:5002/picklist', {
+        const response = await fetch('http://10.0.0.213:5002/picklist', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ const PickList = () => {
         // Reload the current server state on error
         const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const reloadResponse = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
+        const reloadResponse = await fetch(`http://10.0.0.213:5002/picklist/${eventCode}`, {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
@@ -242,7 +242,7 @@ const PickList = () => {
       ];
 
       // Send the complete updated list
-      const response = await fetch('http://10.75.226.156:5002/picklist', {
+      const response = await fetch('http://10.0.0.213:5002/picklist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ const PickList = () => {
       setInitialLoad(true);
 
       // Send empty array to clear server data
-      const response = await fetch('http://10.75.226.156:5002/picklistClear', {
+      const response = await fetch('http://10.0.0.213:5002/picklistClear', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -344,7 +344,7 @@ const PickList = () => {
     try {
       const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
       const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-      const response = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
+      const response = await fetch(`http://10.0.0.213:5002/picklist/${eventCode}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
