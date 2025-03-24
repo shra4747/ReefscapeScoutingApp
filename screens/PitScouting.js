@@ -179,9 +179,12 @@ const PitScouting = () => {
        auto_notes: auto_notes,
        other_notes: notes,
        defense_notes: defense_notes,
-       pickup_reef: reefPickup,
+       pickup_algae_reef: reefPickup,
        pickup_algae_ground: algaeGroundPickup
      };
+
+     // Add console.log to print pitData
+     console.log('Submitting pit data:', pitData);
 
      const formData = new FormData();
      formData.append('data', JSON.stringify(pitData));
