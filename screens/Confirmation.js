@@ -150,6 +150,7 @@ const Confirmation = () => {
             fouls_reef: parseInt(defenseData.fouls_reef),
             intake_block: parseInt(defenseData.intake_block),
             pin_fouls: parseInt(defenseData.pin_fouls),
+            net_block: parseInt(defenseData.net_block),
             processor_block: parseInt(defenseData.processor_block),
             station_block: parseInt(defenseData.station_block),
             station_re_routes: parseInt(defenseData.station_re_routes),
