@@ -138,7 +138,7 @@ const Profile = ({ route }) => {
      try {
        const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
        if (accessToken) {
-         const response = await fetch('http://10.0.0.213:5002/user_stats', {
+         const response = await fetch('http://10.75.226.156:5002/user_stats', {
            method: 'GET',
            headers: {
              'Authorization': `Bearer ${accessToken}`

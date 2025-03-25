@@ -74,7 +74,7 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const scheduleResponse = await fetch(`http://10.0.0.213:5002/schedule/${EVENT_CODE}`, {
+        const scheduleResponse = await fetch(`http://10.75.226.156:5002/schedule/${EVENT_CODE}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ const StartPage = () => {
         if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule');
         
         const scheduleData = await scheduleResponse.json();
-        const scoutedResponse = await fetch(`http://10.0.0.213:5002/robots_in_match`, {
+        const scoutedResponse = await fetch(`http://10.75.226.156:5002/robots_in_match`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

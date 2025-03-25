@@ -17,7 +17,7 @@ const PostGame = () => {
   const [robotTypeItems, setRobotTypeItems] = useState([
     { label: 'Coral', value: 'coral' },
     { label: 'Algae', value: 'algae' },
-    { label: 'Shooter', value: 'shooter' },
+    { label: 'Net', value: 'net' },
     { label: 'Chassis', value: 'chassis' },
     { label: 'Defense', value: 'defense' },
   ]);
