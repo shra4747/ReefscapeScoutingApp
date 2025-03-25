@@ -13,7 +13,8 @@ const Teleop = () => {
 
   const [imageLayout, setImageLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
   const [stationCount, setStationCount] = useState(0);
-  const [groundCount, setGroundCount] = useState(0);
+  const [algaeGroundCount, setAlgaeGroundCount] = useState(0);
+  const [coralGroundCount, setCoralGroundCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
   const slideAnim = useRef(new Animated.Value(-150)).current;
   const navigation = useNavigation();
@@ -28,6 +29,15 @@ const Teleop = () => {
   const [driverStation, setDriverStation] = useState(null); // New state for driver station
   const [currentAlgaeType, setCurrentAlgaeType] = useState(null);
   const [algaeModalText, setAlgaeModalText] = useState('Algae Location');
+
+  // Calculate total ground count
+  const groundCount = algaeGroundCount + coralGroundCount;
+
+  // Add this state variable for the ground type modal
+  const [showGroundTypeModal, setShowGroundTypeModal] = useState(false);
+
+  // Add this state variable at the top with other state declarations
+  const [lastGroundType, setLastGroundType] = useState(null);
 
   useEffect(() => {
     const retrieveAllianceColor = async () => {
@@ -112,8 +122,9 @@ const Teleop = () => {
 
   const storeTeleopData = async () => {
     const TeleopData = {
-      groundCount: groundCount,
-      stationCount: stationCount,
+      groundAlgaeCount: algaeGroundCount,
+      groundCoralCount: coralGroundCount,
+      stationCoralCount: stationCount
     };
     try {
       await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify(TeleopData));
@@ -605,6 +616,24 @@ const Teleop = () => {
       color: 'white',
       marginBottom: 10,
     },
+    modalOptionsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    modalOptionWithImage: {
+      flex: 1,
+      alignItems: 'center',
+      backgroundColor: global_color,
+      padding: 15,
+      borderRadius: 10,
+      marginHorizontal: 5,
+    },
+    optionImage: {
+      width: 60,
+      height: 60,
+      marginBottom: 10,
+    },
     modalOption: {
       backgroundColor: global_color,
       padding: 15,
@@ -634,15 +663,44 @@ const Teleop = () => {
     },
   });
 
+  // Modify handleGroundIncrement to show modal instead of directly incrementing
   const handleGroundIncrement = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setGroundCount(prev => prev + 1);
+    setShowGroundTypeModal(true);
   };
 
+  // Modify handleGroundTypeSelect to update the last type
+  const handleGroundTypeSelect = (type) => {
+    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (type === 'algae') {
+      setAlgaeGroundCount(prev => prev + 1);
+    } else if (type === 'coral') {
+      setCoralGroundCount(prev => prev + 1);
+    }
+    setLastGroundType(type); // Update the last ground type
+    setShowGroundTypeModal(false);
+  };
+
+  // Modify handleGroundDecrement to use the last type
   const handleGroundDecrement = () => {
     if (groundCount > 0) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setGroundCount(prev => prev - 1);
+      
+      // If we have a last type, decrement that specific counter
+      if (lastGroundType === 'algae' && algaeGroundCount > 0) {
+        setAlgaeGroundCount(prev => prev - 1);
+      } else if (lastGroundType === 'coral' && coralGroundCount > 0) {
+        setCoralGroundCount(prev => prev - 1);
+      } else {
+        // If no last type or that type is at 0, decrement whichever counter is greater
+        if (algaeGroundCount >= coralGroundCount && algaeGroundCount > 0) {
+          setAlgaeGroundCount(prev => prev - 1);
+          setLastGroundType('algae');
+        } else if (coralGroundCount > 0) {
+          setCoralGroundCount(prev => prev - 1);
+          setLastGroundType('coral');
+        }
+      }
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
@@ -811,6 +869,52 @@ const Teleop = () => {
                 setShowAlgaeTypeModal(false);
                 setAlgaeModalText('Algae Location');
               }}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add this new Modal component */}
+      <Modal
+        visible={showGroundTypeModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowGroundTypeModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Ground Pickup Type</Text>
+            <View style={styles.modalOptionsRow}>
+              <TouchableOpacity
+                style={styles.modalOptionWithImage}
+                onPress={() => handleGroundTypeSelect('algae')}
+              >
+                <Image
+                  source={require('../assets/algae.png')}
+                  style={styles.optionImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.modalOptionText}>Algae</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.modalOptionWithImage}
+                onPress={() => handleGroundTypeSelect('coral')}
+              >
+                <Image
+                  source={require('../assets/coral.png')}
+                  style={styles.optionImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.modalOptionText}>Coral</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowGroundTypeModal(false)}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>

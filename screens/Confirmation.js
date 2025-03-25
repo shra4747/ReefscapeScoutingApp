@@ -69,8 +69,12 @@ const Confirmation = () => {
           RobotsInMatch: {
             team_number: parseInt(matchInfo.team_number),
             match_number: parseInt(matchInfo.match_number),
-            teleop_ground_pickups: teleopPickups.groundCount,
-            teleop_HP_pickups: teleopPickups.stationCount,
+
+            teleop_ground_pickups: teleopPickups.groundCoralCount,
+            teleop_HP_pickups: teleopPickups.stationCoralCount,
+
+            algae_ground_pickups: teleopPickups.groundAlgaeCount,
+
             park: endgameData.hang == "Park",
             hang: (endgameData.hang.includes("Shallow Hang") ? "Shallow Hang" : (endgameData.hang.includes("Deep Hang")) ? "Deep Hang" : ""),
             hang_time: (endgameData.hang.includes("Shallow Hang") || endgameData.hang.includes("Deep Hang")) ? endgameData.hangTime : null,
@@ -160,7 +164,7 @@ const Confirmation = () => {
           
         };
 
-        // console.log(submissionData)
+        console.log(submissionData)
 
 
         // // // // Get access token
@@ -184,7 +188,7 @@ const Confirmation = () => {
 
         const result = await response.json();
 
-        // Clear storage after successful submission
+        // // Clear storage after successful submission
         await AsyncStorage.multiRemove([
           'MATCH_INFO',
           'AUTO_PICKUPS',
@@ -197,7 +201,7 @@ const Confirmation = () => {
           'ALGAE_DATA',
         ]);
 
-        // Navigate to StartPage
+        // // Navigate to StartPage
         navigation.popToTop();
       } catch (error) {
         console.error('Error submitting data:', error);

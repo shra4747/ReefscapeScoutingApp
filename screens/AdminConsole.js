@@ -40,7 +40,7 @@ const AdminCons = () => {
         throw new Error('Event code not found');
       }
       // Get max match from schedule for current event
-      const scheduleResponse = await fetch(`http://10.0.0.213:5002/robots_in_match`, {
+      const scheduleResponse = await fetch(`http://10.75.226.156:5002/robots_in_match`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -56,7 +56,7 @@ const AdminCons = () => {
       // return maxScheduleMatch;
 
 
-      const res = await fetch(`http://10.0.0.213:5002/schedule/${eventCode}`, {
+      const res = await fetch(`http://10.75.226.156:5002/schedule/${eventCode}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -84,7 +84,7 @@ const AdminCons = () => {
         throw new Error('Event code not found');
       }
       // Get max match from schedule for current event
-      const scheduleResponse = await fetch(`http://10.0.0.213:5002/robots_in_match`, {
+      const scheduleResponse = await fetch(`http://10.75.226.156:5002/robots_in_match`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -100,7 +100,7 @@ const AdminCons = () => {
       // return maxScheduleMatch;
 
 
-      const res = await fetch(`http://10.0.0.213:5002/schedule/${eventCode}`, {
+      const res = await fetch(`http://10.75.226.156:5002/schedule/${eventCode}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -167,7 +167,7 @@ const AdminCons = () => {
       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN');
 
       // Post schedule data
-      const postResponse = await fetch(`http://10.0.0.213:5002/schedule`, {
+      const postResponse = await fetch(`http://10.75.226.156:5002/schedule`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -217,7 +217,7 @@ const AdminCons = () => {
                 throw new Error('No access token found');
               }
 
-              const response = await fetch("http://10.0.0.213:5002/clear_tables", {
+              const response = await fetch("http://10.75.226.156:5002/clear_tables", {
                 method: 'GET',
                 headers: {
                   'Authorization': `Bearer ${access_token}`,
