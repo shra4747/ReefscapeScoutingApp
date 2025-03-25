@@ -3,11 +3,13 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 const Confirmation = () => {
   const navigation = useNavigation();
 
   const handleSubmit = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     // Perform any confirmation logic here
     const onSubmit = async () => {
       try {
@@ -19,8 +21,8 @@ const Confirmation = () => {
         console.log("-")
         console.log(algaeData)
 
-        const processorData = algaeData.filter(item => item.type === "Processor");
-        const bargeNetData = algaeData.filter(item => item.type === "Barge Net");
+        const processorData = algaeData ? algaeData.filter(item => item.type === "Processor") : [];
+        const bargeNetData = algaeData ? algaeData.filter(item => item.type === "Barge Net") : [];
 
         console.log(processorData)
         console.log(bargeNetData)
@@ -67,8 +69,12 @@ const Confirmation = () => {
           RobotsInMatch: {
             team_number: parseInt(matchInfo.team_number),
             match_number: parseInt(matchInfo.match_number),
-            teleop_ground_pickups: teleopPickups.groundCount,
-            teleop_HP_pickups: teleopPickups.stationCount,
+
+            teleop_ground_pickups: teleopPickups.groundCoralCount,
+            teleop_HP_pickups: teleopPickups.stationCoralCount,
+
+            algae_ground_pickups: teleopPickups.groundAlgaeCount,
+
             park: endgameData.hang == "Park",
             hang: (endgameData.hang.includes("Shallow Hang") ? "Shallow Hang" : (endgameData.hang.includes("Deep Hang")) ? "Deep Hang" : ""),
             hang_time: (endgameData.hang.includes("Shallow Hang") || endgameData.hang.includes("Deep Hang")) ? endgameData.hangTime : null,
@@ -148,22 +154,24 @@ const Confirmation = () => {
             fouls_reef: parseInt(defenseData.fouls_reef),
             intake_block: parseInt(defenseData.intake_block),
             pin_fouls: parseInt(defenseData.pin_fouls),
+            net_block: parseInt(defenseData.net_block),
             processor_block: parseInt(defenseData.processor_block),
             station_block: parseInt(defenseData.station_block),
             station_re_routes: parseInt(defenseData.station_re_routes),
+            event_code: matchInfo.event_code,
           }] : []
 
           
         };
 
-        // console.log(submissionData)
+        console.log(submissionData)
 
 
         // // // // Get access token
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request
-        const response = await fetch('http://97.107.134.214:5002/match', {
+        const response = await fetch('http://10.75.226.156:5002/match', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -173,12 +181,14 @@ const Confirmation = () => {
         });
 
         if (!response.ok) {
+          // Add error haptic feedback
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
 
-        // Clear storage after successful submission
+        // // Clear storage after successful submission
         await AsyncStorage.multiRemove([
           'MATCH_INFO',
           'AUTO_PICKUPS',
@@ -191,10 +201,12 @@ const Confirmation = () => {
           'ALGAE_DATA',
         ]);
 
-        // Navigate to StartPage
+        // // Navigate to StartPage
         navigation.popToTop();
       } catch (error) {
         console.error('Error submitting data:', error);
+        // Add error haptic feedback
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     };
 

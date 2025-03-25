@@ -4,6 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 
 const CircularProgressBar = ({ total, current, label, color }) => {
@@ -51,39 +52,39 @@ const AllianceMeter = ({ redMatches, blueMatches }) => {
  const bluePercentage = (blueMatches / totalMatches) * 100;
 
 
- return (
-   <View style={styles.allianceMeterContainer}>
-     <View style={styles.allianceMeterLabels}>
-       <Text style={styles.allianceMeterLabel}>Red Alliance</Text>
-       <Text style={styles.allianceMeterLabel}>Blue Alliance</Text>
-     </View>
-     <View style={styles.meterBackground}>
-       <View
-         style={[
-           styles.meterForeground,
-           {
-             width: `${redPercentage}%`,
-             backgroundColor: '#ff3030',
-           },
-         ]}
-       />
-       <View
-         style={[
-           styles.meterForeground,
-           {
-             width: `${bluePercentage}%`,
-             backgroundColor: '#3078ff',
-             left: `${redPercentage}%`,
-           },
-         ]}
-       />
-     </View>
-     <View style={styles.allianceMeterStats}>
-       <Text style={styles.allianceMeterStatsText}>{redMatches} Matches</Text>
-       <Text style={styles.allianceMeterStatsText}>{blueMatches} Matches</Text>
-     </View>
-   </View>
- );
+//  return (
+//    <View style={styles.allianceMeterContainer}>
+//      <View style={styles.allianceMeterLabels}>
+//        <Text style={styles.allianceMeterLabel}>Red Alliance</Text>
+//        <Text style={styles.allianceMeterLabel}>Blue Alliance</Text>
+//      </View>
+//      <View style={styles.meterBackground}>
+//        <View
+//          style={[
+//            styles.meterForeground,
+//            {
+//              width: `${redPercentage}%`,
+//              backgroundColor: '#ff3030',
+//            },
+//          ]}
+//        />
+//        <View
+//          style={[
+//            styles.meterForeground,
+//            {
+//              width: `${bluePercentage}%`,
+//              backgroundColor: '#3078ff',
+//              left: `${redPercentage}%`,
+//            },
+//          ]}
+//        />
+//      </View>
+//      <View style={styles.allianceMeterStats}>
+//        <Text style={styles.allianceMeterStatsText}>{redMatches} Matches</Text>
+//        <Text style={styles.allianceMeterStatsText}>{blueMatches} Matches</Text>
+//      </View>
+//    </View>
+//  );
 };
 
 
@@ -119,18 +120,32 @@ const Profile = ({ route }) => {
  const scoutingLevel = getScoutingLevel(totalMatchesScouted);
 
 
+ // Calculate matches until next level
+ const getMatchesUntilNextLevel = (matches) => {
+   if (matches < 10) return 10 - matches;
+   if (matches < 40) return 40 - matches;
+   if (matches < 70) return 70 - matches;
+   if (matches < 100) return 100 - matches;
+   if (matches < 150) return 150 - matches;
+   return 0;
+ };
+
+ const matchesUntilNextLevel = getMatchesUntilNextLevel(totalMatchesScouted);
+
+
  useEffect(() => {
    const fetchUserData = async () => {
      try {
        const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
        if (accessToken) {
-         const response = await fetch('http://97.107.134.214:5002/user_stats', {
+         const response = await fetch('http://10.75.226.156:5002/user_stats', {
            method: 'GET',
            headers: {
              'Authorization': `Bearer ${accessToken}`
            }
          });
          const data = await response.json();
+         console.log(data)
          setFirstName(data.user_info.first_name);
          setRedMatches(data.red_matches);
          setBlueMatches(data.blue_matches);
@@ -172,6 +187,13 @@ const Profile = ({ route }) => {
          You are {isTied ? "tied for " : ""}<Text style={styles.highlightedRank}>Rank {rank ?? totalScouters}</Text> out of <Text style={{fontWeight: 'bold'}}>{totalScouters}</Text> RoboScouters!
        </Text>
      </View>
+     <View style={styles.levelProgressContainer}>
+       <Text style={styles.levelProgressText}>
+         {matchesUntilNextLevel > 0 
+           ? `${matchesUntilNextLevel} matches until next rank!`
+           : 'You\'ve reached the highest level!'}
+       </Text>
+     </View>
      <View style={styles.allianceMeterWrapper}>
        <AllianceMeter redMatches={redMatches} blueMatches={blueMatches} />
      </View>
@@ -208,7 +230,10 @@ const Profile = ({ route }) => {
      </View>
      <TouchableOpacity 
        style={styles.backButton}
-       onPress={() => navigation.goBack()}
+       onPress={() => {
+         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+         navigation.goBack();
+       }}
      >
        <Text style={styles.backButtonText}>Back</Text>
      </TouchableOpacity>
@@ -245,7 +270,7 @@ const styles = StyleSheet.create({
  },
  boldGreeting: {
    color: 'white',
-   fontSize: 50,
+   fontSize: 45,
    fontWeight: 'bold',
  },
  statsText: {
@@ -419,6 +444,19 @@ const styles = StyleSheet.create({
    borderRadius: 10,
  },
  backButtonText: {
+   color: 'white',
+   fontSize: 18,
+   fontWeight: 'bold',
+ },
+ levelProgressContainer: {
+   marginTop: 30,
+   padding: 20,
+   backgroundColor: '#222',
+   borderRadius: 10,
+   width: '100%',
+   alignItems: 'center',
+ },
+ levelProgressText: {
    color: 'white',
    fontSize: 18,
    fontWeight: 'bold',

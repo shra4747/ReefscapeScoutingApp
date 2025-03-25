@@ -12,6 +12,7 @@ import CheckBox from 'expo-checkbox';
 import Slider from '@react-native-community/slider';  // Make sure to install this package
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 const EndGame = () => {
   const navigation = useNavigation();
@@ -53,29 +54,28 @@ const EndGame = () => {
   }, [nonePhase, showTapText]);
 
   const handleTap = () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
     if (nonePhase) {
-      setShowTapText(false); // Hide the tap text
-      // Move to park position from none
-      translateY.value = withSpring(0); // Stay at bottom
-      rotateZ.value = withSpring(90); // Rotate to horizontal
-      chainHeight.value = withSpring(0); // Hide chain
+      setShowTapText(false);
+      translateY.value = withSpring(0);
+      rotateZ.value = withSpring(90);
+      chainHeight.value = withSpring(0);
       setPark(true);
       setNonePhase(false);
     } else if (park) {
-      // Move to shallow hang position from park
       translateY.value = withSpring(40);
       rotateZ.value = withSpring(0);
       chainHeight.value = withSpring(40);
       setShallowHang(true);
       setPark(false);
     } else if (shallowHang) {
-      // Move to deep hang position from shallow
       translateY.value = withSpring(130);
       chainHeight.value = withSpring(130);
       setDeepHang(true);
       setShallowHang(false);
     } else {
-      // Move back to none position from deep
       translateY.value = withSpring(0);
       rotateZ.value = withSpring(90);
       chainHeight.value = withSpring(0);
@@ -119,6 +119,9 @@ const EndGame = () => {
   };
 
   const handleSubmit = async () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    
     // Check if hang is selected and hang time is 0
     if (!nonePhase && !park && hangTime === 0) {
       alert('Hang Time: Invalid Input');
@@ -188,7 +191,13 @@ const EndGame = () => {
             <View style={styles.checkboxRow}>
               <CheckBox
                 value={failedClimb}
-                onValueChange={() => setFailedClimb(prev => !prev)}
+                onValueChange={(value) => {
+                  // Add haptic feedback
+                  Haptics.notificationAsync(
+                    value ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success
+                  );
+                  setFailedClimb(value);
+                }}
                 style={styles.checkbox}
                 color={allianceColor}
               />
@@ -207,7 +216,11 @@ const EndGame = () => {
               maximumValue={15}
               step={0.1}
               value={hangTime}
-              onValueChange={setHangTime}
+              onValueChange={(value) => {
+                // Add haptic feedback
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setHangTime(value);
+              }}
               minimumTrackTintColor={allianceColor}
               maximumTrackTintColor="#ffffff"
               thumbTintColor={allianceColor}

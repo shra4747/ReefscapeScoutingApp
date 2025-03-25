@@ -20,68 +20,68 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const PickList = () => {
   const [teamInput, setTeamInput] = useState('');
-  const [pickListTeams, setPickListTeams] = useState([]);
+  const [pickListTeams, setPickListTeams] = useState({ pick1: [], pick2: [] });
   const [competitionTeams, setCompetitionTeams] = useState([]);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [showPickModal, setShowPickModal] = useState(false);
+  const [pendingTeam, setPendingTeam] = useState(null);
 
-  // Load pick list teams from server when screen focuses
- useFocusEffect(
-  React.useCallback(() => {
-    const loadPickListTeams = async () => {
-      try {
-        const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-        const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        if (response.ok) {
-          const serverData = await response.json();
-          const formattedTeams = serverData.map(team => ({
-            id: team.id,
-            number: team.team_number,
-            rank: team.picklist_rank
-          }));
-          setPickListTeams(formattedTeams);
-        }
-      } catch (error) {
-        console.error('Failed to load pick list teams', error);
-      }
-    };
-    
-    loadPickListTeams();
-  }, [])
-);
-  // Load teams from server on mount
-  useEffect(() => {
-    const loadTeams = async () => {
-      try {
-        const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-        const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        if (response.ok) {
-          const serverData = await response.json();
-          setPickListTeams(serverData.map(team => ({
-            id: team.id,
-            number: team.team_number,
-            rank: team.picklist_rank
-          })));
-        }
-      } catch (error) {
-        console.error('Failed to load teams', error);
-      }
-    };
-    loadTeams();
-  }, []);
+  // Remove the duplicate useEffect and keep only the useFocusEffect for loading pick list teams
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadPickListTeams = async () => {
+        try {
+          const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+          const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+          const response = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+          
+          if (response.ok) {
+            const serverData = await response.json();
+            console.log('Server Data:', serverData); // Debugging log
 
-  // Load competition teams from shared storage
+            // Process the server data
+            const formattedTeams = {
+              pick1: serverData
+                .filter(team => team.picklist_tag === "1") // Filter for pick1
+                .map(team => ({
+                  id: team.id,
+                  number: team.team_number,
+                  rank: team.picklist_rank
+                }))
+                .sort((a, b) => a.rank - b.rank),
+              pick2: serverData
+                .filter(team => team.picklist_tag === "2") // Filter for pick2
+                .map(team => ({
+                  id: team.id,
+                  number: team.team_number,
+                  rank: team.picklist_rank
+                }))
+                .sort((a, b) => a.rank - b.rank)
+            };
+
+            console.log('Formatted Teams:', formattedTeams); // Debugging log
+            setPickListTeams(formattedTeams);
+            setInitialLoad(false);
+          }
+        } catch (error) {
+          console.error('Failed to load pick list teams', error);
+        }
+      };
+      
+      loadPickListTeams();
+      
+      // Return a cleanup function
+      return () => {
+        // Any cleanup if needed
+      };
+    }, []) // Empty dependency array since we want this to run only on focus
+  );
+
+  // Keep the competition teams loading effect
   useEffect(() => {
     const loadCompetitionTeams = async () => {
       try {
@@ -97,22 +97,35 @@ const PickList = () => {
     loadCompetitionTeams();
   }, []);
 
-  // Save teams to server only when modified
+  // Update the saveTeams effect
   useEffect(() => {
     const saveTeams = async () => {
-      // Don't save on initial load
-      if (initialLoad || pickListTeams.length === 0) return;
+      if (initialLoad || (!pickListTeams.pick1.length && !pickListTeams.pick2.length)) {
+        return;
+      }
       
       try {
-        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST'
-        const picklistData = pickListTeams.map(team => ({
-          team_number: team.number,
-          picklist_rank: team.rank,
-          picklist_name: eventCode
-        }));
-
+        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
-        const response = await fetch('http://97.107.134.214:5002/picklist', {
+
+        // Create the new team data with explicit picklist_tag values
+        const picklistData = [
+          ...pickListTeams.pick1.map((team, index) => ({
+            team_number: team.number,
+            picklist_rank: index + 1,
+            picklist_name: eventCode,
+            picklist_tag: 1 // Explicitly set to 1 for pick1
+          })),
+          ...pickListTeams.pick2.map((team, index) => ({
+            team_number: team.number,
+            picklist_rank: index + 1,
+            picklist_name: eventCode,
+            picklist_tag: 2 // Explicitly set to 2 for pick2
+          }))
+        ];
+
+        // Send the complete updated list
+        const response = await fetch('http://10.75.226.156:5002/picklist', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -121,56 +134,173 @@ const PickList = () => {
           body: JSON.stringify(picklistData)
         });
 
-        if (!response.ok) throw new Error('Failed to save picklist to server');
-        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Server response:', response.status, errorText);
+          throw new Error(`Server error: ${response.status} ${errorText}`);
+        }
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error saving teams:', error);
+        // Reload the current server state on error
+        const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+        const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+        const reloadResponse = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (reloadResponse.ok) {
+          const serverData = await reloadResponse.json();
+          const formattedTeams = {
+            pick1: serverData.filter(team => team.picklist_tag === 1)
+              .map(team => ({
+                id: team.id,
+                number: team.team_number,
+                rank: team.picklist_rank
+              }))
+              .sort((a, b) => a.rank - b.rank),
+            pick2: serverData.filter(team => team.picklist_tag === 2)
+              .map(team => ({
+                id: team.id,
+                number: team.team_number,
+                rank: team.picklist_rank
+              }))
+              .sort((a, b) => a.rank - b.rank)
+          };
+          setPickListTeams(formattedTeams);
+        }
       }
     };
     
-    saveTeams();
-    setInitialLoad(false);
-  }, [pickListTeams]);
+    // Add a small delay before saving to prevent rapid consecutive saves
+    const timeoutId = setTimeout(() => {
+      saveTeams();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [pickListTeams, initialLoad]);
 
   const handleAddTeam = () => {
     if (!teamInput.trim()) return;
 
     const teamNumber = parseInt(teamInput.trim());
     
-    // Check if team exists in competition
     if (!competitionTeams.includes(teamNumber)) {
       alert('Team not in competition');
       return;
     }
     
-    // Existing duplicate check
-    if (pickListTeams.some(team => team.number === teamNumber)) {
+    if (pickListTeams.pick1.some(team => team.number === teamNumber) || 
+        pickListTeams.pick2.some(team => team.number === teamNumber)) {
       alert('Team already in pick list');
       return;
     }
 
-    const newTeam = {
+    setPendingTeam({
       id: teamNumber,
       number: teamNumber,
-      rank: pickListTeams.length + 1
+    });
+    setShowPickModal(true);
+    setTeamInput('');
+  };
+
+  const handleAssignTeam = async (picklist_tag) => {
+    if (!pendingTeam) return;
+
+    const targetList = picklist_tag === 1 ? 'pick1' : 'pick2';
+    const newTeam = {
+      ...pendingTeam,
+      rank: pickListTeams[targetList].length + 1
     };
 
-    if (Platform.OS !== 'web') {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    try {
+      const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+      const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+      
+      // Update local state first
+      const updatedPickListTeams = {
+        ...pickListTeams,
+        [targetList]: [...pickListTeams[targetList], newTeam]
+      };
+      setPickListTeams(updatedPickListTeams);
+
+      // Prepare the complete updated list with explicit picklist_tag values
+      const picklistData = [
+        ...updatedPickListTeams.pick1.map((team, index) => ({
+          team_number: team.number,
+          picklist_rank: index + 1,
+          picklist_name: eventCode,
+          picklist_tag: 1 // Explicitly set to 1 for pick1
+        })),
+        ...updatedPickListTeams.pick2.map((team, index) => ({
+          team_number: team.number,
+          picklist_rank: index + 1,
+          picklist_name: eventCode,
+          picklist_tag: 2 // Explicitly set to 2 for pick2
+        }))
+      ];
+
+      // Send the complete updated list
+      const response = await fetch('http://10.75.226.156:5002/picklist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(picklistData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save team');
+      }
+
+    } catch (error) {
+      console.error('Error in handleAssignTeam:', error);
+      // Revert local state if save failed
+      setPickListTeams(prev => ({
+        ...prev,
+        [targetList]: prev[targetList].filter(team => team.number !== newTeam.number)
+      }));
+      alert(`Failed to save team: ${error.message}`);
+    } finally {
+      setShowPickModal(false);
+      setPendingTeam(null);
+      setInitialLoad(false);
     }
-
-    setPickListTeams([...pickListTeams, newTeam]);
-    setTeamInput('');
-    setInitialLoad(false);
   };
 
-  const handleResetTeams = () => {
-    setPickListTeams([]);
-    setInitialLoad(true);
+  const handleResetTeams = async () => {
+    try {
+      const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
+      const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
+
+      // Clear local state immediately
+      setPickListTeams({ pick1: [], pick2: [] });
+      setInitialLoad(true);
+
+      // Send empty array to clear server data
+      const response = await fetch('http://10.75.226.156:5002/picklistClear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify([]) // Send empty array to clear the picklist
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset picklist on server');
+      }
+    } catch (error) {
+      console.error('Error resetting teams:', error);
+      alert('Failed to reset teams. Please try again.');
+    }
   };
 
-  const moveTeam = (index, direction) => {
-    const newTeams = [...pickListTeams];
+  const moveTeam = (index, direction, picklist_tag) => {
+    const listKey = picklist_tag === 1 ? 'pick1' : 'pick2';
+    const newTeams = [...pickListTeams[listKey]];
     const targetIndex = index + direction;
 
     if (targetIndex < 0 || targetIndex >= newTeams.length) return;
@@ -182,21 +312,31 @@ const PickList = () => {
     const [movedTeam] = newTeams.splice(index, 1);
     newTeams.splice(targetIndex, 0, movedTeam);
 
-    setPickListTeams(newTeams.map((team, idx) => ({ ...team, rank: idx + 1 })));
+    // Update ranks for the moved list
+    const updatedTeams = newTeams.map((team, idx) => ({ ...team, rank: idx + 1 }));
+
+    setPickListTeams(prev => ({
+      ...prev,
+      [listKey]: updatedTeams
+    }));
     setInitialLoad(false);
   };
 
-  const handleRemoveTeam = (teamNumber) => {
+  const handleRemoveTeam = (teamNumber, picklist_tag) => {
+    const listKey = picklist_tag === 1 ? 'pick1' : 'pick2';
+
     if (Platform.OS !== 'web') {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
     
-    // Recalculate ranks after removal
-    const updatedTeams = pickListTeams
-      .filter(team => team.number !== teamNumber)
-      .map((team, index) => ({ ...team, rank: index + 1 }));
+    const updatedTeams = pickListTeams[listKey]
+        .filter(team => team.number !== teamNumber)
+        .map((team, index) => ({ ...team, rank: index + 1 }));
 
-    setPickListTeams(updatedTeams);
+    setPickListTeams(prev => ({
+        ...prev,
+        [listKey]: updatedTeams
+    }));
     setInitialLoad(false);
   };
 
@@ -204,7 +344,7 @@ const PickList = () => {
     try {
       const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
       const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'TEST';
-      const response = await fetch(`http://97.107.134.214:5002/picklist/${eventCode}`, {
+      const response = await fetch(`http://10.75.226.156:5002/picklist/${eventCode}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -212,30 +352,42 @@ const PickList = () => {
       
       if (response.ok) {
         const serverData = await response.json();
-        setPickListTeams(serverData.map(team => ({
-          id: team.team_number,
-          number: team.team_number,
-          rank: team.picklist_rank
-        })));
+        const formattedTeams = {
+          pick1: serverData.filter(team => team.picklist_tag === 1)
+            .map(team => ({
+              id: team.team_number,
+              number: team.team_number,
+              rank: team.picklist_rank
+            }))
+            .sort((a, b) => a.rank - b.rank),
+          pick2: serverData.filter(team => team.picklist_tag === 2)
+            .map(team => ({
+              id: team.team_number,
+              number: team.team_number,
+              rank: team.picklist_rank
+            }))
+            .sort((a, b) => a.rank - b.rank)
+        };
+        setPickListTeams(formattedTeams);
       }
     } catch (error) {
       console.error('Failed to reload pick list', error);
     }
   };
 
-  const renderTeamItem = (item, index) => {
+  const renderTeamItem = (item, index, picklist_tag) => {
     return (
       <View key={item.number} style={styles.teamItem}>
         <Text style={styles.rankNumber}>{item.rank}</Text>
         <Text style={styles.teamNumber}>Team {item.number}</Text>
         <View style={styles.arrowContainer}>
-          <TouchableOpacity onPress={() => moveTeam(index, -1)}>
+          <TouchableOpacity onPress={() => moveTeam(index, -1, picklist_tag)}>
             <Text style={styles.arrow}>↑</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => moveTeam(index, 1)}>
+          <TouchableOpacity onPress={() => moveTeam(index, 1, picklist_tag)}>
             <Text style={styles.arrow}>↓</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleRemoveTeam(item.number)}>
+          <TouchableOpacity onPress={() => handleRemoveTeam(item.number, picklist_tag)}>
             <Text style={styles.removeButton}>×</Text>
           </TouchableOpacity>
         </View>
@@ -276,8 +428,49 @@ const PickList = () => {
         </TouchableOpacity>
       </View>
 
+      {showPickModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>Select Pick Group</Text>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => handleAssignTeam(1)}
+            >
+              <Text style={styles.modalButtonText}>Alliance Pick 1</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => handleAssignTeam(2)}
+            >
+              <Text style={styles.modalButtonText}>Alliance Pick 2</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.modalCancelButton}
+              onPress={() => {
+                setShowPickModal(false);
+                setPendingTeam(null);
+              }}
+            >
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       <ScrollView>
-        {pickListTeams.map((item, index) => renderTeamItem(item, index))}
+        {pickListTeams.pick1.length > 0 && (
+          <View style={styles.pickListSection}>
+            <Text style={styles.sectionTitle}>Alliance Pick 1</Text>
+            {pickListTeams.pick1.map((item, index) => renderTeamItem(item, index, 1))}
+          </View>
+        )}
+
+        {pickListTeams.pick2.length > 0 && (
+          <View style={styles.pickListSection}>
+            <Text style={styles.sectionTitle}>Alliance Pick 2</Text>
+            {pickListTeams.pick2.map((item, index) => renderTeamItem(item, index, 2))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -382,6 +575,61 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#ff3030',
     marginLeft: 8,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modal: {
+    backgroundColor: '#1a1a1a',
+    padding: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ff3030',
+    width: '80%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#ff3030',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  modalButtonText: {
+    color: '#ffffff',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  modalCancelButton: {
+    backgroundColor: '#2d0808',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#ff3030',
+  },
+  pickListSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
   },
 });
 

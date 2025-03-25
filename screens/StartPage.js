@@ -9,6 +9,9 @@ import Animated, {
   useSharedValue,
   interpolate
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+
+const EVENT_CODE = 'NJFLA'; // Manually set your event code here
 
 const StartPage = () => {
   const navigation = useNavigation();
@@ -33,11 +36,32 @@ const StartPage = () => {
   ]);
   const [teamPositions, setTeamPositions] = useState([]);
 
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [matches, setMatches] = useState([]);
+  const [teams, setTeams] = useState([]);
+
+  // New state for match search
+  const [matchSearch, setMatchSearch] = useState('');
+  const [filteredMatches, setFilteredMatches] = useState([]);
+
+  // New state for pagination
+  const [currentMatchPage, setCurrentMatchPage] = useState(0);
+  const matchesPerPage = 6;
+
+  // New state for cool dropdown
+  const [openMatchDropdown, setOpenMatchDropdown] = useState(false);
+
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{
-        rotateY: `${interpolate(rotation.value, [0, 1], [0, 180])}deg`
-      }]
+      transform: [
+        {
+          rotateX: `${interpolate(rotation.value, [0, 1], [0, 180])}deg`
+        },
+        {
+          rotateY: `${interpolate(rotation.value, [0, 1], [0, 180])}deg`
+        }
+      ]
     };
   });
 
@@ -50,27 +74,50 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const response = await fetch(`http://97.107.134.214:5002/schedule`, {
+        const scheduleResponse = await fetch(`http://10.75.226.156:5002/schedule/${EVENT_CODE}`, {
+          method: 'GET',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
           }
         });
         
-        if (!response.ok) throw new Error('Failed to fetch schedule');
+        if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule');
         
-        const data = await response.json();
+        const scheduleData = await scheduleResponse.json();
+        const scoutedResponse = await fetch(`http://10.75.226.156:5002/robots_in_match`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
         
-        // Filter matches for NJFLA event
-        const njflaMatches = data.filter(item => item.event_code === 'NJFLA');
-        setScheduleData(njflaMatches);
+        if (!scoutedResponse.ok) throw new Error('Failed to fetch scouted matches');
         
-        // Update matches dropdown with filtered matches
-        const uniqueMatches = [...new Set(njflaMatches.map(item => item.match_number))];
-        setItemsPosition([
-          { label: 'Far Starting Position', value: 'far' },
-          { label: 'Middle Starting Position', value: 'middle' },
-          { label: 'Close Starting Position', value: 'close' }
-        ]);
+        const scoutedMatches = await scoutedResponse.json();
+        
+        const availableMatches = scheduleData.schedule.filter(scheduleItem => 
+          !scoutedMatches.some(scoutedItem => 
+            scoutedItem.match_number === scheduleItem.match_number &&
+            scoutedItem.event_code === scheduleItem.event_code
+          )
+        );
+
+        // Get unique matches
+        const uniqueMatches = [...new Set(availableMatches.map(item => item.match_number))]
+          .map(matchNumber => ({
+            label: `Match ${matchNumber}`,
+            value: matchNumber.toString()
+          }));
+        
+        setMatches(uniqueMatches);
+        setScheduleData(availableMatches);
+
+        // Automatically select the first match if available
+        if (uniqueMatches.length > 0) {
+          setSelectedMatch(uniqueMatches[0].value);
+        }
 
       } catch (error) {
         Alert.alert('Error', 'Failed to load schedule');
@@ -93,18 +140,25 @@ const StartPage = () => {
   }, [navigation]);
 
   useEffect(() => {
-    if (valuePosition) {
-      const teamsForMatch = scheduleData
-        .filter(item => item.match_number.toString() === valuePosition.value)
+    if (selectedMatch) {
+      const teamsInMatch = scheduleData
+        .filter(item => item.match_number.toString() === selectedMatch)
         .map(item => ({
           label: `Team ${item.team_number}`,
           value: item.team_number.toString(),
           alliance: item.alliance_color
         }));
+
+      // Sort teams: red alliance first, then blue alliance
+      const sortedTeams = teamsInMatch.sort((a, b) => {
+        if (a.alliance === 'red' && b.alliance === 'blue') return -1;
+        if (a.alliance === 'blue' && b.alliance === 'red') return 1;
+        return 0;
+      });
       
-      setTeamPositions(teamsForMatch);
+      setTeams(sortedTeams);
     }
-  }, [valuePosition, scheduleData]);
+  }, [selectedMatch, scheduleData]);
 
   useEffect(() => {
     if (valuePosition && teamPositions.length > 0) {
@@ -208,15 +262,15 @@ const StartPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!matchNumber || !teamNumber || !eventCode || !valuePosition || !allianceColor) {
-      Alert.alert('Error', 'Please fill in all fields before submitting');
+    if (!selectedMatch || !selectedTeam || !valuePosition || !allianceColor) {
+      Alert.alert('Error', 'Please select all fields before submitting');
       return;
     }
 
     const newData = {
-      match_number: matchNumber,
-      team_number: teamNumber,
-      event_code: eventCode,
+      match_number: selectedMatch,
+      team_number: selectedTeam,
+      event_code: EVENT_CODE,
       match_start_time: new Date().toISOString(),
       alliance_color: allianceColor == "red" ? "Red" : "Blue",
       start_position: valuePosition || 'none'
@@ -255,9 +309,9 @@ const StartPage = () => {
 
     // Print out the submitted data
     console.log('Submitted Data:', newData);
-    console.log('Match Number:', matchNumber);
-    console.log('Team Number:', teamNumber);
-    console.log('Event Code:', eventCode);
+    console.log('Match Number:', selectedMatch);
+    console.log('Team Number:', selectedTeam);
+    console.log('Event Code:', EVENT_CODE);
     console.log('Alliance Color:', allianceColor);
     console.log('Starting Position:', valuePosition);
 
@@ -286,6 +340,98 @@ const StartPage = () => {
     navigation.navigate('Auto');
   };
 
+  // Update match filtering
+  useEffect(() => {
+    if (matchSearch) {
+      const filtered = matches.filter(match => 
+        match.label.toLowerCase().includes(matchSearch.toLowerCase())
+      );
+      setFilteredMatches(filtered);
+    } else {
+      setFilteredMatches(matches);
+    }
+  }, [matchSearch, matches]);
+
+  // Paginated matches
+  const paginatedMatches = () => {
+    const startIndex = currentMatchPage * matchesPerPage;
+    return filteredMatches.slice(startIndex, startIndex + matchesPerPage);
+  };
+
+  // Improved match selection UI
+  const renderMatchSelection = () => (
+    <View style={styles.matchSelectionContainer}>
+      <Text style={styles.selectionTitle}>Select Match</Text>
+      <DropDownPicker
+        open={openMatchDropdown}
+        value={selectedMatch}
+        items={matches}
+        setOpen={setOpenMatchDropdown}
+        setValue={setSelectedMatch}
+        setItems={setMatches}
+        placeholder="Select a match"
+        style={styles.simpleDropdown}
+        containerStyle={styles.dropdownContainer}
+        dropDownContainerStyle={styles.simpleDropdownBox}
+        zIndex={1000}
+        zIndexInverse={3000}
+        onChangeValue={(value) => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setSelectedMatch(value);
+          setSelectedTeam(null);
+        }}
+      />
+    </View>
+  );
+
+  // Improved team selection UI
+  const renderTeamSelection = () => (
+    <View style={styles.selectionContainer}>
+      <Text style={styles.selectionTitle2}>Select Team</Text>
+      <View style={styles.teamCarousel}>
+        {teams.map((team, index) => (
+          <Animated.View
+            key={team.value}
+            style={[
+              styles.teamCard,
+              selectedTeam === team.value && styles.selectedTeamCard,
+              {
+                transform: [
+                  { 
+                    scale: selectedTeam === team.value ? 1 : 0.9 
+                  },
+                  { 
+                    translateY: selectedTeam === team.value ? 0 : 10 
+                  }
+                ]
+              }
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                styles.teamContent,
+                team.alliance === 'red' && styles.redTeam,
+                team.alliance === 'blue' && styles.blueTeam
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setSelectedTeam(team.value);
+                setAllianceColor(team.alliance.toLowerCase());
+              }}
+            >
+              <Text style={styles.teamNumber}>{team.label}</Text>
+              <View style={styles.allianceIndicator}>
+                <Text style={styles.allianceText}>
+                  {team.alliance === 'red' ? 'Red Alliance' : 'Blue Alliance'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        ))}
+      </View>
+    </View>
+  );
+
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <KeyboardAvoidingView
@@ -293,69 +439,80 @@ const StartPage = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={styles.scrollContainer}>
-          {/* Left Profile Button */}
-          <TouchableOpacity
-            style={[styles.profileButton, { left: 20 }]}
-            onPress={() => navigation.navigate('PitScouting')}
-          >
-            <View style={styles.profileIcon}>
-              <Image
-                source={require('../assets/th.jpeg')}
-                style={styles.profileImage}
-              />
-            </View>
-          </TouchableOpacity>
+        <View style={styles.content}>
+          {/* Top Bar */}
+          <View style={styles.topBar}>
+            {/* Left Profile Button */}
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                navigation.navigate('PitScouting');
+              }}
+            >
+              <View style={styles.profileIcon}>
+                <Image
+                  source={require('../assets/th.jpeg')}
+                  style={styles.profileImage}
+                />
+              </View>
+            </TouchableOpacity>
 
-          {/* Admin Console Button */}
-          <TouchableOpacity
-            style={[styles.adminButton, { left: '50%', transform: [{ translateX: -100 }, { translateY: 20 }] }]}
-            onPress={() => {
-              Alert.prompt(
-                'Admin Access',
-                'Enter password:',
-                [
-                  {
-                    text: 'Cancel',
-                    style: 'cancel',
-                  },
-                  {
-                    text: 'Submit',
-                    onPress: (password) => {
-                      if (password === 'HOUSTON2025') {
-                        navigation.navigate('AdminConsole');
-                      } else {
-                        Alert.alert('Error', 'Incorrect password');
-                      }
+            {/* Admin Console Button */}
+            <TouchableOpacity
+              style={styles.adminButton}
+              onPress={() => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                Alert.prompt(
+                  'Admin Access',
+                  'Enter password:',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
                     },
-                  },
-                ],
-                'secure-text'
-              );
-            }}
-          >
-            <Text style={styles.adminButtonText}>Admin Console</Text>
-          </TouchableOpacity>
+                    {
+                      text: 'Submit',
+                      onPress: (password) => {
+                        if (password === 'HOUSTON2025') {
+                          navigation.navigate('AdminConsole');
+                        } else {
+                          Alert.alert('Error', 'Incorrect password');
+                        }
+                      },
+                    },
+                  ],
+                  'secure-text'
+                );
+              }}
+            >
+              <Text style={styles.adminButtonText}>Admin Console</Text>
+            </TouchableOpacity>
 
-          {/* Right Profile Button */}
-          <TouchableOpacity
-            style={[styles.profileButton, { right: 20 }]}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <View style={styles.profileIcon}>
-              <Image
-                source={require('../assets/converted_image.jpeg')}
-                style={styles.profileImage}
-              />
-            </View>
-          </TouchableOpacity>
+            {/* Right Profile Button */}
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                navigation.navigate('Profile');
+              }}
+            >
+              <View style={styles.profileIcon}>
+                <Image
+                  source={require('../assets/converted_image.jpeg')}
+                  style={styles.profileImage}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
 
-          {/* Rest of the StartPage UI */}
-          <View style={[styles.titleContainer, { position: 'absolute', top: 100 }]}>
+          {/* Title */}
+          <View style={styles.titleContainer}>
             <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
             <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
           </View>
 
+          {/* Rest of the content */}
           <Image
             source={require('../assets/logo.jpg')}
             style={styles.logo}
@@ -369,94 +526,40 @@ const StartPage = () => {
             />
           </TouchableOpacity>
 
-          {/* Match Number Input */}
-          <Text style={styles.title}>Match Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Match Number"
-            value={matchNumber}
-            onChangeText={setMatchNumber}
-            keyboardType="number-pad"
-          />
+          <View style={styles.contentContainer}>
+            {renderMatchSelection()}
+            {selectedMatch && renderTeamSelection()}
 
-          {/* Team Number Input */}
-          <Text style={styles.title}>Team Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Team Number"
-            value={teamNumber}
-            onChangeText={setTeamNumber}
-            keyboardType="number-pad"
-          />
+            {/* Starting Position Dropdown */}
+            <View style={styles.positionContainer}>
+              <Text style={styles.title}>Starting Position</Text>
+              <DropDownPicker
+                open={openPosition}
+                value={valuePosition}
+                items={itemsPosition}
+                setOpen={setOpenPosition}
+                setValue={(value) => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setValuePosition(value);
+                }}
+                setItems={setItemsPosition}
+                placeholder="Select Starting Position"
+                style={styles.dropdown}
+                containerStyle={styles.dropdownContainer}
+                dropDownContainerStyle={styles.dropdownBox}
+                zIndex={1000}
+                zIndexInverse={3000}
+              />
+            </View>
 
-          {/* Event Code Input */}
-          <Text style={styles.title}>Event Code</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Event Code"
-            value={eventCode}
-            onChangeText={setEventCode}
-            autoCapitalize="characters"
-          />
-
-          {/* Display Selected Match, Team, and Alliance */}
-          <Text style={styles.resultText}>Selected Match: {matchNumber || 'None'}</Text>
-          <Text style={styles.resultText}>Selected Team: {teamNumber}</Text>
-          <Text style={styles.resultText}>
-            Alliance Color: {allianceColor ? allianceColor.charAt(0).toUpperCase() + allianceColor.slice(1) : 'None'}
-          </Text>
-          <Text style={styles.resultText}>
-            Starting Position: {valuePosition ? itemsPosition.find(item => item.value === valuePosition)?.label : 'None'}
-          </Text>
-
-          {/* Alliance Color Buttons */}
-          <View style={styles.buttonContainer}>
+            {/* Submit Button */}
             <TouchableOpacity
-              style={[
-                styles.colorButton,
-                allianceColor === 'red' ? styles.selectedButtonRed : styles.defaultButton
-              ]}
-              onPress={() => setAllianceColor('red')}
+              style={styles.submitButton}
+              onPress={handleSubmit}
             >
-              <Text style={styles.buttonText}>Red Alliance</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.colorButton,
-                allianceColor === 'blue' ? styles.selectedButtonBlue : styles.defaultButton
-              ]}
-              onPress={() => setAllianceColor('blue')}
-            >
-              <Text style={styles.buttonText}>Blue Alliance</Text>
+              <Text style={styles.submitButtonText}>Start Match {selectedMatch}</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Starting Position Dropdown */}
-          <Text style={styles.title}>Starting Position</Text>
-          <DropDownPicker
-            open={openPosition}
-            value={valuePosition}
-            items={itemsPosition}
-            setOpen={setOpenPosition}
-            setValue={setValuePosition}
-            setItems={setItemsPosition}
-            containerStyle={styles.dropdownContainer}
-            style={styles.dropdown}
-            dropDownContainerStyle={styles.dropdownBox}
-            zIndex={1000}
-            zIndexInverse={3000}
-            ListHeaderComponent={<View />}
-            ListFooterComponent={<View />}
-          />
-
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleSubmit}
-          >
-            <Text style={styles.submitButtonText}>Submit</Text>
-          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
@@ -467,16 +570,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+  },
+  content: {
+    flex: 1,
+    width: '100%',
     paddingVertical: 20,
   },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 25,
+  },
   profileButton: {
-    position: 'absolute',
-    top: 40,
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -500,8 +609,11 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 5,
+    marginBottom: -100,
+    width: '100%',
   },
   pageTitle: {
     fontSize: 30,
@@ -512,6 +624,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    marginTop: 15,
     color: '#ffffff',
   },
   input: {
@@ -528,7 +641,8 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     width: '80%',
-    marginBottom: 20,
+    marginBottom: 0,
+    alignSelf: 'center',
   },
   dropdown: {
     borderColor: '#ff3030',
@@ -543,13 +657,13 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   submitButton: {
-    backgroundColor: 'red',
+    backgroundColor: '#808080',
     padding: 15,
     borderRadius: 10,
-    width: '80%',
+    width: '90%',
     alignItems: 'center',
-    marginTop: 20,
     marginBottom: 20,
+    alignSelf: 'center',
   },
   submitButtonText: {
     color: 'white',
@@ -560,13 +674,13 @@ const styles = StyleSheet.create({
     width: '50%',
     height: 100,
     alignSelf: 'center',
+    opacity: 0
     // marginVertical: 20,
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '80%',
-    marginBottom: 20,
   },
   colorButton: {
     width: '48%',
@@ -598,19 +712,176 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   adminButton: {
-    position: 'absolute',
-    top: 40,
     backgroundColor: 'red',
     padding: 8,
     borderRadius: 15,
     width: 200,
     height: 35,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   adminButtonText: {
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  selectionContainer: {
+    marginBottom: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  selectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 10,
+  },
+  selectionTitle2: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 0,
+  },
+  searchInput: {
+    backgroundColor: '#333',
+    color: '#fff',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  matchGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  matchButton: {
+    width: '30%',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+    backgroundColor: '#444',
+    alignItems: 'center',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  paginationButton: {
+    padding: 8,
+    borderRadius: 5,
+    backgroundColor: '#444',
+  },
+  paginationText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  teamList: {
+    width: '100%',
+  },
+  teamItem: {
+    padding: 10,
+    marginBottom: 5,
+    borderRadius: 5,
+    backgroundColor: '#444',
+  },
+  teamItemText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  coolDropdown: {
+    backgroundColor: '#333',
+    borderColor: '#444',
+    borderRadius: 10,
+  },
+  coolDropdownBox: {
+    backgroundColor: '#333',
+    borderColor: '#444',
+    borderRadius: 10,
+    marginTop: 5,
+  },
+  modalContent: {
+    backgroundColor: '#222',
+    padding: 20,
+    borderRadius: 10,
+    margin: 20,
+  },
+  teamCarousel: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  teamCard: {
+    width: '48%',
+    marginBottom: 10,
+    borderRadius: 15,
+    backgroundColor: '#333',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  selectedTeamCard: {
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  teamContent: {
+    padding: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  teamNumber: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  allianceIndicator: {
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  allianceText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  redTeam: {
+    backgroundColor: '#ff3030',
+  },
+  blueTeam: {
+    backgroundColor: '#308aff',
+  },
+  matchSelectionContainer: {
+    marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  simpleDropdown: {
+    backgroundColor: '#ffffff',
+    borderColor: '#444',
+    borderRadius: 10,
+  },
+  simpleDropdownBox: {
+    backgroundColor: '#ffffff',
+    borderColor: '#444',
+    borderRadius: 10,
+    marginTop: 5,
+  },
+  contentContainer: {
+    width: '90%',
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  positionContainer: {
+    marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: -15
   },
 });
 

@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 const AutoP2 = ({ navigation, route }) => {
   const [selectedLevel, setSelectedLevel] = useState(null);
@@ -22,6 +23,9 @@ const AutoP2 = ({ navigation, route }) => {
   };
 
   const handleAction = (action) => {
+    // Add haptic feedback
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    
     if (action === 'dealgaefy') {
       setDeAlgaefySelected(!deAlgaefySelected);
       return; // Don't store data yet, just toggle the state
@@ -41,6 +45,9 @@ const AutoP2 = ({ navigation, route }) => {
   };
 
   const handleDeAlgaefyChoice = (choice) => {
+    // Add haptic feedback
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    
     if (choice === 'only') {
       const actionData = {
         level: selectedLevel,
@@ -61,6 +68,9 @@ const AutoP2 = ({ navigation, route }) => {
   };
 
   const handleDeAlgaefyOnly = () => {
+    // Add haptic feedback
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    
     const actionData = {
       level: selectedLevel,
       action: 'dealgaefy_only',
