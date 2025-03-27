@@ -14,6 +14,9 @@ const AutoP2 = ({ navigation, route }) => {
   const [deAlgaefyWithAttempt, setDeAlgaefyWithAttempt] = useState(false);
 
   const handleLevelPress = (level) => {
+    // Add medium haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
     setSelectedLevel(level);
     Animated.spring(slideAnim, {
       toValue: 0,
@@ -181,7 +184,10 @@ const AutoP2 = ({ navigation, route }) => {
                   elevation: 5
                 }
               ]}
-              onPress={() => setDeAlgaefySelected(!deAlgaefySelected)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setDeAlgaefySelected(!deAlgaefySelected);
+              }}
             >
               <Text style={styles.deAlgaefyText}>De-Algaefy + Coral Attempt</Text>
             </TouchableOpacity>

@@ -166,6 +166,7 @@ const Teleop = () => {
 
   const handleTap = (event) => {
     if (event.nativeEvent.state === State.END) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const { x, y } = event.nativeEvent;
       const { width, height } = imageLayout;
       
@@ -218,7 +219,6 @@ const Teleop = () => {
   };
 
   const handleUndo = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
         // Get both REEF and Algae data
         const reefValue = await AsyncStorage.getItem('REEF_DATA');
@@ -250,23 +250,24 @@ const Teleop = () => {
         }
         
         if (mostRecentAction) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             if (actionType === 'REEF') {
-                // Remove last reef action
                 reefData = reefData.slice(0, -1);
                 await AsyncStorage.setItem('REEF_DATA', JSON.stringify(reefData));
                 setReef(reefData);
                 setShowNotification(`REEF action undone: ${mostRecentAction.slice} ${mostRecentAction.level}`);
             } else {
-                // Remove last algae action
                 algaeData = algaeData.slice(0, -1);
                 await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(algaeData));
                 setShowNotification(`ALGAE action undone: ${mostRecentAction.action}`);
             }
         } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             setShowNotification('No actions to undo');
         }
     } catch (error) {
         console.error('Error undoing last action:', error);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setShowNotification('Error undoing last action');
     }
   };
@@ -317,6 +318,7 @@ const Teleop = () => {
   };
 
   const handleAlgaeButtonPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowAlgaeTypeModal(true);
   };
 
@@ -324,6 +326,7 @@ const Teleop = () => {
     if (type === 'Cancel') {
       setShowAlgaeTypeModal(false);
     } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setAlgaeModalText('Algae Action');
       setCurrentAlgaeType(type);
     }
@@ -663,21 +666,21 @@ const Teleop = () => {
     },
   });
 
-  // Modify handleGroundIncrement to show modal instead of directly incrementing
+  // Modify handleGroundIncrement to add light haptic feedback
   const handleGroundIncrement = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);  // Add light feedback when + is clicked
     setShowGroundTypeModal(true);
   };
 
-  // Modify handleGroundTypeSelect to update the last type
+  // Modify handleGroundTypeSelect to add success feedback
   const handleGroundTypeSelect = (type) => {
-    
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);  // Change to success feedback
     if (type === 'algae') {
       setAlgaeGroundCount(prev => prev + 1);
     } else if (type === 'coral') {
       setCoralGroundCount(prev => prev + 1);
     }
-    setLastGroundType(type); // Update the last ground type
+    setLastGroundType(type);
     setShowGroundTypeModal(false);
   };
 
@@ -789,7 +792,10 @@ const Teleop = () => {
       <View style={{ height: 100 }} />
       <TouchableOpacity 
         style={styles.algaeButton}
-        onPress={() => setShowAlgaeTypeModal(true)}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowAlgaeTypeModal(true);
+        }}
       >
         <Text style={styles.algaeButtonText}>Algae</Text>
       </TouchableOpacity>

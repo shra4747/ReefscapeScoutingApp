@@ -153,6 +153,7 @@ const Auto = () => {
 
   const handleTap = (event) => {
     if (event.nativeEvent.state === State.END) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const { x, y } = event.nativeEvent;
       const { width, height } = imageLayout;
       
@@ -202,7 +203,6 @@ const Auto = () => {
 
 
   const handleUndo = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     try {
         // Get REEF, PROCESSOR, and ALGAE data
         const reefValue = await AsyncStorage.getItem('REEF_DATA');
@@ -245,28 +245,28 @@ const Auto = () => {
         }
         
         if (mostRecentAction) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             if (actionType === 'REEF') {
-                // Remove last reef action
                 reefData = reefData.slice(0, -1);
                 await AsyncStorage.setItem('REEF_DATA', JSON.stringify(reefData));
                 setReef(reefData);
                 setShowNotification(`REEF action undone: ${mostRecentAction.slice} ${mostRecentAction.level}`);
             } else if (actionType === 'PROCESSOR') {
-                // Remove last processor action
                 processorData = processorData.slice(0, -1);
                 await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify(processorData));
                 setShowNotification(`PROCESSOR action undone: ${mostRecentAction.action}`);
             } else if (actionType === 'ALGAE') {
-                // Remove last algae action
                 algaeData = algaeData.slice(0, -1);
                 await AsyncStorage.setItem('ALGAE_DATA', JSON.stringify(algaeData));
                 setShowNotification(`ALGAE action undone: ${mostRecentAction.type} ${mostRecentAction.action}`);
             }
         } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             setShowNotification('No actions to undo');
         }
     } catch (error) {
         console.error('Error undoing last action:', error);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setShowNotification('Error undoing last action');
     }
   };
@@ -438,6 +438,7 @@ const Auto = () => {
   }, []);
 
   const handleAlgaeButtonPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setShowAlgaeTypeModal(true);
   };
 
@@ -445,6 +446,7 @@ const Auto = () => {
     if (type === 'Cancel') {
       setShowAlgaeTypeModal(false);
     } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setAlgaeModalText('Algae Action');
       setCurrentAlgaeType(type);
     }

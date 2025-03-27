@@ -262,82 +262,88 @@ const StartPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedMatch || !selectedTeam || !valuePosition || !allianceColor) {
-      Alert.alert('Error', 'Please select all fields before submitting');
-      return;
-    }
-
-    const newData = {
-      match_number: selectedMatch,
-      team_number: selectedTeam,
-      event_code: EVENT_CODE,
-      match_start_time: new Date().toISOString(),
-      alliance_color: allianceColor == "red" ? "Red" : "Blue",
-      start_position: valuePosition || 'none'
-    };
-
-    let finalPosition = valuePosition;
-    if (driverStation == "Right") {
-      if (allianceColor == "blue") {
-
-      }
-      else if (allianceColor == "red") {
-        finalPosition = (finalPosition === "close") ? "far" : "close"
+    try {
+      if (!selectedMatch || !selectedTeam || !valuePosition || !allianceColor) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('Error', 'Please select all fields before submitting');
+        return;
       }
 
-    }
+      // Add heavy haptic feedback for successful submission
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-    if (driverStation == "Left") {
-      if (allianceColor == "red") {
+      const newData = {
+        match_number: selectedMatch,
+        team_number: selectedTeam,
+        event_code: EVENT_CODE,
+        match_start_time: new Date().toISOString(),
+        alliance_color: allianceColor == "red" ? "Red" : "Blue",
+        start_position: valuePosition || 'none'
+      };
+
+      let finalPosition = valuePosition;
+      if (driverStation == "Right") {
+        if (allianceColor == "blue") {
+
+        }
+        else if (allianceColor == "red") {
+          finalPosition = (finalPosition === "close") ? "far" : "close"
+        }
 
       }
-      else if (allianceColor == "blue") {
-        finalPosition = (finalPosition === "close") ? "far" : "close"
+
+      if (driverStation == "Left") {
+        if (allianceColor == "red") {
+
+        }
+        else if (allianceColor == "blue") {
+          finalPosition = (finalPosition === "close") ? "far" : "close"
+        }
+
       }
 
+      if (driverStation == "Left" && allianceColor == "red") {
+        await AsyncStorage.setItem('DRIVER_STATION', "Left");
+      }
+      else if (driverStation == "Right" && allianceColor == "blue") {
+        await AsyncStorage.setItem('DRIVER_STATION', "Left");
+      }
+      else {
+        await AsyncStorage.setItem('DRIVER_STATION', "Right");
+      }
+
+      // Wrap all AsyncStorage operations in try-catch
+      try {
+        await AsyncStorage.setItem('ALLIANCE_COLOR', allianceColor == "red" ? "Red" : "Blue");
+        await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify([]));
+        await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify([]));
+        await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify([]));
+        await AsyncStorage.setItem('REEF_DATA', JSON.stringify([]));
+        await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify([]));
+        await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify([]));
+        await AsyncStorage.setItem('MATCH_INFO', JSON.stringify(newData));
+      } catch (storageError) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('Error', 'Failed to save match data');
+        return;
+      }
+
+      // Reset form data
+      setScouterId('');
+      setValuePosition(null);
+      setItemsPosition([
+        { label: 'Far Starting Position', value: 'far' },
+        { label: 'Middle Starting Position', value: 'middle' },
+        { label: 'Close Starting Position', value: 'close' }
+      ]);
+      setMatchNumber('');
+      setTeamNumber('');
+
+      navigation.navigate('Auto');
+    } catch (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'An unexpected error occurred');
     }
-
-    if (driverStation == "Left" && allianceColor == "red") {
-      await AsyncStorage.setItem('DRIVER_STATION', "Left");
-    }
-    else if (driverStation == "Right" && allianceColor == "blue") {
-      await AsyncStorage.setItem('DRIVER_STATION', "Left");
-    }
-    else {
-      await AsyncStorage.setItem('DRIVER_STATION', "Right");
-    }
-
-    // Print out the submitted data
-    console.log('Submitted Data:', newData);
-    console.log('Match Number:', selectedMatch);
-    console.log('Team Number:', selectedTeam);
-    console.log('Event Code:', EVENT_CODE);
-    console.log('Alliance Color:', allianceColor);
-    console.log('Starting Position:', valuePosition);
-
-    setStartPageData([newData]);
-
-    await AsyncStorage.setItem('ALLIANCE_COLOR', allianceColor == "red" ? "Red" : "Blue");
-    await AsyncStorage.setItem('AUTO_PICKUPS', JSON.stringify([]));
-    await AsyncStorage.setItem('Teleop_PICKUPS', JSON.stringify([]));
-    await AsyncStorage.setItem('PROCESSOR_DATA', JSON.stringify([]));
-    await AsyncStorage.setItem('REEF_DATA', JSON.stringify([]));
-    await AsyncStorage.setItem('ENDGAME_DATA', JSON.stringify([]));
-    await AsyncStorage.setItem('POSTGAME_DATA', JSON.stringify([]));
-    await AsyncStorage.setItem('MATCH_INFO', JSON.stringify(newData));
-
-    setScouterId('');
-    setValuePosition(null);
-    setItemsPosition([
-      { label: 'Far Starting Position', value: 'far' },
-      { label: 'Middle Starting Position', value: 'middle' },
-      { label: 'Close Starting Position', value: 'close' }
-    ]);
-
-    setMatchNumber('');
-    setTeamNumber('');
-
-    navigation.navigate('Auto');
   };
 
   // Update match filtering
@@ -439,128 +445,134 @@ const StartPage = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={styles.content}>
-          {/* Top Bar */}
-          <View style={styles.topBar}>
-            {/* Left Profile Button */}
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                navigation.navigate('PitScouting');
-              }}
-            >
-              <View style={styles.profileIcon}>
-                <Image
-                  source={require('../assets/th.jpeg')}
-                  style={styles.profileImage}
-                />
-              </View>
-            </TouchableOpacity>
-
-            {/* Admin Console Button */}
-            <TouchableOpacity
-              style={styles.adminButton}
-              onPress={() => {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                Alert.prompt(
-                  'Admin Access',
-                  'Enter password:',
-                  [
-                    {
-                      text: 'Cancel',
-                      style: 'cancel',
-                    },
-                    {
-                      text: 'Submit',
-                      onPress: (password) => {
-                        if (password === 'HOUSTON2025') {
-                          navigation.navigate('AdminConsole');
-                        } else {
-                          Alert.alert('Error', 'Incorrect password');
-                        }
-                      },
-                    },
-                  ],
-                  'secure-text'
-                );
-              }}
-            >
-              <Text style={styles.adminButtonText}>Admin Console</Text>
-            </TouchableOpacity>
-
-            {/* Right Profile Button */}
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                navigation.navigate('Profile');
-              }}
-            >
-              <View style={styles.profileIcon}>
-                <Image
-                  source={require('../assets/converted_image.jpeg')}
-                  style={styles.profileImage}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Title */}
-          <View style={styles.titleContainer}>
-            <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
-            <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
-          </View>
-
-          {/* Rest of the content */}
-          <Image
-            source={require('../assets/logo.jpg')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-
-          <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
-            <Animated.Image
-              source={require('../assets/field.png')}
-              style={[styles.fieldImage, animatedStyle]}
-            />
-          </TouchableOpacity>
-
-          <View style={styles.contentContainer}>
-            {renderMatchSelection()}
-            {selectedMatch && renderTeamSelection()}
-
-            {/* Starting Position Dropdown */}
-            <View style={styles.positionContainer}>
-              <Text style={styles.title}>Starting Position</Text>
-              <DropDownPicker
-                open={openPosition}
-                value={valuePosition}
-                items={itemsPosition}
-                setOpen={setOpenPosition}
-                setValue={(value) => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setValuePosition(value);
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            {/* Top Bar */}
+            <View style={styles.topBar}>
+              {/* Left Profile Button */}
+              <TouchableOpacity
+                style={styles.profileButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                  navigation.navigate('PitScouting');
                 }}
-                setItems={setItemsPosition}
-                placeholder="Select Starting Position"
-                style={styles.dropdown}
-                containerStyle={styles.dropdownContainer}
-                dropDownContainerStyle={styles.dropdownBox}
-                zIndex={1000}
-                zIndexInverse={3000}
-              />
+              >
+                <View style={styles.profileIcon}>
+                  <Image
+                    source={require('../assets/th.jpeg')}
+                    style={styles.profileImage}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {/* Admin Console Button */}
+              <TouchableOpacity
+                style={styles.adminButton}
+                onPress={() => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  Alert.prompt(
+                    'Admin Access',
+                    'Enter password:',
+                    [
+                      {
+                        text: 'Cancel',
+                        style: 'cancel',
+                      },
+                      {
+                        text: 'Submit',
+                        onPress: (password) => {
+                          if (password === 'HOUSTON2025') {
+                            navigation.navigate('AdminConsole');
+                          } else {
+                            Alert.alert('Error', 'Incorrect password');
+                          }
+                        },
+                      },
+                    ],
+                    'secure-text'
+                  );
+                }}
+              >
+                <Text style={styles.adminButtonText}>Admin Console</Text>
+              </TouchableOpacity>
+
+              {/* Right Profile Button */}
+              <TouchableOpacity
+                style={styles.profileButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                  navigation.navigate('Profile');
+                }}
+              >
+                <View style={styles.profileIcon}>
+                  <Image
+                    source={require('../assets/converted_image.jpeg')}
+                    style={styles.profileImage}
+                  />
+                </View>
+              </TouchableOpacity>
             </View>
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmit}
-            >
-              <Text style={styles.submitButtonText}>Start Match {selectedMatch}</Text>
+            {/* Title */}
+            <View style={styles.titleContainer}>
+              <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
+              <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
+            </View>
+
+            {/* Rest of the content */}
+            <Image
+              source={require('../assets/logo.jpg')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+
+            <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
+              <Animated.Image
+                source={require('../assets/field.png')}
+                style={[styles.fieldImage, animatedStyle]}
+              />
             </TouchableOpacity>
+
+            <View style={styles.contentContainer}>
+              {renderMatchSelection()}
+              {selectedMatch && renderTeamSelection()}
+
+              {/* Starting Position Dropdown */}
+              <View style={styles.positionContainer}>
+                <Text style={styles.title}>Starting Position</Text>
+                <DropDownPicker
+                  open={openPosition}
+                  value={valuePosition}
+                  items={itemsPosition}
+                  setOpen={setOpenPosition}
+                  setValue={(value) => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setValuePosition(value);
+                  }}
+                  setItems={setItemsPosition}
+                  placeholder="Select Starting Position"
+                  style={styles.dropdown}
+                  containerStyle={styles.dropdownContainer}
+                  dropDownContainerStyle={styles.dropdownBox}
+                  zIndex={1000}
+                  zIndexInverse={3000}
+                />
+              </View>
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmit}
+              >
+                <Text style={styles.submitButtonText}>Start Match {selectedMatch}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -882,6 +894,12 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginTop: -15
+  },
+  scrollView: {
+    width: '100%',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
   },
 });
 

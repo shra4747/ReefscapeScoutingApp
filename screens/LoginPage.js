@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingVi
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 const LoginPage = () => {
   const navigation = useNavigation();
@@ -29,6 +30,7 @@ const LoginPage = () => {
     const res = await loginResponse.json();
 
     if (!loginResponse.ok) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       alert(res.message);
       return;
     }
@@ -44,9 +46,11 @@ const LoginPage = () => {
       // Store the access token in AsyncStorage
       const access_token = res['access_token'];
       await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.replace('StartPage');
     } catch (error) {
       console.error('Error storing access token:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       alert('Error saving login information. Please try again.');
     }
   };
@@ -74,6 +78,7 @@ const LoginPage = () => {
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
+            onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
           />
         </View>
 
@@ -86,6 +91,7 @@ const LoginPage = () => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
+              onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             />
             <TouchableOpacity 
               style={styles.eyeButton}
@@ -105,7 +111,10 @@ const LoginPage = () => {
 
         <TouchableOpacity 
           style={styles.registerRedirectButton}
-          onPress={() => navigation.replace('RegisterPage')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            navigation.replace('RegisterPage');
+          }}
         >
           <Text style={styles.registerRedirectText}>Don't have an account? Register here</Text>
         </TouchableOpacity>

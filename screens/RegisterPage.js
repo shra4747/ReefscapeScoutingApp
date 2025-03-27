@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 
 const RegisterPage = () => {
   const navigation = useNavigation();
@@ -16,23 +17,25 @@ const RegisterPage = () => {
   const handleRegister = async () => {
     // Add validation for empty fields
     if (!firstName.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);  // Add error feedback
       alert('Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);  // Add error feedback
       alert('Passwords do not match!');
       return;
     }
 
-
-    const regsterData = {
-        username, // Assuming scouterID is used as the username
+    try {
+      const regsterData = {
+        username,
         password,
         first_name: firstName,
-        scouter_id: Math.floor(Math.random() * 100000), // Random number for scouter_id
+        scouter_id: Math.floor(Math.random() * 100000),
       };
-    const regiserResponse = await fetch('http://10.75.226.156:5002/register', {
+      const regiserResponse = await fetch('http://10.75.226.156:5002/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,17 +43,21 @@ const RegisterPage = () => {
         body: JSON.stringify(regsterData),
       });
 
-    if (!regiserResponse.ok) {
+      if (!regiserResponse.ok) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);  // Add error feedback
         alert('Error registering. Please try again.');
+        return;
+      }
+
+      const res = await regiserResponse.json();
+      const access_token = res['access_token']
+      await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);  // Add success feedback
+      navigation.replace('StartPage');
+    } catch (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);  // Add error feedback
+      alert('Error registering. Please try again.');
     }
-    else {
-        
-    }
-    const res = await regiserResponse.json();
-    const access_token = res['access_token']
-    // Store the first name in AsyncStorage
-    await AsyncStorage.setItem('ACCESS_TOKEN', access_token);
-    navigation.replace('StartPage');
   };
 
   return (
@@ -76,6 +83,7 @@ const RegisterPage = () => {
             value={firstName}
             onChangeText={setFirstName}
             autoCapitalize="words"
+            onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
           />
         </View>
 
@@ -87,6 +95,7 @@ const RegisterPage = () => {
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
+            onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
           />
         </View>
 
@@ -99,6 +108,7 @@ const RegisterPage = () => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
+              onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             />
             <TouchableOpacity 
               style={styles.eyeButton}
@@ -118,6 +128,7 @@ const RegisterPage = () => {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showConfirmPassword}
+              onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             />
             <TouchableOpacity 
               style={styles.eyeButton}
@@ -137,7 +148,10 @@ const RegisterPage = () => {
 
         <TouchableOpacity 
           style={styles.loginRedirectButton}
-          onPress={() => navigation.replace('LoginPage')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            navigation.replace('LoginPage');
+          }}
         >
           <Text style={styles.loginRedirectText}>Already have an account? Login here</Text>
         </TouchableOpacity>

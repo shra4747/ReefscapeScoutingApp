@@ -1,6 +1,6 @@
 // screens/PostGame.js
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -65,60 +65,64 @@ const PostGame = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { marginTop: 20 }]}>Postgame</Text>
-      
-      <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Robot Type</Text>
-      <DropDownPicker
-        open={openRobotType}
-        value={robotTypeValue}
-        items={robotTypeItems}
-        setOpen={setOpenRobotType}
-        setValue={(value) => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setRobotTypeValue(value);
-        }}
-        setItems={setRobotTypeItems}
-        placeholder="Select Robot Type(s)"
-        multiple={true}
-        mode="BADGE"
-        badgeDotColors={["#ff3030"]}
-        style={styles.dropdown}
-        containerStyle={styles.dropdownContainer}
-        zIndex={3000}
-      />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <Text style={[styles.title, { marginTop: 20 }]}>Postgame</Text>
+        
+        <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Robot Type</Text>
+        <DropDownPicker
+          open={openRobotType}
+          value={robotTypeValue}
+          items={robotTypeItems}
+          setOpen={setOpenRobotType}
+          setValue={(value) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setRobotTypeValue(value);
+          }}
+          setItems={setRobotTypeItems}
+          placeholder="Select Robot Type(s)"
+          multiple={true}
+          mode="BADGE"
+          badgeDotColors={["#ff3030"]}
+          style={styles.dropdown}
+          containerStyle={styles.dropdownContainer}
+          zIndex={3000}
+        />
 
-      {robotTypeValue.includes('defense') && (
-        <>
-          <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Defense Notes</Text>
-          <TextInput
-            style={styles.notesInput}
-            placeholder="Enter defense notes..."
-            placeholderTextColor="#888"
-            value={defenseNotes}
-            onChangeText={setDefenseNotes}
-            multiline
-          />
-        </>
-      )}
+        {robotTypeValue.includes('defense') && (
+          <>
+            <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Defense Notes</Text>
+            <TextInput
+              style={styles.notesInput}
+              placeholder="Enter defense notes..."
+              placeholderTextColor="#888"
+              value={defenseNotes}
+              onChangeText={setDefenseNotes}
+              multiline
+              onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            />
+          </>
+        )}
 
-      <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Other Notes</Text>
-      <TextInput
-        style={styles.notesInput}
-        placeholder="Enter other notes..."
-        placeholderTextColor="#888"
-        value={otherNotes}
-        onChangeText={setOtherNotes}
-        multiline
-      />
+        <Text style={[styles.dropdownTitle, { marginTop: 20 }]}>Other Notes</Text>
+        <TextInput
+          style={styles.notesInput}
+          placeholder="Enter other notes..."
+          placeholderTextColor="#888"
+          value={otherNotes}
+          onChangeText={setOtherNotes}
+          multiline
+          onKeyPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+        />
 
-      <TouchableOpacity 
-        style={[styles.submitButton, { marginTop: 20 }]} 
-        onPress={handleSubmit}
-      >
-        <Text style={styles.submitButtonText}>Submit</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity 
+          style={[styles.submitButton, { marginTop: 20 }]} 
+          onPress={handleSubmit}
+        >
+          <Text style={styles.submitButtonText}>Submit</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
