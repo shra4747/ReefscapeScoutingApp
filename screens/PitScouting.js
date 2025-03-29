@@ -69,17 +69,17 @@ const PitScouting = () => {
    const fetchTeams = async () => {
        
      try {
-      const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'NJTAB';
+      const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'NJSKI';
       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN')
       // Fetch all teams from FIRST API
-      const teamsResponse = await fetch("https://frc-api.firstinspires.org/v3.0/2025/teams?eventCode=NJTAB", {
+      const teamsResponse = await fetch("https://frc-api.firstinspires.org/v3.0/2025/teams?eventCode=njski", {
         headers: {
           'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
         }
       });
        const teamsData = await teamsResponse.json();
        // Fetch already scouted teams from your API
-       const scoutedResponse = await fetch('http://10.75.226.156:5002/pit_scout', {
+       const scoutedResponse = await fetch('http://97.107.134.214:5002/pit_scout', {
          headers: {
            'Authorization': `Bearer ${access_token}`
          }
@@ -159,7 +159,7 @@ const PitScouting = () => {
    try {
      const pitData = {
        team_number: parseInt(teamNumber, 10),
-       event_code: "NJTAB",
+       event_code: "NJSKI",
        robot_height: parseInt(height, 10),
        robot_dimensions: `${length}x${width}`,
        robot_weight: parseFloat(robotWeight),
@@ -189,7 +189,7 @@ const PitScouting = () => {
      const formData = new FormData();
      formData.append('data', JSON.stringify(pitData));
 
-     const response = await fetch('http://10.75.226.156:5002/pit_scout', {
+     const response = await fetch('http://97.107.134.214:5002/pit_scout', {
        method: 'POST',
        body: formData,
        headers: {

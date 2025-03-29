@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, TouchableOpacity, Image, Alert, FlatList } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-const EVENT_CODE = 'NJFLA'; // Manually set your event code here
+const EVENT_CODE = 'NJSKI'; // Manually set your event code here
 
 const StartPage = () => {
   const navigation = useNavigation();
@@ -74,7 +74,7 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const scheduleResponse = await fetch(`http://10.75.226.156:5002/schedule/${EVENT_CODE}`, {
+        const scheduleResponse = await fetch(`http://97.107.134.214:5002/schedule/${EVENT_CODE}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ const StartPage = () => {
         if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule');
         
         const scheduleData = await scheduleResponse.json();
-        const scoutedResponse = await fetch(`http://10.75.226.156:5002/robots_in_match`, {
+        const scoutedResponse = await fetch(`http://97.107.134.214:5002/robots_in_match`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -381,6 +381,13 @@ const StartPage = () => {
         dropDownContainerStyle={styles.simpleDropdownBox}
         zIndex={1000}
         zIndexInverse={3000}
+        listMode="MODAL"
+        modalProps={{
+          animationType: "fade"
+        }}
+        modalContentContainerStyle={{
+          backgroundColor: '#fff'
+        }}
         onChangeValue={(value) => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           setSelectedMatch(value);
@@ -438,6 +445,142 @@ const StartPage = () => {
     </View>
   );
 
+  // Create a single data item for FlatList
+  const contentData = [{ key: 'content' }];
+
+  // Render the content as a FlatList item
+  const renderContent = ({ item }) => (
+    <View style={styles.content}>
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        {/* Left Profile Button */}
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            navigation.navigate('PitScouting');
+          }}
+        >
+          <View style={styles.profileIcon}>
+            <Image
+              source={require('../assets/th.jpeg')}
+              style={styles.profileImage}
+            />
+          </View>
+        </TouchableOpacity>
+
+        {/* Admin Console Button */}
+        <TouchableOpacity
+          style={styles.adminButton}
+          onPress={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            Alert.prompt(
+              'Admin Access',
+              'Enter password:',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Submit',
+                  onPress: (password) => {
+                    if (password === 'HOUSTON2025') {
+                      navigation.navigate('AdminConsole');
+                    } else {
+                      Alert.alert('Error', 'Incorrect password');
+                    }
+                  },
+                },
+              ],
+              'secure-text'
+            );
+          }}
+        >
+          <Text style={styles.adminButtonText}>Admin Console</Text>
+        </TouchableOpacity>
+
+        {/* Right Profile Button */}
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            navigation.navigate('Profile');
+          }}
+        >
+          <View style={styles.profileIcon}>
+            <Image
+              source={require('../assets/converted_image.jpeg')}
+              style={styles.profileImage}
+            />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Title */}
+      <View style={styles.titleContainer}>
+        <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
+        <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
+      </View>
+
+      {/* Rest of the content */}
+      <Image
+        source={require('../assets/logo.jpg')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+
+      <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
+        <Animated.Image
+          source={require('../assets/field.png')}
+          style={[styles.fieldImage, animatedStyle]}
+        />
+      </TouchableOpacity>
+
+      <View style={styles.contentContainer}>
+        {renderMatchSelection()}
+        {selectedMatch && renderTeamSelection()}
+
+        {/* Starting Position Dropdown */}
+        <View style={styles.positionContainer}>
+          <Text style={styles.title}>Starting Position</Text>
+          <DropDownPicker
+            open={openPosition}
+            value={valuePosition}
+            items={itemsPosition}
+            setOpen={setOpenPosition}
+            setValue={(value) => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setValuePosition(value);
+            }}
+            setItems={setItemsPosition}
+            placeholder="Select Starting Position"
+            style={styles.dropdown}
+            containerStyle={styles.dropdownContainer}
+            dropDownContainerStyle={styles.dropdownBox}
+            zIndex={1000}
+            zIndexInverse={3000}
+            listMode="MODAL"
+            modalProps={{
+              animationType: "fade"
+            }}
+            modalContentContainerStyle={{
+              backgroundColor: '#fff'
+            }}
+          />
+        </View>
+
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+        >
+          <Text style={styles.submitButtonText}>Start Match {selectedMatch}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <KeyboardAvoidingView
@@ -445,134 +588,15 @@ const StartPage = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <ScrollView 
-          style={styles.scrollView} 
-          contentContainerStyle={styles.scrollViewContent}
+        <FlatList
+          data={contentData}
+          renderItem={renderContent}
           showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.content}>
-            {/* Top Bar */}
-            <View style={styles.topBar}>
-              {/* Left Profile Button */}
-              <TouchableOpacity
-                style={styles.profileButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                  navigation.navigate('PitScouting');
-                }}
-              >
-                <View style={styles.profileIcon}>
-                  <Image
-                    source={require('../assets/th.jpeg')}
-                    style={styles.profileImage}
-                  />
-                </View>
-              </TouchableOpacity>
-
-              {/* Admin Console Button */}
-              <TouchableOpacity
-                style={styles.adminButton}
-                onPress={() => {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                  Alert.prompt(
-                    'Admin Access',
-                    'Enter password:',
-                    [
-                      {
-                        text: 'Cancel',
-                        style: 'cancel',
-                      },
-                      {
-                        text: 'Submit',
-                        onPress: (password) => {
-                          if (password === 'HOUSTON2025') {
-                            navigation.navigate('AdminConsole');
-                          } else {
-                            Alert.alert('Error', 'Incorrect password');
-                          }
-                        },
-                      },
-                    ],
-                    'secure-text'
-                  );
-                }}
-              >
-                <Text style={styles.adminButtonText}>Admin Console</Text>
-              </TouchableOpacity>
-
-              {/* Right Profile Button */}
-              <TouchableOpacity
-                style={styles.profileButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                  navigation.navigate('Profile');
-                }}
-              >
-                <View style={styles.profileIcon}>
-                  <Image
-                    source={require('../assets/converted_image.jpeg')}
-                    style={styles.profileImage}
-                  />
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Title */}
-            <View style={styles.titleContainer}>
-              <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
-              <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
-            </View>
-
-            {/* Rest of the content */}
-            <Image
-              source={require('../assets/logo.jpg')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-
-            <TouchableOpacity onPress={toggleDriverStation} style={styles.fieldContainer}>
-              <Animated.Image
-                source={require('../assets/field.png')}
-                style={[styles.fieldImage, animatedStyle]}
-              />
-            </TouchableOpacity>
-
-            <View style={styles.contentContainer}>
-              {renderMatchSelection()}
-              {selectedMatch && renderTeamSelection()}
-
-              {/* Starting Position Dropdown */}
-              <View style={styles.positionContainer}>
-                <Text style={styles.title}>Starting Position</Text>
-                <DropDownPicker
-                  open={openPosition}
-                  value={valuePosition}
-                  items={itemsPosition}
-                  setOpen={setOpenPosition}
-                  setValue={(value) => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setValuePosition(value);
-                  }}
-                  setItems={setItemsPosition}
-                  placeholder="Select Starting Position"
-                  style={styles.dropdown}
-                  containerStyle={styles.dropdownContainer}
-                  dropDownContainerStyle={styles.dropdownBox}
-                  zIndex={1000}
-                  zIndexInverse={3000}
-                />
-              </View>
-
-              {/* Submit Button */}
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit}
-              >
-                <Text style={styles.submitButtonText}>Start Match {selectedMatch}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
+          contentContainerStyle={styles.scrollViewContent}
+          keyExtractor={item => item.key}
+          scrollEnabled={true}
+          nestedScrollEnabled={true}
+        />
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );

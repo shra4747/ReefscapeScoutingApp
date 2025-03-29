@@ -103,14 +103,13 @@ const Profile = ({ route }) => {
  const [firstName, setFirstName] = useState('');
  const [redMatches, setRedMatches] = useState(0);
  const [blueMatches, setBlueMatches] = useState(0);
- const currentMinutes = (redMatches + blueMatches) * 2.5; // Current minutes as a fraction of totalMatches
  const [rank, setRank] = useState(0);
  const [isTied, setIsTied] = useState(false);
  const [totalScouters, setTotalScouters] = useState(0);
 
 
  // Ensure redMatches + blueMatches equals totalMatches
- const totalMatchesScouted = redMatches + blueMatches;
+ const [totalMatchesScouted, setTotalMatchesScouted] = useState(0);
 
 
  // Determine the color of the progress bar based on the dominant alliance
@@ -138,7 +137,7 @@ const Profile = ({ route }) => {
      try {
        const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
        if (accessToken) {
-         const response = await fetch('http://10.75.226.156:5002/user_stats', {
+         const response = await fetch('http://97.107.134.214:5002/user_stats', {
            method: 'GET',
            headers: {
              'Authorization': `Bearer ${accessToken}`
@@ -152,6 +151,7 @@ const Profile = ({ route }) => {
          setRank(data.rank);
          setIsTied(data.is_tied); 
          setTotalScouters(data.total_scouters)
+         setTotalMatchesScouted(data.total_matches_scouted)
        }
      } catch (error) {
        console.error('Error fetching user data:', error);
@@ -170,14 +170,14 @@ const Profile = ({ route }) => {
      </View>
      <View style={styles.progressBarContainer}>
        <CircularProgressBar
-         total={currentMinutes}
-         current={currentMinutes}
+         total={parseInt(totalMatchesScouted*2.5)}
+         current={parseInt(totalMatchesScouted*2.5)}
          label="Minutes"
          color="#ff3030"
        />
        <CircularProgressBar
-         total={redMatches+blueMatches}
-         current={redMatches+blueMatches}
+         total={totalMatchesScouted}
+         current={totalMatchesScouted}
          label="Matches"
          color={progressBarColor}
        />
