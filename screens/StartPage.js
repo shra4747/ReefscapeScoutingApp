@@ -74,7 +74,7 @@ const StartPage = () => {
       try {
         const authToken = await AsyncStorage.getItem('ACCESS_TOKEN');
         
-        const scheduleResponse = await fetch(`http://97.107.134.214:5002/schedule/${EVENT_CODE}`, {
+        const scheduleResponse = await fetch(`http://192.168.68.67:8081/schedule/${EVENT_CODE}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ const StartPage = () => {
         if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule');
         
         const scheduleData = await scheduleResponse.json();
-        const scoutedResponse = await fetch(`http://97.107.134.214:5002/robots_in_match`, {
+        const scoutedResponse = await fetch(`http://192.168.68.67:8081/robots_in_match`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -263,6 +263,7 @@ const StartPage = () => {
 
   const handleSubmit = async () => {
     try {
+      // Re-enable the validation check
       if (!selectedMatch || !selectedTeam || !valuePosition || !allianceColor) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert('Error', 'Please select all fields before submitting');

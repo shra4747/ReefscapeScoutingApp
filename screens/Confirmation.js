@@ -171,7 +171,7 @@ const Confirmation = () => {
         const accessToken = await AsyncStorage.getItem('ACCESS_TOKEN');
 
         // Make POST request
-        const response = await fetch('http://97.107.134.214:5002/match', {
+        const response = await fetch('http://192.168.68.67:8081/match', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

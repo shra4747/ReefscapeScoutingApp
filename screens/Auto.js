@@ -36,6 +36,13 @@ const Auto = () => {
   const [currentAlgaeType, setCurrentAlgaeType] = useState(null);
   const [algaeModalText, setAlgaeModalText] = useState('Algae Location');
 
+  // Add state for timer and vibration interval
+  const [timeExceeded, setTimeExceeded] = useState(false);
+  const vibrationInterval = useRef(null);
+
+  // Add state for the pulse animation
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
   useEffect(() => {
     const retrieveAllianceColor = async () => {
       try {
@@ -490,6 +497,54 @@ const Auto = () => {
     }
   };
 
+  // Add useEffect for the timer, vibration, and pulse animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimeExceeded(true);
+      // Start vibrating repeatedly with a phone call pattern
+      vibrationInterval.current = setInterval(() => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); // Buzz
+        setTimeout(() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); // Buzz again
+        }, 500); // Short delay between buzzes
+      }, 2000); // Repeat every 2 seconds
+
+      // Start the pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, 15000); // 15 seconds
+
+    // Cleanup the timer, vibration interval, and animation when the component unmounts
+    return () => {
+      clearTimeout(timer);
+      if (vibrationInterval.current) {
+        clearInterval(vibrationInterval.current);
+      }
+      pulseAnim.stopAnimation();
+    };
+  }, []);
+
+  // Stop vibrations and pulse animation when proceeding to the next page
+  const handleProceed = () => {
+    if (vibrationInterval.current) {
+      clearInterval(vibrationInterval.current); // Stop vibrations
+    }
+    pulseAnim.stopAnimation(); // Stop the pulse animation
+    navigation.navigate('NextPage'); // Replace 'NextPage' with the actual page name
+  };
+
   // Define styles after determining global_color
   const styles = StyleSheet.create({
     container: {
@@ -763,6 +818,13 @@ const Auto = () => {
       fontSize: 16,
       fontWeight: 'bold',
     },
+    warningText: {
+      color: 'red',
+      fontSize: 18,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginTop: 20,
+    },
   });
 
   return (
@@ -787,12 +849,14 @@ const Auto = () => {
         >
           <Text style={styles.undoButtonText}>Undo</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.proceedButton} 
-          onPress={handleSubmit}
-        >
-          <Text style={styles.proceedButtonText}>Proceed</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+          <TouchableOpacity 
+            style={styles.proceedButton} 
+            onPress={handleProceed}
+          >
+            <Text style={styles.proceedButtonText}>Proceed</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
       <View 
         style={styles.imageContainer}
