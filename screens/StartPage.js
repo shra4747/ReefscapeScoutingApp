@@ -83,7 +83,6 @@ const StartPage = () => {
         });
         
         if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule');
-        
         const scheduleData = await scheduleResponse.json();
         const scoutedResponse = await fetch(`http://192.168.68.67:8081/robots_in_match`, {
           method: 'GET',
@@ -101,15 +100,22 @@ const StartPage = () => {
           !scoutedMatches.some(scoutedItem => 
             scoutedItem.match_number === scheduleItem.match_number &&
             scoutedItem.event_code === scheduleItem.event_code
-          )
+          ) &&
+          scheduleItem.team_number !== null // Filter out matches with null team numbers
         );
 
         // Get unique matches
-        const uniqueMatches = [...new Set(availableMatches.map(item => item.match_number))]
-          .map(matchNumber => ({
-            label: `Match ${matchNumber}`,
-            value: matchNumber.toString()
-          }));
+        const uniqueMatches = [...new Set(availableMatches
+          .filter(item => item.match_number !== null) // Filter out null match numbers
+          .map(item => item.match_number))]
+          .map(matchNumber => {
+            return {
+              label: `Match ${matchNumber}`,
+              value: matchNumber.toString()
+            };
+          });
+
+        console.log(uniqueMatches)
         
         setMatches(uniqueMatches);
         setScheduleData(availableMatches);
@@ -142,10 +148,17 @@ const StartPage = () => {
   useEffect(() => {
     if (selectedMatch) {
       const teamsInMatch = scheduleData
-        .filter(item => item.match_number.toString() === selectedMatch)
+        .filter(item => {
+          try {
+            return item.match_number !== null && item.match_number.toString() === selectedMatch;
+          } catch (error) {
+            console.error('Error converting match_number to string:', error);
+            return false;
+          }
+        })
         .map(item => ({
           label: `Team ${item.team_number}`,
-          value: item.team_number.toString(),
+          value: item.team_number !== null ? item.team_number.toString() : '',
           alliance: item.alliance_color
         }));
 
@@ -521,7 +534,7 @@ const StartPage = () => {
       {/* Title */}
       <View style={styles.titleContainer}>
         <Text style={[styles.pageTitle, { color: 'red' }]}>TEAM 75:</Text>
-        <Text style={[styles.pageTitle, { color: 'white' }]}> SCOUTING APP</Text>
+        <Text style={[styles.pageTitle, { color: 'white' }]}> MONTY APP</Text>
       </View>
 
       {/* Rest of the content */}

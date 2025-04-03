@@ -154,14 +154,16 @@ const AdminCons = () => {
       }
 
       const teams_in_matches = newMatches.map(match => 
-        match.teams.map(team => ({
-          team_number: parseInt(team.teamNumber),
-          match_number: tournamentLevel === 'playoff' ? parseInt(match.matchNumber) + 1000 : parseInt(match.matchNumber),
-          drive_station: parseInt(team.station.slice(-1)),
-          alliance_color: team.station.slice(0, -1).toLowerCase(),
-          event_code: EVENT_CODE,
-          date: match.startTime
-        }))
+        match.teams
+          .filter(team => team.teamNumber !== null) // Filter out teams with null team numbers
+          .map(team => ({
+            team_number: parseInt(team.teamNumber),
+            match_number: tournamentLevel === 'playoff' ? parseInt(match.matchNumber) + 1000 : parseInt(match.matchNumber),
+            drive_station: parseInt(team.station.slice(-1)),
+            alliance_color: team.station.slice(0, -1).toLowerCase(),
+            event_code: EVENT_CODE,
+            date: match.startTime
+          }))
       ).flat();
 
       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN');

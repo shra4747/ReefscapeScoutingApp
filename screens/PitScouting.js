@@ -64,30 +64,33 @@ const PitScouting = () => {
  const [reefPickup, setReefPickup] = useState(false);
  const [algaeGroundPickup, setAlgaeGroundPickup] = useState(false);
 
+ // Add this state for tracking if teams are available
+ const [hasTeams, setHasTeams] = useState(true);
+
  // Fetch teams on component mount
  useEffect(() => {
    const fetchTeams = async () => {
-       
      try {
-      const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'NJSKI';
-      const access_token = await AsyncStorage.getItem('ACCESS_TOKEN')
-      // Fetch all teams from FIRST API
-      const teamsResponse = await fetch("https://frc-api.firstinspires.org/v3.0/2025/teams?eventCode=njski", {
-        headers: {
-          'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
-        }
-      });
-       const teamsData = await teamsResponse.json();
-       // Fetch already scouted teams from your API
-       const scoutedResponse = await fetch('http://192.168.68.67:8081/pit_scout', {
+       const eventCode = await AsyncStorage.getItem('EVENT_CODE') || 'NJSKI';
+       const access_token = await AsyncStorage.getItem('ACCESS_TOKEN')
+       
+       const teamsResponse = await fetch("https://frc-api.firstinspires.org/v3.0/2025/teams?eventCode=NJSKI&", {
          headers: {
+           'Content-Type': 'application/json',
+           'Authorization': 'Basic c2hyYXZhbnA6MjVhZWQzNjMtZWY0Yi00NTljLTg3MjYtZmY4MzlhNzgxNWMy'
+         }
+       });
+       const teamsData = await teamsResponse.json();
+       
+       const scoutedResponse = await fetch('http://97.107.134.214:5002/pit_scout', {
+         headers: {
+          'Content-Type': 'application/json',
            'Authorization': `Bearer ${access_token}`
          }
        });
        const scoutedData = await scoutedResponse.json();
        const scoutedTeamNumbers = scoutedData.map(scout => scout.team_number.toString());
 
-       // Filter out already scouted teams
        const teamItems = teamsData.teams
          .filter(team => !scoutedTeamNumbers.includes(team.teamNumber.toString()))
          .map(team => ({
@@ -95,9 +98,15 @@ const PitScouting = () => {
            value: team.teamNumber.toString()
          }));
 
-       setTeams([{ label: 'Select Team...', value: null }, ...teamItems]);
+       if (teamItems.length > 0) {
+         setTeams([{ label: 'Select Team...', value: null }, ...teamItems]);
+         setHasTeams(true);
+       } else {
+         setHasTeams(false);
+       }
      } catch (error) {
        console.error('Error fetching teams:', error);
+       setHasTeams(false);
      }
    };
 
@@ -147,12 +156,12 @@ const PitScouting = () => {
    if (isSubmitting) return;
 
    // Validate all fields
-   if (!teamNumber || !height || !length || !width || !robotWeight ||
-       !driverExperience || !driveTrainValue) {
-     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-     alert('Please fill out all fields before submitting.');
-     return;
-   }
+  //  if (!teamNumber || !height || !length || !width || !robotWeight ||
+  //      !driverExperience || !driveTrainValue) {
+  //    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  //    alert('Please fill out all fields before submitting.');
+  //    return;
+  //  }
 
    setIsSubmitting(true);
 
@@ -229,26 +238,38 @@ const PitScouting = () => {
      </TouchableOpacity>
      <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Team Number</Text>
-       <DropDownPicker
-         open={openTeamPicker}
-         value={teamNumber}
-         items={teams}
-         setOpen={setOpenTeamPicker}
-         setValue={(value) => {
-           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-           setTeamNumber(value);
-         }}
-         setItems={setTeams}
-         placeholder="Select Team"
-         style={styles.dropdown}
-         containerStyle={[styles.dropdownContainer, { zIndex: 5000 }]}
-         listMode="SCROLLVIEW"
-         scrollViewProps={{
-           nestedScrollEnabled: true,
-         }}
-         zIndex={5000}
-         zIndexInverse={6000}
-       />
+       {hasTeams ? (
+         <DropDownPicker
+           open={openTeamPicker}
+           value={teamNumber}
+           items={teams}
+           setOpen={setOpenTeamPicker}
+           setValue={(value) => {
+             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+             setTeamNumber(value);
+           }}
+           setItems={setTeams}
+           placeholder="Select Team"
+           style={styles.dropdown}
+           containerStyle={[styles.dropdownContainer, { zIndex: 5000 }]}
+           listMode="SCROLLVIEW"
+           scrollViewProps={{
+             nestedScrollEnabled: true,
+           }}
+           zIndex={5000}
+           zIndexInverse={6000}
+         />
+       ) : (
+         <TextInput
+           style={styles.inputField}
+           placeholder="Enter Team Number"
+           placeholderTextColor="#888"
+           value={teamNumber}
+           onChangeText={handleTeamNumberChange}
+           keyboardType="numeric"
+           maxLength={4}
+         />
+       )}
      </View>
      <View style={styles.sectionContainer}>
        <Text style={styles.sectionTitle}>Robot Dimensions (in)</Text>
